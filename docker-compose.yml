@@ -1,0 +1,26 @@
+version: '3.2'
+
+services:
+    perl-carton:
+        build:
+            context: .
+            dockerfile: Dockerfile.perl-carton
+            cache_from:
+                - perl:5.26
+        image: perl:carton
+
+    gradle:
+        build:
+            context: .
+            dockerfile: Dockerfile.gradle
+            cache_from:
+                - openjdk:8-jdk-alpine
+        image: gradle:4.4.1-jdk8-alpine
+
+    openjdk:
+        build:
+            context: .
+            dockerfile: Dockerfile.openjdk
+            cache_from:
+                - alpine:3.6
+        image: openjdk:8-jdk-alpine
