@@ -26,11 +26,11 @@ services:
             cache_from:
                 - perl-carton:20180120
             context: ./files-librd
-        hostname: files
-        image: files:20180120
+        hostname: files-2
+        image: files-1:20180120
         restart: unless-stopped
         volumes:
-            - ./scanfiles.2/:/usr/src/myapp
+            - ./files-librd/:/usr/src/myapp
         logging:
             driver: "json-file"
             options:
@@ -44,11 +44,11 @@ services:
             cache_from:
                 - perl-carton:20180120
             context: ./files-kafka
-        hostname: scanfiles
-        image: scanfiles:20180120
+        hostname: files-2
+        image: files-2:20180120
         restart: unless-stopped
         volumes:
-            - ./scanfiles/:/usr/src/myapp
+            - ./files-librd/:/usr/src/myapp
         logging:
             driver: "json-file"
             options:
