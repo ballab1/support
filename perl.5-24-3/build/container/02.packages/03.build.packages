@@ -1,0 +1,2 @@
+# build Packages
+apk add --no-cache --virtual .buildDepedencies build-base expat expat-dev file g++ gcc gcc-objc git gnutls-utils libc6-compat libtool make

@@ -1,26 +1,91 @@
 version: '3.2'
 
 services:
-    perl-carton:
+    movefiles:
         build:
-            context: .
-            dockerfile: Dockerfile.perl-carton
+            args:
+                CODE_VERSION: '20180120'
             cache_from:
-                - perl:5.26
-        image: perl:carton
+                - perl-carton:20180120
+            context: ./movefiles
+        hostname: movefiles
+        image: movefiles:20180120
+        restart: unless-stopped
+        volumes:
+            - ./movefiles/:/usr/src/myapp
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "10m"
+                max-file: "3" 
+
+    files-1:
+        build:
+            args:
+                CODE_VERSION: '20180120'
+            cache_from:
+                - perl-carton:20180120
+            context: ./files-librd
+        hostname: files
+        image: files:20180120
+        restart: unless-stopped
+        volumes:
+            - ./scanfiles.2/:/usr/src/myapp
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "10m"
+                max-file: "3"
+
+    files-2:
+        build:
+            args:
+                CODE_VERSION: '20180120'
+            cache_from:
+                - perl-carton:20180120
+            context: ./files-kafka
+        hostname: scanfiles
+        image: scanfiles:20180120
+        restart: unless-stopped
+        volumes:
+            - ./scanfiles/:/usr/src/myapp
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "10m"
+                max-file: "3" 
+
+    carton:
+        build:
+            args:
+                CODE_VERSION: '20180120'
+            cache_from:
+                - perl-5.24.3:20180120
+            context: ./carton
+        image: perl-carton:20180120
+
+    perl:
+        build:
+            args:
+                TZ: "America/New_York"
+            cache_from:
+                - alpine:3.6
+            context: ./perl.5-24-3
+        image: perl-5.24.3:20180120
 
     gradle:
         build:
-            context: .
-            dockerfile: Dockerfile.gradle
+            dockerfile: Dockerfile
             cache_from:
                 - openjdk:8-jdk-alpine
+            context: ./gradle
         image: gradle:4.4.1-jdk8-alpine
 
     openjdk:
         build:
-            context: .
-            dockerfile: Dockerfile.openjdk
+            args:
+                TZ: "America/New_York"
             cache_from:
                 - alpine:3.6
-        image: openjdk:8-jdk-alpine
+            context: ./openjdk
+        image: openjdk:8-jdk-alpine 

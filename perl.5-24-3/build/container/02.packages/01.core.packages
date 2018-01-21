@@ -1,0 +1,2 @@
+# core Packages
+apk add --no-cache bash ca-certificates curl findutils openssl sudo shadow tar wget zip
