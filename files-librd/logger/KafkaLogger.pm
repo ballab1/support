@@ -69,8 +69,8 @@ sub new
         server => DEFAULT_BROKER,
         records => 0,
         debug => 0,
-        client => undef,
-        group => undef,
+        client => 0,
+        group => 0,
         partition => 0,
         topic => undef,
         msgflags => undef,
@@ -101,18 +101,19 @@ sub new
 #    print STDERR "Using rdkafka version: " . Kafka::Librd::rd_kafka_version_str if $self->{debug};
 
     my $params = { "client.id" => $self->{client},
-                   "group.id" => $self->{group},
-                   "default_topic_conf" => $self->{topic}
+                   "group.id" => $self->{group}
                   };
 
     my $kafka = Kafka::Librd->new(Kafka::Librd::RD_KAFKA_PRODUCER, $params);
+    $self->{kafka} = $kafka;
 
     # Configure the server
     $kafka->brokers_add($self->{server});
     say STDERR "Added broker" if $self->{debug}; 
 
-    $self->{kafka} = $kafka;
- 
+    my $topic = $kafka->topic($self->{topic}, {});
+    $self->{kafka_topic} = $topic;
+    
     return $self;
 }
 
@@ -155,8 +156,8 @@ sub logger
         my $json = JSON->new->allow_nonref;
         my $json_text = $json->encode( $results );
 
-        my $kafka = $self->{kafka};
-        if ($kafka->produce($self->{partition}, $self->{msgflags}, $json_text, $self->{keys})) {
+        my $topic = $self->{kafka_topic};
+        if ($topic->produce($self->{partition}, $self->{msgflags}, $json_text, $self->{keys})) {
             $self->{records}++;
         }
     } 

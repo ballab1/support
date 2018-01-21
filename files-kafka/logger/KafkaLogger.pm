@@ -108,7 +108,8 @@ sub new
         my $producer = Kafka::Producer->new( Connection => $connection );
 
         # Save the Kafka::Librd object
-        $self->{kafka} = $producer;
+        $self->{kafka_connection} = $connection;
+        $self->{kafka_producer} = $producer;
     }
     catch {
         my $error = $_;
@@ -132,14 +133,14 @@ sub new
 =cut
 sub DESTROY {
     my $self = shift;
-    my $kafka = $self->{kafka};
+    my $kafka_connection = $self->{kafka_connection};
 
-    if (defined $kafka) {
+    if (defined $kafka_connection) {
         print STDERR "Destroying Kafka producer..." if $self->{debug};
-        $kafka->destroy;
+        $kafka_connection->destroy;
         print STDERR "Waiting for destruction..." if $self->{debug};
-        Kafka::Librd::rd_kafka_wait_destroyed(5000);
-        print STDERR "Destruction complete" if $self->{debug};
+#        Kafka::Librd::rd_kafka_wait_destroyed(5000);
+#        print STDERR "Destruction complete" if $self->{debug};
     }
 } 
 
@@ -162,8 +163,8 @@ sub logger
         my $json = JSON->new->allow_nonref;
         my $json_text = $json->encode( $results );
 
-        my $kafka = $self->{kafka};
-        if ($kafka->send( $self->{topic}, $self->{partition}, $json_text, $self->{key}, $self->{compression_codec} )) {
+        my $kafka_connection = $self->{kafka_connection};
+        if ($kafka_connection->send( $self->{topic}, $self->{partition}, $json_text, $self->{key}, $self->{compression_codec} )) {
             $self->{records}++;
         }
     } 
