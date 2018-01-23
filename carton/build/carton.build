@@ -26,4 +26,5 @@ if ( grep -rcH ' FAIL ' * | grep -v ':0' > /dev/null ) ; then
 fi
 
 #create folder to mount  (working folder)
-mkdir -p /usr/src/myapp 
+mkdir -p /usr/src/myapp
+export HOME=/usr/src/myapp

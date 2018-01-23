@@ -22,6 +22,10 @@ use warnings;
 use Exporter 'import';
 our $VERSION     = 1.00;
 
+our @ISA         = qw(Exporter);
+our @EXPORT_OK   = qw(processFile); 
+
+
 use POSIX qw(strftime);
 use IO::Dir;
 use Crypt::Digest::SHA256;
@@ -31,8 +35,6 @@ use Cwd qw(abs_path);
 use utilities::hashes qw(copyHash);
 use utilities::string qw(trim);
 use utilities::formattime qw(getTime);
-
-our @ISA         = qw(Exporter);
 
 
 #-- GLOBALS -------------------------------------------------------
@@ -72,6 +74,29 @@ use constant {
                      OUTPUT => [ FILESDEF, SCANSDEF ]
                     }
 };
+
+sub processFile($$)
+{
+    my ($input, $parser) = @_;
+    
+    # get the current time #
+    my $now = time;    
+    
+    my $parsedCount = $parser->parse($input);
+
+    my $warningsCount = $parser->reportWarnings();
+    
+    # print summary of what was done #
+    print "\n\nParsed ".$parsedCount.' records read';
+    print '.    '.$warningsCount.' warnings detected '  if ($warningsCount > 0);
+
+    # Calculate total runtime (current time minus start time) #
+    $now = time - $now;
+    # Print runtime #
+    printf("\nTotal running time: %02d:%02d:%02d\n\n", int($now / 3600), int(($now % 3600) / 60), int($now % 60));
+    
+    return 1;
+}
 
 =item C<new>
 

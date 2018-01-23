@@ -11,7 +11,7 @@ use warnings;
 use FindBin qw($Bin);
 use lib "$Bin";
 use ArgHandler;
-use Parser;
+use Parser qw(processFile);
 use logger::KafkaLogger;
 
 #-- GLOBALS -------------------------------------------------------
@@ -24,8 +24,8 @@ my $parser = Parser->new( $argHash->getParams() );
 
 # process the buildlog
 eval {
-   processLog($argHash->{'topic'}, $parser);
-   print 'Successfully parsed '.$argHash->{'topic'}."\n";
+   processFile('/opt', $parser);
+   print 'Successfully parsed /opt'."\n";
 };
 if ($@) 
 {

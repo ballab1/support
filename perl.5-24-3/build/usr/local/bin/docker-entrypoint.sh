@@ -5,8 +5,8 @@ set -o errexit
 set -o nounset 
 #set -o verbose
 
+[ $HOME ] && cd "$HOME"
 
-cd /scripts
 if [ "$1" = 'perl' ]; then       # regular app start
 
     shift

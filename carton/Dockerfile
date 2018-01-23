@@ -18,4 +18,5 @@ RUN set -o verbose \
 ONBUILD COPY cpanfile* /usr/src/app/
 ONBUILD RUN /carton.build ; rm /carton.build
 ONBUILD ENV PERL5LIB=/usr/src/app/local/lib/perl5:$PERL5LIB
+ONBUILD ENV HOME=/usr/src/myapp
 WORKDIR /usr/src/myapp

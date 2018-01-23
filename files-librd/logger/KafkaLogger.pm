@@ -46,7 +46,7 @@ our @EXPORT_OK   = qw(close logger);
  
 # Global variables
 use constant {
-    DEFAULT_BROKER => '10.1.3.11:2181'
+    DEFAULT_BROKER => '10.1.3.11:9092'
 };
  
 =item C<new>
