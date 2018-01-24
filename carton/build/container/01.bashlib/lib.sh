@@ -88,7 +88,7 @@ function lib.run_scripts()
         for file in ${files} ; do
             chmod 755 "$file"
             $LOG "..executing ${file}${LF}" 'info'
-            eval "$file" || lib.log "..*** issue while executing $( basename "$file" ) ***${LF}" 'warn'
+            eval "$file" || $LOG "..*** issue while executing $( basename "$file" ) ***${LF}" 'warn'
         done
     fi
 }
