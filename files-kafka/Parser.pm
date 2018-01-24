@@ -22,9 +22,13 @@ use warnings;
 use Exporter 'import';
 our $VERSION     = 1.00;
 
+our @ISA         = qw(Exporter);
+our @EXPORT_OK   = qw(processFile); 
+
+
 use POSIX qw(strftime);
 use IO::Dir;
-use Crypt::Digest::SHA256;
+use Crypt::Digest::SHA256 qw(sha256_file_hex);
 use File::stat qw(:FIELDS);
 use Cwd qw(abs_path);
 
@@ -32,39 +36,35 @@ use utilities::hashes qw(copyHash);
 use utilities::string qw(trim);
 use utilities::formattime qw(getTime);
 
-our @ISA         = qw(Exporter);
-
 
 #-- GLOBALS -------------------------------------------------------
 use constant {
     DEFAULT_LOG => 'kafkaLogger',
     FILES_RESULTS => 'fileHashes',
-    SCAN_RESULTS => 'scanFilesSummary'
+    SCAN_RESULTS => 'scanResults'
 };    
 
 #['client', 'group', 'partition', 'server', 'topic', 'msgflags', 'compression_codec', 'keys']
 use constant {
-   SCANSDEF => { 'key' => SCAN_RESULTS,
+   SCANSDEF => { 'topic' => SCAN_RESULTS,
                  'comment' => '-' . SCAN_RESULTS . q#          Kafka topic name#,
                  'debug' => undef,
-                 'group' => undef,
-                 'client' => undef,
-                 'partition' => undef,
-                 'msgflags' => undef,
-                 'compression_codec' => undef,
-                 'keys' => undef,
-                 'topic' => SCAN_RESULTS
+                 'group' => 0,
+                 'client' => 0,
+                 'partition' => 0,
+                 'msgflags' => 0,
+                 'compression_codec' => 0,
+                 'key' => 0
                  },
-   FILESDEF => { 'key' => FILES_RESULTS,
+   FILESDEF => { 'topic' => FILES_RESULTS,
                  'comment' => '-' . FILES_RESULTS . q#         Kafka topic name#,
-                 'debug' => undef,
-                 'group' => undef,
-                 'client' => undef,
-                 'partition' => undef,
-                 'msgflags' => undef,
-                 'compression_codec' => undef,
-                 'keys' => undef,
-                 'topic' => FILES_RESULTS
+                 'debug' => 0,
+                 'group' => 0,
+                 'client' => 0,
+                 'partition' => 0,
+                 'msgflags' => 0,
+                 'compression_codec' => 0,
+                 'key' => 0
                }
 };
 
@@ -74,6 +74,29 @@ use constant {
                      OUTPUT => [ FILESDEF, SCANSDEF ]
                     }
 };
+
+sub processFile($$)
+{
+    my ($input, $parser) = @_;
+    
+    # get the current time #
+    my $now = time;    
+    
+    my $parsedCount = $parser->parse($input);
+
+    my $warningsCount = $parser->reportWarnings();
+    
+    # print summary of what was done #
+    print "\n\nParsed ".$parsedCount.' records read';
+    print '.    '.$warningsCount.' warnings detected '  if ($warningsCount > 0);
+
+    # Calculate total runtime (current time minus start time) #
+    $now = time - $now;
+    # Print runtime #
+    printf("\nTotal running time: %02d:%02d:%02d\n\n", int($now / 3600), int(($now % 3600) / 60), int($now % 60));
+    
+    return 1;
+}
 
 =item C<new>
 
@@ -135,10 +158,10 @@ sub close()
     $results->{total} = $self->{regfiles} + $self->{emptyfiles} +  $self->{links};
     $results->{duration} = time() - $self->{start_tm};
     $results->{size} = $self->{size};
-    $self->{scanresults}->logger($results);
+    $self->{SCAN_RESULTS()}->logger($results);
     
     for my $cfg ( @{ CONFIG_DATA()->{OUTPUT} }) {
-        my $key = $cfg->{key};
+        my $key = $cfg->{topic};
         $self->{$key}->close();
     }
 
@@ -275,7 +298,7 @@ sub logEntry($$$)
         $results->{group} = getgrgid($st->gid);
         $results->{lastmodified} = getTime($st->mtime);
     }
-    $self->{filescan}->logger($results);
+    $self->{FILES_RESULTS()}->logger($results);
     
     return $results;
 }

@@ -28,7 +28,7 @@ our @EXPORT_OK   = qw(processFile);
 
 use POSIX qw(strftime);
 use IO::Dir;
-use Crypt::Digest::SHA256;
+use Crypt::Digest::SHA256 qw(sha256_file_hex);
 use File::stat qw(:FIELDS);
 use Cwd qw(abs_path);
 
@@ -41,7 +41,7 @@ use utilities::formattime qw(getTime);
 use constant {
     DEFAULT_LOG => 'kafkaLogger',
     FILES_RESULTS => 'fileHashes',
-    SCAN_RESULTS => 'scanFilesSummary'
+    SCAN_RESULTS => 'scanResults'
 };    
 
 #['client', 'group', 'partition', 'server', 'topic', 'msgflags', 'compression_codec', 'keys']
@@ -49,22 +49,22 @@ use constant {
    SCANSDEF => { 'topic' => SCAN_RESULTS,
                  'comment' => '-' . SCAN_RESULTS . q#          Kafka topic name#,
                  'debug' => undef,
-                 'group' => undef,
-                 'client' => undef,
-                 'partition' => undef,
-                 'msgflags' => undef,
-                 'compression_codec' => undef,
-                 'key' => undef
+                 'group' => 0,
+                 'client' => 0,
+                 'partition' => 0,
+                 'msgflags' => 0,
+                 'compression_codec' => 0,
+                 'key' => 0
                  },
    FILESDEF => { 'topic' => FILES_RESULTS,
                  'comment' => '-' . FILES_RESULTS . q#         Kafka topic name#,
-                 'debug' => undef,
-                 'group' => undef,
-                 'client' => undef,
-                 'partition' => undef,
-                 'msgflags' => undef,
-                 'compression_codec' => undef,
-                 'key' => undef
+                 'debug' => 0,
+                 'group' => 0,
+                 'client' => 0,
+                 'partition' => 0,
+                 'msgflags' => 0,
+                 'compression_codec' => 0,
+                 'key' => 0
                }
 };
 
@@ -158,7 +158,7 @@ sub close()
     $results->{total} = $self->{regfiles} + $self->{emptyfiles} +  $self->{links};
     $results->{duration} = time() - $self->{start_tm};
     $results->{size} = $self->{size};
-    $self->{scanresults}->logger($results);
+    $self->{SCAN_RESULTS()}->logger($results);
     
     for my $cfg ( @{ CONFIG_DATA()->{OUTPUT} }) {
         my $key = $cfg->{topic};
@@ -298,7 +298,7 @@ sub logEntry($$$)
         $results->{group} = getgrgid($st->gid);
         $results->{lastmodified} = getTime($st->mtime);
     }
-    $self->{filescan}->logger($results);
+    $self->{FILES_RESULTS()}->logger($results);
     
     return $results;
 }

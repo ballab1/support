@@ -90,7 +90,7 @@ sub new
             when (['debug']) {
                 $self->{$option} = 1 if $value;
             }
-            when (['client', 'group', 'partition', 'server', 'topic', 'msgflags', 'compression_codec', 'keys']) {
+            when (['client', 'group', 'partition', 'server', 'topic', 'msgflags', 'compression_codec', 'key']) {
                 $self->{$option} = $value;
             }
             default { die "Unknown option: $option,  value: $value" }
@@ -157,13 +157,13 @@ sub logger
         my $json_text = $json->encode( $results );
 
         my $topic = $self->{kafka_topic};
-        if ($topic->produce($self->{partition}, $self->{msgflags}, $json_text, $self->{keys})) {
+        if ($topic->produce($self->{partition}, 0, $json_text, $self->{key})) {
             $self->{records}++;
         }
     } 
     catch {
         my $error = $_;
-        if ( blessed( $error ) && $error->isa( 'Kafka::Exception' ) ) {
+        if ( $error->isa( 'Kafka::Exception' ) ) {
             warn 'Error: (', $error->code, ') ',  $error->message, "\n";
             exit;
         }

@@ -39,7 +39,8 @@ use JSON;
 use Kafka::Connection;
 use Kafka::Producer;
 #use Kafka::Consumer;
-
+use Scalar::Util qw(blessed);
+use Try::Tiny;
 
 our $VERSION     = '1.00';
 our @ISA         = qw(Exporter);

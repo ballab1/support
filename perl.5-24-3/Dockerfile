@@ -6,6 +6,8 @@ LABEL version=$VERSION
 # Add configuration and customizations
 COPY build /tmp/
 
+ARG TZ='America/New_York'
+
 # build content
 RUN set -o verbose \
     && apk update \

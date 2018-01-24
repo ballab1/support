@@ -71,12 +71,6 @@ sub new
       $self->usage();
   };
 
- # setup default values
-  
-  $self->verify('infile');
-  foreach my $cfg ( @{ $configData->{OUTPUT} } ) {
-      $self->verify($cfg->{topic});
-  }
   return $self;
 }
 
@@ -141,36 +135,15 @@ sub usage()
     my $cfg = $self->{cfg};
     
     print "USAGE: $0 [options]\n";
-    print "          topic                   Kafka topic";
+    print "          -infile                 filename            {input log file - defaults to './".$cfg->{INPUT_LOG}.".log'}\n";
     foreach my $cfg ( @{ $cfg->{OUTPUT} } ) {
         print "          $cfg->{comment}\n";
     }
+    print "          -id                     'id=nnnn'           {id to relate to this capture}\n";
     print "          -help                                       {this info}\n";
     exit -2;
 }
 
-
-=item C<verify>
-
-############################################################
-verify
-
-setup the default value for a spcific value
-
-=cut
-
-sub verify
-{
-    my ($self, $topic) = @_;
-    
-    foreach my $cfg ( @{ $self->{cfg}->{OUTPUT} } ) {
-      if ($cfg->{topic} eq $topic) {
-          $self->{$topic} = $cfg->{extension};
-          last;
-      }
-    }
-    return $self->{$topic};
-}
 
 #########################################################################
 1;

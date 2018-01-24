@@ -5,7 +5,7 @@ set -o errexit
 set -o nounset 
 #set -o verbose
 
-[ $HOME ] && cd "$HOME"
+[ $APPDIR ] && cd "$APPDIR"
 
 if [ "$1" = 'perl' ]; then       # regular app start
 

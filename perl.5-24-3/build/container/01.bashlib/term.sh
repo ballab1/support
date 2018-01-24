@@ -57,6 +57,17 @@ function term.get_fb()
 }
 
 #############################################################################
+function term.header()
+{
+    local -r name=${1:?'Input parameter "name" must be defined'}
+    local -r bars='+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++'
+
+    $LOG "${LF}${bars}${LF}" 'blue'
+    $LOG "Building container: $( term.decode 'white' )${name}${LF}" 'lt_blue'
+    $LOG "${bars}${LF}" 'blue'
+}
+
+#############################################################################
 function term.log()
 {
     local -r msg=${1:?'Input parameter "msg" must be defined'}

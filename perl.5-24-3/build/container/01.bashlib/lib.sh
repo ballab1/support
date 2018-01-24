@@ -9,7 +9,7 @@ function lib.build_container()
     local -r name=${1:?'Input parameter "name" must be defined'}
     local -r timezone=${2:?'Input parameter "timezone" must be defined'}
     
-    lib.header "$name"
+    term.header "$name"
     lib.run_scripts '02.packages' 'Install OS Support'
     package.installTimezone "$timezone"
     download.get_packages '03.downloads'
@@ -61,17 +61,6 @@ function lib.createUserAndGroup()
 function lib.get_base()
 {
     printf "%s" "$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"   
-}
-
-#############################################################################
-function lib.header()
-{
-    local -r name=${1:?'Input parameter "name" must be defined'}
-    local -r bars='+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++'
-
-    $LOG "${LF}${bars}${LF}" 'blue'
-    $LOG "Building container: $( term.decode 'white' )${name}${LF}" 'lt_blue'
-    $LOG "${bars}${LF}" 'blue'
 }
 
 #############################################################################
