@@ -1,0 +1,9 @@
+docker run -it \
+           --rm \
+           -e "ZK_HOSTS=$ZK_HOSTS" \
+           -e "BOOTSTRAP_SERVERS=$BOOTSTRAP_SERVERS" \
+           -e "AVRO_HOSTS=$AVRO_HOSTS" \
+           --volume "$PWD:/usr/scr/myapp" \
+           --volume "$PWD:/opt" \
+           files-kafka:20180120 \ 
+           bash

@@ -38,6 +38,7 @@ use Exporter;
 use JSON;
 use Kafka::Connection;
 use Kafka::Producer;
+use Env;
 #use Kafka::Consumer;
 use Scalar::Util qw(blessed);
 use Try::Tiny;
@@ -50,7 +51,7 @@ our @EXPORT_OK   = qw(logger);
  
 # Global variables
 use constant {
-    DEFAULT_BROKER => '10.1.3.11:9092'
+    DEFAULT_BROKER => (exists $ENV{KAFKA_BOOTSTRAP_SERVERS}) ? $ENV{KAFKA_BOOTSTRAP_SERVERS} : '10.1.3.11:9092' 
 };
 
 =item C<new>

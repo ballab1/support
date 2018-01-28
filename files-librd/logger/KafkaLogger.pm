@@ -38,6 +38,8 @@ no if $] >= 5.018, warnings => 'experimental::smartmatch';
 use Exporter;
 use JSON;
 use Kafka::Librd;
+use Env;
+use Scalar::Util qw(blessed); 
 
 our $VERSION     = '1.00';
 our @ISA         = qw(Exporter);
@@ -46,7 +48,7 @@ our @EXPORT_OK   = qw(close logger);
  
 # Global variables
 use constant {
-    DEFAULT_BROKER => '10.1.3.11:9092'
+    DEFAULT_BROKER => (exists $ENV{KAFKA_BOOTSTRAP_SERVERS}) ? $ENV{KAFKA_BOOTSTRAP_SERVERS} : '10.1.3.11:9092' 
 };
  
 =item C<new>
@@ -73,9 +75,9 @@ sub new
         group => 0,
         partition => 0,
         topic => undef,
-        msgflags => undef,
+        msgflags => 0,
         compression_codec => undef,
-        keys => undef
+        key => 0
     };
     bless( $self, $class );
 
@@ -97,6 +99,7 @@ sub new
         }
     }
 
+   
     # When debugging, show the librdkakfa version
 #    print STDERR "Using rdkafka version: " . Kafka::Librd::rd_kafka_version_str if $self->{debug};
 
@@ -108,9 +111,12 @@ sub new
     $self->{kafka} = $kafka;
 
     # Configure the server
-    $kafka->brokers_add($self->{server});
-    say STDERR "Added broker" if $self->{debug}; 
-
+    my @brokers = split ( /,/, $self->{server} );
+    for my $server ( @brokers ) {
+        $kafka->brokers_add($server);
+        say STDERR "Added broker" if $self->{debug}; 
+    }
+    
     my $topic = $kafka->topic($self->{topic}, {});
     $self->{kafka_topic} = $topic;
     
@@ -157,19 +163,23 @@ sub logger
         my $json_text = $json->encode( $results );
 
         my $topic = $self->{kafka_topic};
-        if ($topic->produce($self->{partition}, 0, $json_text, $self->{key})) {
+        my $err = $topic->produce($self->{partition}, $self->{msgflags}, $json_text, $self->{key});
+        if ($err == 0) {
             $self->{records}++;
+            return;
+        }
+        else {
+            die $err;
         }
     } 
     catch {
         my $error = $_;
-        if ( $error->isa( 'Kafka::Exception' ) ) {
+        if ( blessed( $error ) && $error->isa( 'Kafka::Exception' ) ) {
             warn 'Error: (', $error->code, ') ',  $error->message, "\n";
             exit;
         }
         die $error;
     };
-
 }
 
 
