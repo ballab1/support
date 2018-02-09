@@ -1,6 +1,0 @@
-#!/bin/bash
-
-declare dirs='/root/.cpanm /root/.cpan'
-for dir in $dirs ; do
-    [ -d "$dir" ] && rm -rf "$dir"
-done

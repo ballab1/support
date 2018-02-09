@@ -1,0 +1,27 @@
+[submodule "base_container"]
+    path = base_container
+    url = ../base_container.git
+[submodule "container_lib"]
+    path = container_lib
+    url = ../container_lib.git
+[submodule "files-kafka"]
+    path = files-kafka
+    url = ../files-kafka.git
+[submodule "files-librd"]
+    path = files-librd
+    url = ../files-librd.git
+[submodule "perl-carton"]
+	path = perl-carton
+	url = https://github.com/ballab1/perl-carton.git
+[submodule "perl.5-24-3"]
+	path = perl.5-24-3
+	url = https://github.com/ballab1/perl.5-24-3.git
+[submodule "movefiles"]
+	path = movefiles
+	url = https://github.com/ballab1/movefiles.git
+[submodule "openjdk"]
+	path = openjdk
+	url = https://github.com/ballab1/openjdk.git
+[submodule "gradle"]
+	path = gradle
+	url = https://github.com/ballab1/gradle.git

@@ -4,90 +4,101 @@ services:
     movefiles:
         build:
             args:
-                CODE_VERSION: '20180120'
+                CODE_VERSION: perl-carton:20180207
             cache_from:
-                - perl-carton:20180120
+                - perl-carton:20180207
             context: ./movefiles
         hostname: movefiles
-        image: movefiles:20180120
-        restart: unless-stopped
-        volumes:
-            - ./movefiles:/usr/src/myapp
+        image: movefiles:20180207
         logging:
             driver: "json-file"
             options:
                 max-size: "10m"
                 max-file: "3" 
+        restart: unless-stopped
+        volumes:
+            - ./movefiles:/usr/src/myapp
 
     files-librd:
         build:
             args:
-                CODE_VERSION: '20180120'
+                CODE_VERSION: perl-carton:20180207
             cache_from:
-                - perl-carton:20180120
+                - perl-carton:20180207
             context: ./files-librd
         hostname: files-librd
-        image: files-librd:20180120
-        restart: unless-stopped
-        volumes:
-           - ./files-librd:/usr/src/myapp
-           - ./files-librd:/opt
+        image: files-librd:20180207
         logging:
             driver: "json-file"
             options:
                 max-size: "10m"
                 max-file: "3"
+        restart: unless-stopped
+        volumes:
+           - ./files-librd:/usr/src/myapp
+           - ./files-librd:/opt
 
     files-kafka:
         build:
             args:
-                CODE_VERSION: '20180120'
+                CODE_VERSION: perl-carton:20180207
             cache_from:
-                - perl-carton:20180120
+                - perl-carton:20180207
             context: ./files-kafka
         hostname: files-kafka
-        image: files-kafka:20180120
-        restart: unless-stopped
-        volumes:
-           - ./files-kafka:/usr/src/myapp
-           - ./files-kafka:/opt
+        image: files-kafka:20180207
         logging:
             driver: "json-file"
             options:
                 max-size: "10m"
                 max-file: "3" 
+        restart: unless-stopped
+        volumes:
+           - ./files-kafka:/usr/src/myapp
+           - ./files-kafka:/opt
 
     carton:
         build:
             args:
-                CODE_VERSION: '20180120'
+                CODE_VERSION: perl-5.24.3:20180207
             cache_from:
-                - perl-5.24.3:20180120
-            context: ./carton
-        image: perl-carton:20180120
+                - perl-5.24.3:20180207
+            context: ./perl-carton
+        image: perl-carton:20180207
 
     perl:
         build:
             args:
-                TZ: "America/New_York"
+                CODE_VERSION: base_container:20180207
             cache_from:
-                - alpine:3.6
+                - base_container:20180207
             context: ./perl.5-24-3
-        image: perl-5.24.3:20180120
+        image: perl-5.24.3:20180207
 
     gradle:
         build:
-            dockerfile: Dockerfile
+            args:
+                CODE_VERSION: openjre_8u131.11-r2:20180207
             cache_from:
-                - openjdk:8-jdk-alpine
+                - openjre_8u131.11-r2:20180207
             context: ./gradle
-        image: gradle:4.4.1-jdk8-alpine
+        image: gradle_4.4.1-jdk8-alpine:20180207
 
     openjdk:
         build:
             args:
+                CODE_VERSION: base_container:20180207
+            cache_from:
+                - base_container:20180207
+            context: ./openjdk
+        image: openjre_8u131.11-r2:20180207 
+
+    base:
+        build:
+            args:
+                CODE_VERSION: alpine:3.6
                 TZ: "America/New_York"
             cache_from:
                 - alpine:3.6
-            context: ./openjdk
-        image: openjdk:8-jdk-alpine 
+            context: ./base_container
+        image: base_container:20180207

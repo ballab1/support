@@ -1,2 +1,0 @@
-# movefile Packages
-apk add --no-cache --virtual libxml2
