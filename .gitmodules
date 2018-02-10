@@ -11,20 +11,20 @@
     path = files-librd
     url = ../files-librd.git
 [submodule "perl-carton"]
-	path = perl-carton
-	url = https://github.com/ballab1/perl-carton.git
+    path = perl-carton
+    url = ../perl-carton.git
 [submodule "perl.5-24-3"]
-	path = perl.5-24-3
-	url = https://github.com/ballab1/perl.5-24-3.git
+    path = perl.5-24-3
+    url = ../perl.5-24-3.git
 [submodule "movefiles"]
-	path = movefiles
-	url = https://github.com/ballab1/movefiles.git
+    path = movefiles
+    url = ../movefiles.git
 [submodule "openjdk"]
-	path = openjdk
-	url = https://github.com/ballab1/openjdk.git
+    path = openjdk
+    url = ../openjdk.git
 [submodule "gradle"]
-	path = gradle
-	url = https://github.com/ballab1/gradle.git
+    path = gradle
+    url = ../gradle.git
 [submodule "postgres"]
-	path = postgres
-	url = https://github.com/ballab1/postgres.git
+    path = postgres
+    url = ../postgres.git
