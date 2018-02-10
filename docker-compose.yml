@@ -1,6 +1,23 @@
 version: '3.2'
 
 services:
+    alpinefull:
+        build:
+            args:
+                CODE_VERSION: base_container:20180207
+            cache_from:
+                - base_container:20180207
+            context: ./alpinefull
+        container_name: alpinefull
+        image: alpinefull:20180207
+#        hostname: alpinefull
+#        logging:
+#            driver: "json-file"
+#            options:
+#                max-size: "10m"
+#        volumes:
+#                - ./alpinefull/vols-rw/opt:/opt
+
     base:
         build:
             args:
@@ -105,6 +122,10 @@ services:
 
     postgres:
         build:
+            args:
+                CODE_VERSION: base_container:20180207
+            cache_from:
+                - base_container:20180207
             context: ./postgres
         container_name: postgres
         environment:
