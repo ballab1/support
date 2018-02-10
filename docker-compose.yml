@@ -1,23 +1,24 @@
 version: '3.2'
 
 services:
-    movefiles:
+    base:
         build:
             args:
-                CODE_VERSION: perl-carton:20180207
+                CODE_VERSION: alpine:3.6
+                TZ: "America/New_York"
             cache_from:
-                - perl-carton:20180207
-            context: ./movefiles
-        hostname: movefiles
-        image: movefiles:20180207
-        logging:
-            driver: "json-file"
-            options:
-                max-size: "10m"
-                max-file: "3" 
-        restart: unless-stopped
-        volumes:
-            - ./movefiles:/usr/src/myapp
+                - alpine:3.6
+            context: ./base_container
+        image: base_container:20180207
+
+    carton:
+        build:
+            args:
+                CODE_VERSION: perl-5.24.3:20180207
+            cache_from:
+                - perl-5.24.3:20180207
+            context: ./perl-carton
+        image: perl-carton:20180207
 
     files-librd:
         build:
@@ -57,24 +58,6 @@ services:
            - ./files-kafka:/usr/src/myapp
            - ./files-kafka:/opt
 
-    carton:
-        build:
-            args:
-                CODE_VERSION: perl-5.24.3:20180207
-            cache_from:
-                - perl-5.24.3:20180207
-            context: ./perl-carton
-        image: perl-carton:20180207
-
-    perl:
-        build:
-            args:
-                CODE_VERSION: base_container:20180207
-            cache_from:
-                - base_container:20180207
-            context: ./perl.5-24-3
-        image: perl-5.24.3:20180207
-
     gradle:
         build:
             args:
@@ -83,6 +66,24 @@ services:
                 - openjre_8u131.11-r2:20180207
             context: ./gradle
         image: gradle_4.4.1-jdk8-alpine:20180207
+
+    movefiles:
+        build:
+            args:
+                CODE_VERSION: perl-carton:20180207
+            cache_from:
+                - perl-carton:20180207
+            context: ./movefiles
+        hostname: movefiles
+        image: movefiles:20180207
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "10m"
+                max-file: "3" 
+        restart: unless-stopped
+        volumes:
+            - ./movefiles:/usr/src/myapp
 
     openjdk:
         build:
@@ -93,12 +94,34 @@ services:
             context: ./openjdk
         image: openjre_8u131.11-r2:20180207 
 
-    base:
+    perl:
         build:
             args:
-                CODE_VERSION: alpine:3.6
-                TZ: "America/New_York"
+                CODE_VERSION: base_container:20180207
             cache_from:
-                - alpine:3.6
-            context: ./base_container
-        image: base_container:20180207
+                - base_container:20180207
+            context: ./perl.5-24-3
+        image: perl-5.24.3:20180207
+
+    postgres:
+        build:
+            context: ./postgres
+        container_name: postgres
+        environment:
+            POSTGRES_PASSWORD: postgres
+            TZ: "America/New_York"
+        hostname: postgres
+        image: postgresql:10.1
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "10m"
+                max-file: "3"
+        ports:
+            - 5432:5432
+        restart: unless-stopped
+        volumes:
+            - ./vols-ro/postgres-initdb:/docker-entrypoint-initdb.d
+            - ./vols-rw/data:/var/lib/postgresql/data
+            - ./vols-ro/etc:/etc/postgres
+            - ./vols-rw/log:/var/log/postgres 
