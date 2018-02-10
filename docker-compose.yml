@@ -4,12 +4,12 @@ services:
     alpinefull:
         build:
             args:
-                CODE_VERSION: base_container:20180207
+                CODE_VERSION: base_container:20180210
             cache_from:
-                - base_container:20180207
+                - base_container:20180210
             context: ./alpinefull
         container_name: alpinefull
-        image: alpinefull:20180207
+        image: alpinefull:20180210
 #        hostname: alpinefull
 #        logging:
 #            driver: "json-file"
@@ -26,26 +26,26 @@ services:
             cache_from:
                 - alpine:3.6
             context: ./base_container
-        image: base_container:20180207
+        image: base_container:20180210
 
     carton:
         build:
             args:
-                CODE_VERSION: perl-5.24.3:20180207
+                CODE_VERSION: perl-5.24.3:20180210
             cache_from:
-                - perl-5.24.3:20180207
+                - perl-5.24.3:20180210
             context: ./perl-carton
-        image: perl-carton:20180207
+        image: perl-carton:20180210
 
     files-librd:
         build:
             args:
-                CODE_VERSION: perl-carton:20180207
+                CODE_VERSION: perl-carton:20180210
             cache_from:
-                - perl-carton:20180207
+                - perl-carton:20180210
             context: ./files-librd
         hostname: files-librd
-        image: files-librd:20180207
+        image: files-librd:20180210
         logging:
             driver: "json-file"
             options:
@@ -59,12 +59,12 @@ services:
     files-kafka:
         build:
             args:
-                CODE_VERSION: perl-carton:20180207
+                CODE_VERSION: perl-carton:20180210
             cache_from:
-                - perl-carton:20180207
+                - perl-carton:20180210
             context: ./files-kafka
         hostname: files-kafka
-        image: files-kafka:20180207
+        image: files-kafka:20180210
         logging:
             driver: "json-file"
             options:
@@ -78,21 +78,21 @@ services:
     gradle:
         build:
             args:
-                CODE_VERSION: openjre_8u131.11-r2:20180207
+                CODE_VERSION: openjre_8u131.11-r2:20180210
             cache_from:
-                - openjre_8u131.11-r2:20180207
+                - openjre_8u131.11-r2:20180210
             context: ./gradle
-        image: gradle_4.4.1-jdk8-alpine:20180207
+        image: gradle_4.4.1-jdk8-alpine:20180210
 
     movefiles:
         build:
             args:
-                CODE_VERSION: perl-carton:20180207
+                CODE_VERSION: perl-carton:20180210
             cache_from:
-                - perl-carton:20180207
+                - perl-carton:20180210
             context: ./movefiles
         hostname: movefiles
-        image: movefiles:20180207
+        image: movefiles:20180210
         logging:
             driver: "json-file"
             options:
@@ -105,27 +105,27 @@ services:
     openjdk:
         build:
             args:
-                CODE_VERSION: base_container:20180207
+                CODE_VERSION: base_container:20180210
             cache_from:
-                - base_container:20180207
+                - base_container:20180210
             context: ./openjdk
-        image: openjre_8u131.11-r2:20180207 
+        image: openjre_8u131.11-r2:20180210 
 
     perl:
         build:
             args:
-                CODE_VERSION: base_container:20180207
+                CODE_VERSION: base_container:20180210
             cache_from:
-                - base_container:20180207
+                - base_container:20180210
             context: ./perl.5-24-3
-        image: perl-5.24.3:20180207
+        image: perl-5.24.3:20180210
 
     postgres:
         build:
             args:
-                CODE_VERSION: base_container:20180207
+                CODE_VERSION: base_container:20180210
             cache_from:
-                - base_container:20180207
+                - base_container:20180210
             context: ./postgres
         container_name: postgres
         environment:
