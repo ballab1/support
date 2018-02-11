@@ -11,7 +11,7 @@ services:
             context: ./alpinefull
         container_name: alpinefull
         depends_on:
-            - base_container:20180210
+            - base
         image: alpinefull:20180210
 #        hostname: alpinefull
 #        logging:
@@ -29,8 +29,6 @@ services:
             cache_from:
                 - alpine:3.6
             context: ./base_container
-        depends_on:
-            - alpine:3.6
         image: base_container:20180210
 
     carton:
@@ -43,7 +41,7 @@ services:
                 - alpine:3.6
             context: ./perl-carton
         depends_on:
-            - perl-5.24.3:20180210
+            - perl
         image: perl-carton:20180210
 
     files-librd:
@@ -57,7 +55,7 @@ services:
                 - alpine:3.6
             context: ./files-librd
         depends_on:
-            - perl-carton:20180210
+            - carton
         hostname: files-librd
         image: files-librd:20180210
         logging:
@@ -81,7 +79,7 @@ services:
                 - alpine:3.6
             context: ./files-kafka
         depends_on:
-            - perl-carton:20180210
+            - carton
         hostname: files-kafka
         image: files-kafka:20180210
         logging:
@@ -97,14 +95,14 @@ services:
     gradle:
         build:
             args:
-                CODE_VERSION: openjre_8u131.11-r2:20180210
+                CODE_VERSION: openjdk_8u131.11-r2:20180210
             cache_from:
                 - openjdk_8u131.11-r2:20180210
                 - base_container:20180210
                 - alpine:3.6
             context: ./gradle
         depends_on:
-            - openjdk_8u131.11-r2:20180210
+            - openjdk
         image: gradle_4.4.1-jdk8-alpine:20180210
 
     movefiles:
@@ -118,7 +116,7 @@ services:
                 - alpine:3.6
             context: ./movefiles
         depends_on:
-            - perl-carton:20180210
+            - carton
         hostname: movefiles
         image: movefiles:20180210
         logging:
@@ -139,7 +137,7 @@ services:
                 - alpine:3.6
             context: ./openjdk
         depends_on:
-            - base_container:20180210
+            - base
         image: openjdk_8u131.11-r2:20180210 
 
     openjre:
@@ -151,7 +149,7 @@ services:
                 - alpine:3.6
             context: ./openjre8
         depends_on:
-            - base_container:20180210
+            - base
         image: openjre_8u131.11-r2:20180210 
 
     perl:
@@ -162,7 +160,7 @@ services:
                 - base_container:20180210
             context: ./perl.5-24-3
         depends_on:
-            - base_container:20180210
+            - base
         image: perl-5.24.3:20180210
 
     postgres:
@@ -175,10 +173,9 @@ services:
             context: ./postgres
         container_name: postgres
         depends_on:
-            - base_container:20180210
+            - base
         environment:
             POSTGRES_PASSWORD: postgres
-            TZ: "America/New_York"
         hostname: postgres
         image: postgresql:10.1
         logging:
