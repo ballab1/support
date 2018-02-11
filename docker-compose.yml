@@ -177,7 +177,7 @@ services:
         environment:
             POSTGRES_PASSWORD: postgres
         hostname: postgres
-        image: postgresql:10.1
+        image: postgresql-10.1:20180210
         logging:
             driver: "json-file"
             options:
