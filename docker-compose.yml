@@ -135,7 +135,7 @@ services:
             cache_from:
                 - base_container:20180210
                 - alpine:3.6
-            context: ./openjdk
+            context: ./openjdk8
         depends_on:
             - base
         image: openjdk_8u131.11-r2:20180210 
