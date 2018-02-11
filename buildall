@@ -1,0 +1,18 @@
+#!/bin/bash
+
+#set -o xtrace
+set -o errexit
+set -o nounset
+set -o verbose
+
+docker-compose build base
+docker-compose build alpinefull
+docker-compose build openjdk
+docker-compose build openjre
+docker-compose build gradle
+docker-compose build perl
+docker-compose build carton
+docker-compose build files-librd
+docker-compose build files-kafka
+docker-compose build movefiles
+docker-compose build postgres

@@ -1,4 +1,4 @@
-version: '3.2'
+version: '3.5'
 
 services:
     alpinefull:
@@ -7,8 +7,11 @@ services:
                 CODE_VERSION: base_container:20180210
             cache_from:
                 - base_container:20180210
+                - alpine:3.6
             context: ./alpinefull
         container_name: alpinefull
+        depends_on:
+            - base_container:20180210
         image: alpinefull:20180210
 #        hostname: alpinefull
 #        logging:
@@ -26,6 +29,8 @@ services:
             cache_from:
                 - alpine:3.6
             context: ./base_container
+        depends_on:
+            - alpine:3.6
         image: base_container:20180210
 
     carton:
@@ -34,7 +39,11 @@ services:
                 CODE_VERSION: perl-5.24.3:20180210
             cache_from:
                 - perl-5.24.3:20180210
+                - base_container:20180210
+                - alpine:3.6
             context: ./perl-carton
+        depends_on:
+            - perl-5.24.3:20180210
         image: perl-carton:20180210
 
     files-librd:
@@ -43,7 +52,12 @@ services:
                 CODE_VERSION: perl-carton:20180210
             cache_from:
                 - perl-carton:20180210
+                - perl-5.24.3:20180210
+                - base_container:20180210
+                - alpine:3.6
             context: ./files-librd
+        depends_on:
+            - perl-carton:20180210
         hostname: files-librd
         image: files-librd:20180210
         logging:
@@ -62,7 +76,12 @@ services:
                 CODE_VERSION: perl-carton:20180210
             cache_from:
                 - perl-carton:20180210
+                - perl-5.24.3:20180210
+                - base_container:20180210
+                - alpine:3.6
             context: ./files-kafka
+        depends_on:
+            - perl-carton:20180210
         hostname: files-kafka
         image: files-kafka:20180210
         logging:
@@ -80,8 +99,12 @@ services:
             args:
                 CODE_VERSION: openjre_8u131.11-r2:20180210
             cache_from:
-                - openjre_8u131.11-r2:20180210
+                - openjdk_8u131.11-r2:20180210
+                - base_container:20180210
+                - alpine:3.6
             context: ./gradle
+        depends_on:
+            - openjdk_8u131.11-r2:20180210
         image: gradle_4.4.1-jdk8-alpine:20180210
 
     movefiles:
@@ -90,7 +113,12 @@ services:
                 CODE_VERSION: perl-carton:20180210
             cache_from:
                 - perl-carton:20180210
+                - perl-5.24.3:20180210
+                - base_container:20180210
+                - alpine:3.6
             context: ./movefiles
+        depends_on:
+            - perl-carton:20180210
         hostname: movefiles
         image: movefiles:20180210
         logging:
@@ -108,7 +136,22 @@ services:
                 CODE_VERSION: base_container:20180210
             cache_from:
                 - base_container:20180210
+                - alpine:3.6
             context: ./openjdk
+        depends_on:
+            - base_container:20180210
+        image: openjdk_8u131.11-r2:20180210 
+
+    openjre:
+        build:
+            args:
+                CODE_VERSION: base_container:20180210
+            cache_from:
+                - base_container:20180210
+                - alpine:3.6
+            context: ./openjre8
+        depends_on:
+            - base_container:20180210
         image: openjre_8u131.11-r2:20180210 
 
     perl:
@@ -118,6 +161,8 @@ services:
             cache_from:
                 - base_container:20180210
             context: ./perl.5-24-3
+        depends_on:
+            - base_container:20180210
         image: perl-5.24.3:20180210
 
     postgres:
@@ -126,8 +171,11 @@ services:
                 CODE_VERSION: base_container:20180210
             cache_from:
                 - base_container:20180210
+                - alpine:3.6
             context: ./postgres
         container_name: postgres
+        depends_on:
+            - base_container:20180210
         environment:
             POSTGRES_PASSWORD: postgres
             TZ: "America/New_York"
