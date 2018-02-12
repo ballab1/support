@@ -1,0 +1,579 @@
+
+docker-compose build base
+Building base
+Step 1/9 : ARG FROM_BASE=alpine:3.6
+Step 2/9 : FROM ${FROM_BASE}
+ ---> e2cd449cde75
+Step 3/9 : ARG CONTAINER_VERSION=1.0.0
+ ---> Running in 6963b987bcc6
+Removing intermediate container 6963b987bcc6
+ ---> efc783b02996
+Step 4/9 : LABEL version=$CONTAINER_VERSION
+ ---> Running in d7297b026638
+Removing intermediate container d7297b026638
+ ---> db425808b547
+Step 5/9 : ENV TZ="$TZ"
+ ---> Running in ef40aba8193f
+Removing intermediate container ef40aba8193f
+ ---> 062d6695c2b1
+Step 6/9 : LABEL version=$CONTAINER_VERSION
+ ---> Running in ca89d59b5103
+Removing intermediate container ca89d59b5103
+ ---> 7393dd8a5a3a
+Step 7/9 : COPY build /tmp/
+ ---> 1de8d3cee765
+Step 8/9 : RUN set -o verbose     && apk update     && apk add --no-cache bash     && chmod u+rwx /tmp/container/build.sh     && /tmp/container/build.sh 'BASE' "$TZ"
+ ---> Running in ce4153769e08
+fetch http://dl-cdn.alpinelinux.org/alpine/v3.6/main/x86_64/APKINDEX.tar.gz
+fetch http://dl-cdn.alpinelinux.org/alpine/v3.6/community/x86_64/APKINDEX.tar.gz
+v3.6.2-256-g0319b040f4 [http://dl-cdn.alpinelinux.org/alpine/v3.6/main]
+v3.6.2-255-gdf44076119 [http://dl-cdn.alpinelinux.org/alpine/v3.6/community]
+OK: 8438 distinct packages available
+fetch http://dl-cdn.alpinelinux.org/alpine/v3.6/main/x86_64/APKINDEX.tar.gz
+fetch http://dl-cdn.alpinelinux.org/alpine/v3.6/community/x86_64/APKINDEX.tar.gz
+(1/5) Installing ncurses-terminfo-base (6.0_p20171125-r0)
+(2/5) Installing ncurses-terminfo (6.0_p20171125-r0)
+(3/5) Installing ncurses-libs (6.0_p20171125-r0)
+(4/5) Installing readline (6.3.008-r5)
+(5/5) Installing bash (4.3.48-r1)
+Executing bash-4.3.48-r1.post-install
+Executing busybox-1.26.2-r9.trigger
+OK: 12 MiB in 16 packages
+[34m
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+[0m[94mBuilding container: [97mBASE
+[0m[34m+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+[0m[96mInstall OS Support
+[0mfetch http://dl-cdn.alpinelinux.org/alpine/v3.6/main/x86_64/APKINDEX.tar.gz
+fetch http://dl-cdn.alpinelinux.org/alpine/v3.6/community/x86_64/APKINDEX.tar.gz
+v3.6.2-256-g0319b040f4 [http://dl-cdn.alpinelinux.org/alpine/v3.6/main]
+v3.6.2-255-gdf44076119 [http://dl-cdn.alpinelinux.org/alpine/v3.6/community]
+OK: 8438 distinct packages available
+[92m..executing /tmp/container/02.packages/01.base.packages
+[0mfetch http://dl-cdn.alpinelinux.org/alpine/v3.6/main/x86_64/APKINDEX.tar.gz
+fetch http://dl-cdn.alpinelinux.org/alpine/v3.6/community/x86_64/APKINDEX.tar.gz
+(1/1) Installing tzdata (2017a-r0)
+Executing busybox-1.26.2-r9.trigger
+OK: 16 MiB in 17 packages
+[96mAdd configuration and customizations
+[0m[92m..executing /tmp/container/06.customizations/01.custom_folders.sh
+[0m[96mMake sure that ownership & permissions are correct
+[0m[92m..executing /tmp/container/07.permissions/01.bin_dirs.sh
+[0m[92m..executing /tmp/container/07.permissions/01.docker-entry.sh
+[0m[96mClean up
+[0m[92m..executing /tmp/container/08.cleanup/01.apk.cleanup
+[0mRemoving intermediate container ce4153769e08
+ ---> 8b8ad6128ef3
+Step 9/9 : RUN rm -rf /tmp/*
+ ---> Running in 32f3c265cf8e
+Removing intermediate container 32f3c265cf8e
+ ---> b4b58fb8cb06
+
+[Warning] One or more build-args [TZ] were not consumed
+Successfully built b4b58fb8cb06
+Successfully tagged base_container:20180210
+docker-compose build alpinefull
+Building alpinefull
+Step 1/9 : ARG FROM_BASE=base_container:20180210
+Step 2/9 : FROM $FROM_BASE
+ ---> b4b58fb8cb06
+Step 3/9 : ARG CONTAINER_VERSION=1.0.0
+ ---> Running in c20dc2052b5d
+Removing intermediate container c20dc2052b5d
+ ---> 63127f04ebcc
+Step 4/9 : LABEL version=$CONTAINER_VERSION
+ ---> Running in 94325dd29831
+Removing intermediate container 94325dd29831
+ ---> 43ee2d2c1a3a
+Step 5/9 : COPY build /tmp/
+ ---> 404faced5607
+Step 6/9 : RUN set -o verbose     && chmod u+rwx /tmp/container/build.sh     && /tmp/container/build.sh 'ALPINEFULL'
+ ---> Running in 24fa5872ff33
+[34m
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+[0m[94mBuilding container: [97mALPINEFULL
+[0m[34m+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+[0m[96mInstall OS Support
+[0mfetch http://dl-cdn.alpinelinux.org/alpine/v3.6/main/x86_64/APKINDEX.tar.gz
+fetch http://dl-cdn.alpinelinux.org/alpine/v3.6/community/x86_64/APKINDEX.tar.gz
+v3.6.2-256-g0319b040f4 [http://dl-cdn.alpinelinux.org/alpine/v3.6/main]
+v3.6.2-255-gdf44076119 [http://dl-cdn.alpinelinux.org/alpine/v3.6/community]
+OK: 8438 distinct packages available
+[92m..executing /tmp/container/02.packages/01.core.packages
+[0mfetch http://dl-cdn.alpinelinux.org/alpine/v3.6/main/x86_64/APKINDEX.tar.gz
+fetch http://dl-cdn.alpinelinux.org/alpine/v3.6/community/x86_64/APKINDEX.tar.gz
+(1/27) Installing bash-completion (2.4-r0)
+(2/27) Installing libattr (2.4.47-r6)
+(3/27) Installing libacl (2.2.52-r3)
+(4/27) Installing coreutils (8.27-r0)
+(5/27) Installing openssh-keygen (7.5_p1-r2)
+(6/27) Installing openssh-client (7.5_p1-r2)
+(7/27) Installing linux-pam (1.2.1-r1)
+(8/27) Installing shadow (4.2.1-r11)
+(9/27) Installing sudo (1.8.19_p2-r0)
+(10/27) Installing libbz2 (1.0.6-r5)
+(11/27) Installing expat (2.2.0-r1)
+(12/27) Installing libffi (3.2.1-r3)
+(13/27) Installing gdbm (1.12-r0)
+(14/27) Installing sqlite-libs (3.20.1-r0)
+(15/27) Installing python2 (2.7.13-r1)
+(16/27) Installing py-meld3 (1.0.2-r0)
+(17/27) Installing py-setuptools (33.1.1-r1)
+(18/27) Installing supervisor (3.2.4-r0)
+(19/27) Installing libpng (1.6.29-r1)
+(20/27) Installing freetype (2.7.1-r1)
+(21/27) Installing fontconfig (2.12.1-r0)
+(22/27) Installing encodings (1.0.4-r0)
+(23/27) Installing libfontenc (1.1.3-r1)
+(24/27) Installing mkfontscale (1.0.7-r2)
+(25/27) Installing mkfontdir (1.0.5-r1)
+(26/27) Installing ttf-dejavu (2.35-r0)
+(27/27) Installing unzip (6.0-r2)
+Executing busybox-1.26.2-r9.trigger
+Executing fontconfig-2.12.1-r0.trigger
+Executing mkfontscale-1.0.7-r2.trigger
+Executing mkfontdir-1.0.5-r1.trigger
+OK: 94 MiB in 44 packages
+[92m..executing /tmp/container/02.packages/02.perl.packages
+[0mfetch http://dl-cdn.alpinelinux.org/alpine/v3.6/main/x86_64/APKINDEX.tar.gz
+fetch http://dl-cdn.alpinelinux.org/alpine/v3.6/community/x86_64/APKINDEX.tar.gz
+(1/8) Installing pkgconf (1.3.7-r0)
+(2/8) Installing zlib-dev (1.2.11-r0)
+(3/8) Installing libcrypto1.0 (1.0.2n-r0)
+(4/8) Installing libssl1.0 (1.0.2n-r0)
+(5/8) Installing openssl-dev (1.0.2n-r0)
+(6/8) Installing perl (5.24.3-r1)
+(7/8) Installing perl-utils (5.24.3-r1)
+(8/8) Installing perl-dev (5.24.3-r1)
+Executing busybox-1.26.2-r9.trigger
+OK: 154 MiB in 52 packages
+[92m..executing /tmp/container/02.packages/03.build.packages
+[0mfetch http://dl-cdn.alpinelinux.org/alpine/v3.6/main/x86_64/APKINDEX.tar.gz
+fetch http://dl-cdn.alpinelinux.org/alpine/v3.6/community/x86_64/APKINDEX.tar.gz
+(1/109) Installing fakeroot (1.21-r1)
+(2/109) Installing libcap (2.25-r1)
+(3/109) Installing pax-utils (1.2.2-r0)
+(4/109) Installing libressl2.5-libtls (2.5.5-r0)
+(5/109) Installing libressl (2.5.5-r0)
+(6/109) Upgrading apk-tools (2.7.4-r0 -> 2.7.5-r0)
+(7/109) Installing attr (2.4.47-r6)
+(8/109) Installing tar (1.29-r1)
+(9/109) Installing patch (2.7.5-r1)
+(10/109) Installing libgcc (6.3.0-r4)
+(11/109) Installing libstdc++ (6.3.0-r4)
+(12/109) Installing lzip (1.19-r0)
+(13/109) Installing ca-certificates (20161130-r2)
+(14/109) Installing libcurl (7.58.0-r0)
+(15/109) Installing curl (7.58.0-r0)
+(16/109) Installing abuild (3.0.0_rc2-r8)
+Executing abuild-3.0.0_rc2-r8.pre-install
+(17/109) Installing binutils-libs (2.28-r3)
+(18/109) Installing binutils (2.28-r3)
+(19/109) Installing gmp (6.1.2-r0)
+(20/109) Installing isl (0.17.1-r0)
+(21/109) Installing libgomp (6.3.0-r4)
+(22/109) Installing libatomic (6.3.0-r4)
+(23/109) Installing mpfr3 (3.1.5-r0)
+(24/109) Installing mpc1 (1.0.3-r0)
+(25/109) Installing gcc (6.3.0-r4)
+(26/109) Installing musl-dev (1.1.16-r14)
+(27/109) Installing libc-dev (0.7.1-r0)
+(28/109) Installing g++ (6.3.0-r4)
+(29/109) Installing make (4.2.1-r0)
+(30/109) Installing fortify-headers (0.8-r0)
+(31/109) Installing build-base (0.5-r0)
+(32/109) Installing pcre (8.41-r0)
+(33/109) Installing git (2.13.5-r0)
+(34/109) Installing xz-libs (5.2.3-r0)
+(35/109) Installing lzo (2.10-r0)
+(36/109) Installing squashfs-tools (4.3-r3)
+(37/109) Installing libburn (1.4.6-r0)
+(38/109) Installing libedit (20170329.3.1-r2)
+(39/109) Installing libisofs (1.4.6-r0)
+(40/109) Installing libisoburn (1.4.6-r0)
+(41/109) Installing xorriso (1.4.6-r0)
+(42/109) Installing acct (6.6.3-r0)
+(43/109) Installing lddtree (1.26-r0)
+(44/109) Installing libuuid (2.28.2-r2)
+(45/109) Installing libblkid (2.28.2-r2)
+(46/109) Installing device-mapper-libs (2.02.168-r3)
+(47/109) Installing cryptsetup-libs (1.7.5-r0)
+(48/109) Installing kmod (23-r1)
+(49/109) Installing mkinitfs (3.1.0-r4)
+Executing mkinitfs-3.1.0-r4.post-install
+(50/109) Installing mtools (4.0.18-r1)
+(51/109) Installing alpine-sdk (0.5-r0)
+(52/109) Installing expat-dev (2.2.0-r1)
+(53/109) Installing libmagic (5.32-r0)
+(54/109) Installing file (5.32-r0)
+(55/109) Installing findutils (4.6.0-r0)
+(56/109) Installing libobjc (6.3.0-r4)
+(57/109) Installing gcc-objc (6.3.0-r4)
+(58/109) Installing libjpeg-turbo (1.5.1-r0)
+(59/109) Installing libwebp (0.6.0-r0)
+(60/109) Installing libgd (2.2.5-r0)
+(61/109) Installing gd (2.2.5-r0)
+(62/109) Installing nettle (3.3-r0)
+(63/109) Installing libtasn1 (4.10-r2)
+(64/109) Installing p11-kit (0.23.2-r1)
+(65/109) Installing libunistring (0.9.7-r0)
+(66/109) Installing gnutls (3.5.13-r0)
+(67/109) Installing gnutls-utils (3.5.13-r0)
+(68/109) Installing libjpeg-turbo-utils (1.5.1-r0)
+(69/109) Installing jpeg (8-r6)
+(70/109) Installing libc6-compat (1.1.16-r14)
+(71/109) Installing libltdl (2.4.6-r1)
+(72/109) Installing libtool (2.4.6-r1)
+(73/109) Installing libxml2 (2.9.5-r0)
+(74/109) Installing libxml2-dev (2.9.5-r0)
+(75/109) Installing linux-headers (4.4.6-r2)
+(76/109) Installing mariadb-common (10.1.26-r0)
+(77/109) Installing libaio (0.3.110-r0)
+(78/109) Installing mariadb (10.1.26-r0)
+Executing mariadb-10.1.26-r0.pre-install
+(79/109) Installing mysql (10.1.26-r0)
+(80/109) Installing perl-class-inspector (1.28-r0)
+(81/109) Installing perl-file-sharedir (1.102-r0)
+(82/109) Installing perl-filesys-notify-simple (0.07-r0)
+(83/109) Installing perl-devel-stacktrace (2.00-r0)
+(84/109) Installing perl-stream-buffered (0.02-r0)
+(85/109) Installing perl-uri (1.71-r0)
+(86/109) Installing perl-devel-stacktrace-ashtml (0.11-r0)
+(87/109) Installing perl-lwp-mediatypes (6.02-r0)
+(88/109) Installing perl-encode-locale (1.05-r0)
+(89/109) Installing perl-http-date (6.02-r0)
+(90/109) Installing perl-io-html (1.001-r0)
+(91/109) Installing perl-http-message (6.11-r0)
+(92/109) Installing perl-http-body (1.17-r0)
+(93/109) Installing perl-test-requires (0.10-r0)
+(94/109) Installing perl-test-sharedfork (0.35-r0)
+(95/109) Installing perl-test-tcp (2.14-r0)
+(96/109) Installing perl-capture-tiny (0.46-r0)
+(97/109) Installing perl-devel-symdump (2.17-r0)
+(98/109) Installing perl-test-pod (1.51-r0)
+(99/109) Installing perl-pod-coverage (0.23-r0)
+(100/109) Installing perl-try-tiny (0.28-r0)
+(101/109) Installing perl-posix-strftime-compiler (0.41-r0)
+(102/109) Installing perl-apache-logformat-compiler (0.32-r0)
+(103/109) Installing perl-hash-multivalue (0.08-r0)
+(104/109) Installing perl-plack (1.0033-r0)
+(105/109) Installing popt (1.16-r6)
+(106/109) Installing rsync (3.1.2-r6)
+(107/109) Installing .buildDepedencies (0)
+(108/109) Installing git-bash-completion (2.13.5-r0)
+(109/109) Installing kmod-bash-completion (23-r1)
+Executing busybox-1.26.2-r9.trigger
+Executing ca-certificates-20161130-r2.trigger
+OK: 516 MiB in 160 packages
+[96mAdd configuration and customizations
+[0m[92m..executing /tmp/container/06.customizations/01.custom_folders.sh
+[0m[96mMake sure that ownership & permissions are correct
+[0m[92m..executing /tmp/container/07.permissions/01.bin_dirs.sh
+[0m[92m..executing /tmp/container/07.permissions/01.docker-entry.sh
+[0m[96mClean up
+[0m[92m..executing /tmp/container/08.cleanup/01.apk.cleanup
+[0mRemoving intermediate container 24fa5872ff33
+ ---> a9ccf0b74c0b
+Step 7/9 : RUN rm -rf /tmp/*
+ ---> Running in d3c26db3b184
+Removing intermediate container d3c26db3b184
+ ---> c9260ef04ebd
+Step 8/9 : ENTRYPOINT [ "docker-entrypoint.sh" ]
+ ---> Running in b4c5e264dca6
+Removing intermediate container b4c5e264dca6
+ ---> c9a107b5c2ab
+Step 9/9 : CMD ["alpinefull"]
+ ---> Running in 991924c5d269
+Removing intermediate container 991924c5d269
+ ---> 949eebbc5977
+
+Successfully built 949eebbc5977
+Successfully tagged alpinefull:20180210
+docker-compose build openjdk
+Building openjdk
+Step 1/10 : ARG FROM_BASE=base_container:20180210
+Step 2/10 : FROM $FROM_BASE
+ ---> b4b58fb8cb06
+Step 3/10 : ARG CONTAINER_VERSION=1.0.0
+ ---> Running in 0f7707e2a8f3
+Removing intermediate container 0f7707e2a8f3
+ ---> 0f38d6878623
+Step 4/10 : LABEL version=$CONTAINER_VERSION
+ ---> Running in a0cc549b640f
+Removing intermediate container a0cc549b640f
+ ---> 56ab502a3604
+Step 5/10 : ENV LANG=C.UTF-8
+ ---> Running in c62e4db809b8
+Removing intermediate container c62e4db809b8
+ ---> 3318f03b1d1a
+Step 6/10 : COPY build /tmp/
+ ---> fb749fa5833b
+Step 7/10 : RUN set -o verbose     && chmod u+rwx /tmp/container/build.sh     && /tmp/container/build.sh 'OPENJDK-JDK'
+ ---> Running in ceea8f5179b3
+[34m
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+[0m[94mBuilding container: [97mOPENJDK-JDK
+[0m[34m+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+[0m[96mInstall OS Support
+[0mfetch http://dl-cdn.alpinelinux.org/alpine/v3.6/main/x86_64/APKINDEX.tar.gz
+fetch http://dl-cdn.alpinelinux.org/alpine/v3.6/community/x86_64/APKINDEX.tar.gz
+v3.6.2-256-g0319b040f4 [http://dl-cdn.alpinelinux.org/alpine/v3.6/main]
+v3.6.2-255-gdf44076119 [http://dl-cdn.alpinelinux.org/alpine/v3.6/community]
+OK: 8438 distinct packages available
+[92m..executing /tmp/container/02.packages/01.core.packages
+[0mfetch http://dl-cdn.alpinelinux.org/alpine/v3.6/main/x86_64/APKINDEX.tar.gz
+fetch http://dl-cdn.alpinelinux.org/alpine/v3.6/community/x86_64/APKINDEX.tar.gz
+(1/4) Installing libcrypto1.0 (1.0.2n-r0)
+(2/4) Installing libssl1.0 (1.0.2n-r0)
+(3/4) Installing openssl (1.0.2n-r0)
+(4/4) Installing su-exec (0.2-r0)
+Executing busybox-1.26.2-r9.trigger
+OK: 19 MiB in 21 packages
+[92m..executing /tmp/container/02.packages/02.java-jdk.packages
+[0mfetch http://dl-cdn.alpinelinux.org/alpine/v3.6/main/x86_64/APKINDEX.tar.gz
+fetch http://dl-cdn.alpinelinux.org/alpine/v3.6/community/x86_64/APKINDEX.tar.gz
+(1/40) Installing libffi (3.2.1-r3)
+(2/40) Installing libtasn1 (4.10-r2)
+(3/40) Installing p11-kit (0.23.2-r1)
+(4/40) Installing p11-kit-trust (0.23.2-r1)
+(5/40) Installing ca-certificates (20161130-r2)
+(6/40) Installing java-cacerts (1.0-r0)
+(7/40) Installing libxau (1.0.8-r1)
+(8/40) Installing libbsd (0.8.3-r3)
+(9/40) Installing libxdmcp (1.1.2-r3)
+(10/40) Installing libxcb (1.12-r0)
+(11/40) Installing libx11 (1.6.5-r0)
+(12/40) Installing libxcomposite (0.4.4-r0)
+(13/40) Installing libxext (1.3.3-r1)
+(14/40) Installing libxi (1.7.9-r0)
+(15/40) Installing libxrender (0.9.10-r1)
+(16/40) Installing libxtst (1.2.3-r0)
+(17/40) Installing alsa-lib (1.1.3-r0)
+(18/40) Installing libbz2 (1.0.6-r5)
+(19/40) Installing libpng (1.6.29-r1)
+(20/40) Installing freetype (2.7.1-r1)
+(21/40) Installing libgcc (6.3.0-r4)
+(22/40) Installing giflib (5.1.4-r1)
+(23/40) Installing libjpeg-turbo (1.5.1-r0)
+(24/40) Installing libstdc++ (6.3.0-r4)
+(25/40) Installing openjdk8-jre-lib (8.131.11-r2)
+(26/40) Installing java-common (0.1-r0)
+(27/40) Installing krb5-conf (1.0-r1)
+(28/40) Installing libcom_err (1.43.4-r0)
+(29/40) Installing keyutils-libs (1.5.9-r1)
+(30/40) Installing libverto (0.2.5-r2)
+(31/40) Installing krb5-libs (1.14.3-r2)
+(32/40) Installing lcms2 (2.8-r1)
+(33/40) Installing nspr (4.13.1-r0)
+(34/40) Installing sqlite-libs (3.20.1-r0)
+(35/40) Installing nss (3.30.1-r0)
+(36/40) Installing pcsc-lite-libs (1.8.21-r0)
+(37/40) Installing lksctp-tools (1.0.17-r0)
+(38/40) Installing openjdk8-jre-base (8.131.11-r2)
+(39/40) Installing openjdk8-jre (8.131.11-r2)
+(40/40) Installing openjdk8 (8.131.11-r2)
+Executing busybox-1.26.2-r9.trigger
+Executing ca-certificates-20161130-r2.trigger
+Executing java-common-0.1-r0.trigger
+OK: 114 MiB in 61 packages
+[96mInstall applications
+[0m[92m..executing /tmp/container/05.applications/01.jdk.sh
+[0m[96mAdd configuration and customizations
+[0m[92m..executing /tmp/container/06.customizations/01.custom_folders.sh
+[0m[96mMake sure that ownership & permissions are correct
+[0m[92m..executing /tmp/container/07.permissions/01.bin_dirs.sh
+[0m[92m..executing /tmp/container/07.permissions/01.docker-entry.sh
+[0m[96mClean up
+[0m[92m..executing /tmp/container/08.cleanup/01.apk.cleanup
+[0mRemoving intermediate container ceea8f5179b3
+ ---> 58fd0d78644d
+Step 8/10 : RUN rm -rf /tmp/*
+ ---> Running in f83bb332d195
+Removing intermediate container f83bb332d195
+ ---> a90674262cd8
+Step 9/10 : ENV JAVA_HOME=/usr/lib/jvm/java-1.8-openjdk
+ ---> Running in 136f11807c89
+Removing intermediate container 136f11807c89
+ ---> 35f7e637ca76
+Step 10/10 : ENV PATH=${PATH}:${JAVA_HOME}/bin
+ ---> Running in 11dd985e5bb5
+Removing intermediate container 11dd985e5bb5
+ ---> 4cb415ea8b7f
+
+Successfully built 4cb415ea8b7f
+Successfully tagged openjdk_8u131.11-r2:20180210
+docker-compose build openjre
+Building openjre
+Step 1/10 : ARG FROM_BASE=base_container:20180210
+Step 2/10 : FROM $FROM_BASE
+ ---> b4b58fb8cb06
+Step 3/10 : ARG CONTAINER_VERSION=1.0.0
+ ---> Running in d34cb07681ef
+Removing intermediate container d34cb07681ef
+ ---> f47c8bef9073
+Step 4/10 : LABEL version=$CONTAINER_VERSION
+ ---> Running in e9149bfad8e3
+Removing intermediate container e9149bfad8e3
+ ---> db9899f6c708
+Step 5/10 : ENV LANG=C.UTF-8
+ ---> Running in 24178aaa6cd6
+Removing intermediate container 24178aaa6cd6
+ ---> 4b48ff68ab6c
+Step 6/10 : COPY build /tmp/
+ ---> d901b9b098c9
+Step 7/10 : RUN set -o verbose     && chmod u+rwx /tmp/container/build.sh     && /tmp/container/build.sh 'OPENJDK-JRE'
+ ---> Running in 5b4bee4fc069
+[34m
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+[0m[94mBuilding container: [97mOPENJDK-JRE
+[0m[34m+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+[0m[96mInstall OS Support
+[0mfetch http://dl-cdn.alpinelinux.org/alpine/v3.6/main/x86_64/APKINDEX.tar.gz
+fetch http://dl-cdn.alpinelinux.org/alpine/v3.6/community/x86_64/APKINDEX.tar.gz
+v3.6.2-256-g0319b040f4 [http://dl-cdn.alpinelinux.org/alpine/v3.6/main]
+v3.6.2-255-gdf44076119 [http://dl-cdn.alpinelinux.org/alpine/v3.6/community]
+OK: 8438 distinct packages available
+[92m..executing /tmp/container/02.packages/01.core.packages
+[0mfetch http://dl-cdn.alpinelinux.org/alpine/v3.6/main/x86_64/APKINDEX.tar.gz
+fetch http://dl-cdn.alpinelinux.org/alpine/v3.6/community/x86_64/APKINDEX.tar.gz
+(1/4) Installing libcrypto1.0 (1.0.2n-r0)
+(2/4) Installing libssl1.0 (1.0.2n-r0)
+(3/4) Installing openssl (1.0.2n-r0)
+(4/4) Installing su-exec (0.2-r0)
+Executing busybox-1.26.2-r9.trigger
+OK: 19 MiB in 21 packages
+[92m..executing /tmp/container/02.packages/02.java-jre.packages
+[0mfetch http://dl-cdn.alpinelinux.org/alpine/v3.6/main/x86_64/APKINDEX.tar.gz
+fetch http://dl-cdn.alpinelinux.org/alpine/v3.6/community/x86_64/APKINDEX.tar.gz
+(1/39) Installing libffi (3.2.1-r3)
+(2/39) Installing libtasn1 (4.10-r2)
+(3/39) Installing p11-kit (0.23.2-r1)
+(4/39) Installing p11-kit-trust (0.23.2-r1)
+(5/39) Installing ca-certificates (20161130-r2)
+(6/39) Installing java-cacerts (1.0-r0)
+(7/39) Installing libxau (1.0.8-r1)
+(8/39) Installing libbsd (0.8.3-r3)
+(9/39) Installing libxdmcp (1.1.2-r3)
+(10/39) Installing libxcb (1.12-r0)
+(11/39) Installing libx11 (1.6.5-r0)
+(12/39) Installing libxcomposite (0.4.4-r0)
+(13/39) Installing libxext (1.3.3-r1)
+(14/39) Installing libxi (1.7.9-r0)
+(15/39) Installing libxrender (0.9.10-r1)
+(16/39) Installing libxtst (1.2.3-r0)
+(17/39) Installing alsa-lib (1.1.3-r0)
+(18/39) Installing libbz2 (1.0.6-r5)
+(19/39) Installing libpng (1.6.29-r1)
+(20/39) Installing freetype (2.7.1-r1)
+(21/39) Installing libgcc (6.3.0-r4)
+(22/39) Installing giflib (5.1.4-r1)
+(23/39) Installing libjpeg-turbo (1.5.1-r0)
+(24/39) Installing libstdc++ (6.3.0-r4)
+(25/39) Installing openjdk8-jre-lib (8.131.11-r2)
+(26/39) Installing java-common (0.1-r0)
+(27/39) Installing krb5-conf (1.0-r1)
+(28/39) Installing libcom_err (1.43.4-r0)
+(29/39) Installing keyutils-libs (1.5.9-r1)
+(30/39) Installing libverto (0.2.5-r2)
+(31/39) Installing krb5-libs (1.14.3-r2)
+(32/39) Installing lcms2 (2.8-r1)
+(33/39) Installing nspr (4.13.1-r0)
+(34/39) Installing sqlite-libs (3.20.1-r0)
+(35/39) Installing nss (3.30.1-r0)
+(36/39) Installing pcsc-lite-libs (1.8.21-r0)
+(37/39) Installing lksctp-tools (1.0.17-r0)
+(38/39) Installing openjdk8-jre-base (8.131.11-r2)
+(39/39) Installing openjdk8-jre (8.131.11-r2)
+Executing busybox-1.26.2-r9.trigger
+Executing ca-certificates-20161130-r2.trigger
+Executing java-common-0.1-r0.trigger
+OK: 95 MiB in 60 packages
+[96mInstall applications
+[0m[92m..executing /tmp/container/05.applications/01.jre.sh
+[0m[96mAdd configuration and customizations
+[0m[92m..executing /tmp/container/06.customizations/01.custom_folders.sh
+[0m[96mMake sure that ownership & permissions are correct
+[0m[92m..executing /tmp/container/07.permissions/01.bin_dirs.sh
+[0m[92m..executing /tmp/container/07.permissions/01.docker-entry.sh
+[0m[96mClean up
+[0m[92m..executing /tmp/container/08.cleanup/01.apk.cleanup
+[0mRemoving intermediate container 5b4bee4fc069
+ ---> ec7db0a2933b
+Step 8/10 : RUN rm -rf /tmp/*
+ ---> Running in 573a25b69dfb
+Removing intermediate container 573a25b69dfb
+ ---> d414dd7ef590
+Step 9/10 : ENV JAVA_HOME=/usr/lib/jvm/java-1.8-openjdk/jre
+ ---> Running in 2768e4a6cf6c
+Removing intermediate container 2768e4a6cf6c
+ ---> 1acf451a6ccf
+Step 10/10 : ENV PATH=${PATH}:${JAVA_HOME}/bin
+ ---> Running in e7659428aade
+Removing intermediate container e7659428aade
+ ---> eb979fd6d804
+
+Successfully built eb979fd6d804
+Successfully tagged openjre_8u131.11-r2:20180210
+docker-compose build gradle
+Building gradle
+Step 1/7 : ARG FROM_BASE=openjdk:20180210
+Step 2/7 : FROM $FROM_BASE
+ ---> 4cb415ea8b7f
+Step 3/7 : ARG CONTAINER_VERSION=1.0.0
+ ---> Running in 0fde93e052af
+Removing intermediate container 0fde93e052af
+ ---> afe0cee5cf0a
+Step 4/7 : LABEL version=$CONTAINER_VERSION
+ ---> Running in eea3b37c7332
+Removing intermediate container eea3b37c7332
+ ---> 8c850c8c6e22
+Step 5/7 : COPY build /tmp/
+ ---> 1cadd5371941
+Step 6/7 : RUN set -o verbose     && chmod u+rwx /tmp/container/build.sh     && /tmp/container/build.sh 'GRADLE'
+ ---> Running in 2285c80f4069
+[34m
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+[0m[94mBuilding container: [97mGRADLE
+[0m[34m+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+[0m[96mInstall OS Support
+[0mfetch http://dl-cdn.alpinelinux.org/alpine/v3.6/main/x86_64/APKINDEX.tar.gz
+fetch http://dl-cdn.alpinelinux.org/alpine/v3.6/community/x86_64/APKINDEX.tar.gz
+v3.6.2-256-g0319b040f4 [http://dl-cdn.alpinelinux.org/alpine/v3.6/main]
+v3.6.2-255-gdf44076119 [http://dl-cdn.alpinelinux.org/alpine/v3.6/community]
+OK: 8438 distinct packages available
+[92m..executing /tmp/container/02.packages/01.core.packages
+[0mfetch http://dl-cdn.alpinelinux.org/alpine/v3.6/main/x86_64/APKINDEX.tar.gz
+fetch http://dl-cdn.alpinelinux.org/alpine/v3.6/community/x86_64/APKINDEX.tar.gz
+OK: 114 MiB in 61 packages
+[92m..executing /tmp/container/02.packages/03.build.packages
+[0mfetch http://dl-cdn.alpinelinux.org/alpine/v3.6/main/x86_64/APKINDEX.tar.gz
+fetch http://dl-cdn.alpinelinux.org/alpine/v3.6/community/x86_64/APKINDEX.tar.gz
+(1/16) Installing unzip (6.0-r2)
+(2/16) Installing linux-pam (1.2.1-r1)
+(3/16) Installing shadow (4.2.1-r11)
+(4/16) Installing tar (1.29-r1)
+(5/16) Installing libgpg-error (1.27-r0)
+(6/16) Installing libassuan (2.4.3-r0)
+(7/16) Installing libcap (2.25-r1)
+(8/16) Installing pinentry (1.0.0-r0)
+Executing pinentry-1.0.0-r0.post-install
+(9/16) Installing libgcrypt (1.7.9-r0)
+(10/16) Installing libksba (1.3.4-r0)
+(11/16) Installing db (5.3.28-r0)
+(12/16) Installing libsasl (2.1.26-r10)
+(13/16) Installing libldap (2.4.44-r5)
+(14/16) Installing npth (1.2-r0)
+(15/16) Installing gnupg (2.1.20-r0)
+(16/16) Installing .build-deps (0)
+Executing busybox-1.26.2-r9.trigger
+OK: 125 MiB in 77 packages
+[96mVerify users and groups
+[0m[92m..executing /tmp/container/03.users_groups/01.gradle
+[0m[92mINFO: group/gid (gradle:1000):  is currently ()/()
+[0m[92mcreate group:  gradle
+[0m[92mINFO: user/uid (gradle:1000):  is currently ()/()
+[0m[92mcreate user: gradle
+[0m[91mCreating mailbox file: No such file or directory
+[0m[96mDownload & verify extrenal packages
+[0m[91m/tmp/container/01.bashlib/download.sh: line 50: pkg: unbound variable
+[0mService 'gradle' failed to build: The command '/bin/sh -c set -o verbose     && chmod u+rwx /tmp/container/build.sh     && /tmp/container/build.sh 'GRADLE'' returned a non-zero code: 1
