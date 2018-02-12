@@ -4,14 +4,13 @@ services:
     alpinefull:
         build:
             args:
-                CODE_VERSION: base_container:20180210
+                FROM_BASE: base_container:20180210
+                CONTAINER_VERSION: 1.0.0 
             cache_from:
                 - base_container:20180210
                 - alpine:3.6
             context: ./alpinefull
         container_name: alpinefull
-        depends_on:
-            - base
         image: alpinefull:20180210
 #        hostname: alpinefull
 #        logging:
@@ -24,7 +23,8 @@ services:
     base:
         build:
             args:
-                CODE_VERSION: alpine:3.6
+                FROM_BASE: alpine:3.6
+                CONTAINER_VERSION: 1.0.0 
                 TZ: "America/New_York"
             cache_from:
                 - alpine:3.6
@@ -34,28 +34,26 @@ services:
     carton:
         build:
             args:
-                CODE_VERSION: perl-5.24.3:20180210
+                FROM_BASE: perl-5.24.3:20180210
+                CONTAINER_VERSION: 1.0.0 
             cache_from:
                 - perl-5.24.3:20180210
                 - base_container:20180210
                 - alpine:3.6
             context: ./perl-carton
-        depends_on:
-            - perl
         image: perl-carton:20180210
 
     files-librd:
         build:
             args:
-                CODE_VERSION: perl-carton:20180210
+                FROM_BASE: perl-carton:20180210
+                CONTAINER_VERSION: 1.0.0 
             cache_from:
                 - perl-carton:20180210
                 - perl-5.24.3:20180210
                 - base_container:20180210
                 - alpine:3.6
             context: ./files-librd
-        depends_on:
-            - carton
         hostname: files-librd
         image: files-librd:20180210
         logging:
@@ -71,15 +69,14 @@ services:
     files-kafka:
         build:
             args:
-                CODE_VERSION: perl-carton:20180210
+                FROM_BASE: perl-carton:20180210
+                CONTAINER_VERSION: 1.0.0 
             cache_from:
                 - perl-carton:20180210
                 - perl-5.24.3:20180210
                 - base_container:20180210
                 - alpine:3.6
             context: ./files-kafka
-        depends_on:
-            - carton
         hostname: files-kafka
         image: files-kafka:20180210
         logging:
@@ -95,28 +92,26 @@ services:
     gradle:
         build:
             args:
-                CODE_VERSION: openjdk_8u131.11-r2:20180210
+                FROM_BASE: openjdk_8u131.11-r2:20180210
+                CONTAINER_VERSION: 1.0.0 
             cache_from:
                 - openjdk_8u131.11-r2:20180210
                 - base_container:20180210
                 - alpine:3.6
             context: ./gradle
-        depends_on:
-            - openjdk
         image: gradle_4.4.1-jdk8-alpine:20180210
 
     movefiles:
         build:
             args:
-                CODE_VERSION: perl-carton:20180210
+                FROM_BASE: perl-carton:20180210
+                CONTAINER_VERSION: 1.0.0 
             cache_from:
                 - perl-carton:20180210
                 - perl-5.24.3:20180210
                 - base_container:20180210
                 - alpine:3.6
             context: ./movefiles
-        depends_on:
-            - carton
         hostname: movefiles
         image: movefiles:20180210
         logging:
@@ -131,49 +126,45 @@ services:
     openjdk:
         build:
             args:
-                CODE_VERSION: base_container:20180210
+                FROM_BASE: base_container:20180210
+                CONTAINER_VERSION: 1.0.0 
             cache_from:
                 - base_container:20180210
                 - alpine:3.6
             context: ./openjdk8
-        depends_on:
-            - base
         image: openjdk_8u131.11-r2:20180210 
 
     openjre:
         build:
             args:
-                CODE_VERSION: base_container:20180210
+                FROM_BASE: base_container:20180210
+                CONTAINER_VERSION: 1.0.0 
             cache_from:
                 - base_container:20180210
                 - alpine:3.6
             context: ./openjre8
-        depends_on:
-            - base
         image: openjre_8u131.11-r2:20180210 
 
     perl:
         build:
             args:
-                CODE_VERSION: base_container:20180210
+                FROM_BASE: base_container:20180210
+                CONTAINER_VERSION: 1.0.0 
             cache_from:
                 - base_container:20180210
             context: ./perl.5-24-3
-        depends_on:
-            - base
         image: perl-5.24.3:20180210
 
     postgres:
         build:
             args:
-                CODE_VERSION: base_container:20180210
+                FROM_BASE: base_container:20180210
+                CONTAINER_VERSION: 1.0.0 
             cache_from:
                 - base_container:20180210
                 - alpine:3.6
             context: ./postgres
         container_name: postgres
-        depends_on:
-            - base
         environment:
             POSTGRES_PASSWORD: postgres
         hostname: postgres
