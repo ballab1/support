@@ -6,8 +6,8 @@ set -o nounset
 set -o verbose
 
 docker-compose build base
-docker-compose build alpinefull
 docker-compose build openjdk
+docker-compose build alpinefull
 docker-compose build openjre
 docker-compose build gradle
 docker-compose build perl

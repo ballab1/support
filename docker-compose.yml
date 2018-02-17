@@ -4,14 +4,14 @@ services:
     alpinefull:
         build:
             args:
-                FROM_BASE: base_container:20180210
-                CONTAINER_VERSION: 1.0.1 
+                FROM_BASE: base_container:20180217
+                CONTAINER_VERSION: 1.0.2
             cache_from:
-                - base_container:20180210
+                - base_container:20180217
                 - alpine:3.6
             context: ./alpinefull
         container_name: alpinefull
-        image: alpinefull:20180210
+        image: alpinefull:20180217
 #        hostname: alpinefull
 #        logging:
 #            driver: "json-file"
@@ -24,38 +24,38 @@ services:
         build:
             args:
                 FROM_BASE: alpine:3.6
-                CONTAINER_VERSION: 1.0.1 
+                CONTAINER_VERSION: 1.0.2
                 TZ: "America/New_York"
             cache_from:
                 - alpine:3.6
             context: ./base_container
-        image: base_container:20180210
+        image: base_container:20180217
 
     carton:
         build:
             args:
-                FROM_BASE: perl-5.24.3:20180210
-                CONTAINER_VERSION: 1.0.1 
+                FROM_BASE: perl-5.24.3:20180217
+                CONTAINER_VERSION: 1.0.2 
             cache_from:
-                - perl-5.24.3:20180210
-                - base_container:20180210
+                - perl-5.24.3:20180217
+                - base_container:20180217
                 - alpine:3.6
             context: ./perl-carton
-        image: perl-carton:20180210
+        image: perl-carton:20180217
 
     files-librd:
         build:
             args:
-                FROM_BASE: perl-carton:20180210
-                CONTAINER_VERSION: 1.0.1 
+                FROM_BASE: perl-carton:20180217
+                CONTAINER_VERSION: 1.0.2 
             cache_from:
-                - perl-carton:20180210
-                - perl-5.24.3:20180210
-                - base_container:20180210
+                - perl-carton:20180217
+                - perl-5.24.3:20180217
+                - base_container:20180217
                 - alpine:3.6
             context: ./files-librd
         hostname: files-librd
-        image: files-librd:20180210
+        image: files-librd:20180217
         logging:
             driver: "json-file"
             options:
@@ -69,16 +69,16 @@ services:
     files-kafka:
         build:
             args:
-                FROM_BASE: perl-carton:20180210
-                CONTAINER_VERSION: 1.0.1 
+                FROM_BASE: perl-carton:20180217
+                CONTAINER_VERSION: 1.0.2 
             cache_from:
-                - perl-carton:20180210
-                - perl-5.24.3:20180210
-                - base_container:20180210
+                - perl-carton:20180217
+                - perl-5.24.3:20180217
+                - base_container:20180217
                 - alpine:3.6
             context: ./files-kafka
         hostname: files-kafka
-        image: files-kafka:20180210
+        image: files-kafka:20180217
         logging:
             driver: "json-file"
             options:
@@ -92,28 +92,28 @@ services:
     gradle:
         build:
             args:
-                FROM_BASE: openjdk_8u131.11-r2:20180210
-                CONTAINER_VERSION: 1.0.1 
+                FROM_BASE: openjdk_8u131.11-r2:20180217
+                CONTAINER_VERSION: 1.0.2 
             cache_from:
-                - openjdk_8u131.11-r2:20180210
-                - base_container:20180210
+                - openjdk_8u131.11-r2:20180217
+                - base_container:20180217
                 - alpine:3.6
             context: ./gradle
-        image: gradle_4.4.1-jdk8-alpine:20180210
+        image: gradle_4.4.1-jdk8-alpine:20180217
 
     movefiles:
         build:
             args:
-                FROM_BASE: perl-carton:20180210
-                CONTAINER_VERSION: 1.0.1 
+                FROM_BASE: perl-carton:20180217
+                CONTAINER_VERSION: 1.0.2 
             cache_from:
-                - perl-carton:20180210
-                - perl-5.24.3:20180210
-                - base_container:20180210
+                - perl-carton:20180217
+                - perl-5.24.3:20180217
+                - base_container:20180217
                 - alpine:3.6
             context: ./movefiles
         hostname: movefiles
-        image: movefiles:20180210
+        image: movefiles:20180217
         logging:
             driver: "json-file"
             options:
@@ -126,49 +126,49 @@ services:
     openjdk:
         build:
             args:
-                FROM_BASE: base_container:20180210
-                CONTAINER_VERSION: 1.0.1 
+                FROM_BASE: base_container:20180217
+                CONTAINER_VERSION: 1.0.2 
             cache_from:
-                - base_container:20180210
+                - base_container:20180217
                 - alpine:3.6
             context: ./openjdk8
-        image: openjdk_8u131.11-r2:20180210 
+        image: openjdk_8u131.11-r2:20180217 
 
     openjre:
         build:
             args:
-                FROM_BASE: base_container:20180210
-                CONTAINER_VERSION: 1.0.1 
+                FROM_BASE: base_container:20180217
+                CONTAINER_VERSION: 1.0.2 
             cache_from:
-                - base_container:20180210
+                - base_container:20180217
                 - alpine:3.6
             context: ./openjre8
-        image: openjre_8u131.11-r2:20180210 
+        image: openjre_8u131.11-r2:20180217 
 
     perl:
         build:
             args:
-                FROM_BASE: base_container:20180210
-                CONTAINER_VERSION: 1.0.1 
+                FROM_BASE: base_container:20180217
+                CONTAINER_VERSION: 1.0.2 
             cache_from:
-                - base_container:20180210
+                - base_container:20180217
             context: ./perl.5-24-3
-        image: perl-5.24.3:20180210
+        image: perl-5.24.3:20180217
 
     postgres:
         build:
             args:
-                FROM_BASE: base_container:20180210
-                CONTAINER_VERSION: 1.0.1 
+                FROM_BASE: base_container:20180217
+                CONTAINER_VERSION: 1.0.2 
             cache_from:
-                - base_container:20180210
+                - base_container:20180217
                 - alpine:3.6
             context: ./postgres
         container_name: postgres
         environment:
             POSTGRES_PASSWORD: postgres
         hostname: postgres
-        image: postgresql-10.2:20180210
+        image: postgresql-10.2:20180217
         logging:
             driver: "json-file"
             options:
