@@ -4,9 +4,9 @@
 [submodule "base_container"]
     path = base_container
     url = ../base_container.git
-[submodule "container_lib"]
-    path = container_lib
-    url = ../container_lib.git
+[submodule "container_build_framework"]
+    path = container_build_framework
+    url = ../container_build_framework.git
 [submodule "files-kafka"]
     path = files-kafka
     url = ../files-kafka.git
