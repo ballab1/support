@@ -4,6 +4,7 @@ services:
     alpinefull:
         build:
             args:
+                CONTAINER_NAME: alpinefull
                 CONTAINER_VERSION: 1.0.4
                 DEBUG_TRACE: 0
                 FROM_BASE: base_container:20180225
@@ -12,14 +13,13 @@ services:
                 - alpine:3.6
             context: ./alpinefull
             dockerfile: Dockerfile
-        environment:
-            CONTAINER_NAME: alpinefull
         container_name: alpinefull
         image: alpinefull:20180225
 
     base:
         build:
             args:
+                CONTAINER_NAME: base_container
                 CONTAINER_VERSION: 1.0.4
                 DEBUG_TRACE: 0
                 FROM_BASE: alpine:3.6
@@ -28,13 +28,12 @@ services:
                 - alpine:3.6
             context: ./base_container
             dockerfile: Dockerfile
-        environment:
-            CONTAINER_NAME: base_container
         image: base_container:20180225
 
     carton:
         build:
             args:
+                CONTAINER_NAME: perl-carton
                 CONTAINER_VERSION: 1.0.4
                 DEBUG_TRACE: 0
                 FROM_BASE: perl-5.24.3:20180225
@@ -44,8 +43,6 @@ services:
                 - alpine:3.6
             context: ./perl-carton
             dockerfile: Dockerfile
-        environment:
-            CONTAINER_NAME: perl-carton
         image: perl-carton:20180225
 
     files-librd:
@@ -103,6 +100,7 @@ services:
     gradle:
         build:
             args:
+                CONTAINER_NAME: gradle
                 CONTAINER_VERSION: 1.0.4
                 DEBUG_TRACE: 0
                 FROM_BASE: openjdk_8u131.11-r2:20180225
@@ -112,13 +110,12 @@ services:
                 - alpine:3.6
             dockerfile: Dockerfile
             context: ./gradle
-        environment:
-            CONTAINER_NAME: gradle
         image: gradle_4.4.1-jdk8-alpine:20180225
 
     movefiles:
         build:
             args:
+                CONTAINER_NAME: movefiles
                 CONTAINER_VERSION: 1.0.4
                 DEBUG_TRACE: 0
                 FROM_BASE: perl-carton:20180225
@@ -129,8 +126,6 @@ services:
                 - alpine:3.6
             context: ./movefiles
             dockerfile: Dockerfile
-        environment:
-            CONTAINER_NAME: movefiles
         hostname: movefiles
         image: movefiles:20180225
         logging:
@@ -145,6 +140,7 @@ services:
     openjdk:
         build:
             args:
+                CONTAINER_NAME: openjdk_8u131.11-r2
                 CONTAINER_VERSION: 1.0.4
                 DEBUG_TRACE: 0
                 FROM_BASE: base_container:20180225
@@ -153,13 +149,12 @@ services:
                 - alpine:3.6
             context: ./openjdk8
             dockerfile: Dockerfile
-        environment:
-            CONTAINER_NAME: openjdk_8u131.11-r2
         image: openjdk_8u131.11-r2:20180225 
 
     openjre:
         build:
             args:
+                CONTAINER_NAME: openjre_8u131.11-r2
                 CONTAINER_VERSION: 1.0.4
                 DEBUG_TRACE: 0
                 FROM_BASE: base_container:20180225
@@ -167,13 +162,12 @@ services:
                 - base_container:20180225
                 - alpine:3.6
             context: ./openjre8
-        environment:
-            CONTAINER_NAME: openjre_8u131.11-r2
         image: openjre_8u131.11-r2:20180225 
 
     perl:
         build:
             args:
+                CONTAINER_NAME: perl-5.24.3
                 CONTAINER_VERSION: 1.0.4
                 DEBUG_TRACE: 0
                 FROM_BASE: base_container:20180225
@@ -181,13 +175,12 @@ services:
                 - base_container:20180225
             context: ./perl.5-24-3
             dockerfile: Dockerfile
-        environment:
-            CONTAINER_NAME: perl-5.24.3
         image: perl-5.24.3:20180225
 
     postgres:
         build:
             args:
+                CONTAINER_NAME: postgres
                 CONTAINER_VERSION: 1.0.4
                 DEBUG_TRACE: 0
                 FROM_BASE: base_container:20180225
@@ -198,7 +191,6 @@ services:
             dockerfile: Dockerfile
         container_name: postgres
         environment:
-            CONTAINER_NAME: postgres
             POSTGRES_PASSWORD: postgres
         hostname: postgres
         image: postgresql-10.2:20180225
