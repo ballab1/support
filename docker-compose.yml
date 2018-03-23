@@ -207,3 +207,31 @@ services:
             - ./vols-rw/data:/var/lib/postgresql/data
             - ./vols-ro/etc:/etc/postgres
             - ./vols-rw/log:/var/log/postgres 
+
+    supervisord:
+        build:
+            args:
+                CONTAINER_NAME: supervisord
+                CONTAINER_VERSION: 1.0.6
+                DEBUG_TRACE: 0
+                FROM_BASE: base_container:20180314
+            cache_from:
+                - base_container:20180314
+                - alpine:3.6
+            context: ./supervisord
+            dockerfile: Dockerfile
+        container_name: supervisord
+        environment:
+            SUPERVISORD_PASS: $CFG_PASS
+        hostname: supervisord
+        image: supervisord:20180314
+        logging:
+            driver: json-file
+            options:
+                max-file: "3"
+                max-size: "10m"
+        ports:
+            - 5432:5432
+        restart: unless-stopped
+        volumes:
+            - ./vols-rw/log:/var/log 

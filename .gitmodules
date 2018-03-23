@@ -34,3 +34,6 @@
 [submodule "postgres"]
     path = postgres
     url = ../postgres.git
+[submodule "supervisord"]
+    path = supervisord
+    url = ../supervisord.git
