@@ -236,7 +236,18 @@ services:
             context: ./supervisord
             dockerfile: Dockerfile
         container_name: supervisord
-#        environment:
-#            SUPERVISORD_PASS: $CFG_PASS
-#            SUPERVISORD_USER: $CFG_USER
+        environment:
+            SUPERVISORD_PASS: $CFG_PASS
+            SUPERVISORD_USER: $CFG_USER
+        hostname: supervisord
         image: supervisord:20180325
+        logging:
+            driver: json-file
+            options:
+                max-file: "3"
+                max-size: "10m"
+        ports:
+            - 5432:5432
+        restart: unless-stopped
+        volumes:
+            - ./vols-rw/log:/var/log 
