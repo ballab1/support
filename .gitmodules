@@ -34,9 +34,6 @@
 [submodule "postgres"]
     path = postgres
     url = ../postgres.git
-[submodule "supervisord"]
-    path = supervisord
-    url = ../supervisord.git
 [submodule "php5"]
-	path = php5
-	url = https://github.com/ballab1/php5.git
+    path = php5
+    url = ../php5.git
