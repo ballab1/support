@@ -37,3 +37,6 @@
 [submodule "php5"]
     path = php5
     url = ../php5.git
+[submodule "supervisord"]
+    path = supervisord
+    url = ../supervisord
