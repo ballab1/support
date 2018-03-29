@@ -22,6 +22,7 @@ if [ $(( $mode & 1 )) -eq 1 ]; then
     cd ../files-kafka; docker-compose build 2>&1 | tee -a "$bldlog"
     cd ../movefiles; docker-compose build 2>&1 | tee -a "$bldlog"
     cd ../postgres; docker-compose build 2>&1 | tee -a "$bldlog"
+    cd ../supervisord; docker-compose build 2>&1 | tee -a "$bldlog"
     cd ..
 fi
 
@@ -37,4 +38,5 @@ if [ $(( $mode & 2 )) -eq 2 ]; then
     docker-compose build files-kafka 2>&1 | tee -a "$bldlog"
     docker-compose build movefiles 2>&1 | tee -a "$bldlog"
     docker-compose build postgres 2>&1 | tee -a "$bldlog"
+    docker-compose build supervisord 2>&1 | tee -a "$bldlog"
 fi
