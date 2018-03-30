@@ -6,7 +6,7 @@ set -o nounset
 #set -o verbose
 
 declare bldlog="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/bld.log"
-declare -i mode=3
+declare -i mode=2
 
 [ -e "$bldlog" ] && rm "$bldlog"
 
