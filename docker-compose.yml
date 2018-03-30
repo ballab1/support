@@ -208,7 +208,7 @@ services:
         environment:
             POSTGRES_PASSWORD: postgres
         hostname: postgres
-        image: postgresql-10.2:20180329
+        image: postgresql-10.3:20180329
         logging:
             driver: json-file
             options:
