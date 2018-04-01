@@ -4,6 +4,7 @@ services:
     alpinefull:
         build:
             args:
+                CBF_VERSION: ${CBF_VERSION:-v2.0}
                 CONTAINER_NAME: alpinefull
                 CONTAINER_VERSION: 1.0.8
                 DEBUG_TRACE: 0
@@ -19,6 +20,7 @@ services:
     base:
         build:
             args:
+                CBF_VERSION: ${CBF_VERSION:-v2.0}
                 CONTAINER_NAME: base_container
                 CONTAINER_VERSION: 1.0.8
                 DEBUG_TRACE: 0
@@ -33,6 +35,7 @@ services:
     carton:
         build:
             args:
+                CBF_VERSION: ${CBF_VERSION:-v2.0}
                 CONTAINER_NAME: perl-carton
                 CONTAINER_VERSION: 1.0.8
                 DEBUG_TRACE: 0
@@ -100,6 +103,7 @@ services:
     gradle:
         build:
             args:
+                CBF_VERSION: ${CBF_VERSION:-v2.0}
                 CONTAINER_NAME: gradle
                 CONTAINER_VERSION: 1.0.8
                 DEBUG_TRACE: 0
@@ -140,6 +144,7 @@ services:
     openjdk:
         build:
             args:
+                CBF_VERSION: ${CBF_VERSION:-v2.0}
                 CONTAINER_NAME: openjdk_8u131.11-r2
                 CONTAINER_VERSION: 1.0.8
                 DEBUG_TRACE: 0
@@ -154,6 +159,7 @@ services:
     openjre:
         build:
             args:
+                CBF_VERSION: ${CBF_VERSION:-v2.0}
                 CONTAINER_NAME: openjre_8u131.11-r2
                 CONTAINER_VERSION: 1.0.8
                 DEBUG_TRACE: 0
@@ -167,6 +173,7 @@ services:
     perl:
         build:
             args:
+                CBF_VERSION: ${CBF_VERSION:-v2.0}
                 CONTAINER_NAME: perl-5.24.3
                 CONTAINER_VERSION: 1.0.8
                 DEBUG_TRACE: 0
@@ -180,6 +187,7 @@ services:
     php5:
         build:
             args:
+                CBF_VERSION: ${CBF_VERSION:-v2.0}
                 CONTAINER_NAME: php5
                 CONTAINER_VERSION: 1.0.8
                 DEBUG_TRACE: 0
@@ -195,6 +203,7 @@ services:
     postgres:
         build:
             args:
+                CBF_VERSION: ${CBF_VERSION:-v2.0}
                 CONTAINER_NAME: postgres
                 CONTAINER_VERSION: 1.0.8
                 DEBUG_TRACE: 0
@@ -226,6 +235,7 @@ services:
     supervisord:
         build:
             args:
+                CBF_VERSION: ${CBF_VERSION:-v2.0}
                 CONTAINER_NAME: supervisord
                 CONTAINER_VERSION: 1.0.8
                 DEBUG_TRACE: 0
