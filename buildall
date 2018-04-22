@@ -24,6 +24,7 @@ if [ $(( $mode & 1 )) -eq 1 ]; then
     cd ../alpinefull; docker-compose build 2>&1 | tee -a "$bldlog"
     cd ../openjre8; docker-compose build 2>&1 | tee -a "$bldlog"
     cd ../postgres; docker-compose build 2>&1 | tee -a "$bldlog"
+    cd ../supervisord; docker-compose build 2>&1 | tee -a "$bldlog"
     cd ..
 fi
 
@@ -41,4 +42,5 @@ if [ $(( $mode & 2 )) -eq 2 ]; then
     docker-compose build alpinefull 2>&1 | tee -a "$bldlog"
     docker-compose build openjre 2>&1 | tee -a "$bldlog"
     docker-compose build postgres 2>&1 | tee -a "$bldlog"
+    docker-compose build supervisord 2>&1 | tee -a "$bldlog"
 fi

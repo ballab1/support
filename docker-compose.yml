@@ -7,16 +7,27 @@ services:
                 CBF_VERSION: ${CBF_VERSION:-v2.0}
                 CONTAINER_NAME: alpinefull
                 CONTAINER_VERSION: 1.0.8
+<<<<<<< HEAD
                 FROM_BASE: base_container:20180419
             cache_from:
                 - base_container:20180419
+=======
+                DEBUG_TRACE: 0
+                FROM_BASE: base_container:20180402
+            cache_from:
+                - base_container:20180402
+>>>>>>> dev
                 - alpine:3.6
             context: ./alpinefull
             dockerfile: Dockerfile
         container_name: alpinefull
+<<<<<<< HEAD
         environment:
             DEBUG_TRACE: ${DEBUG_TRACE:-0}
         image: alpinefull:20180419
+=======
+        image: alpinefull:20180402
+>>>>>>> dev
 
     base:
         build:
@@ -24,15 +35,23 @@ services:
                 CBF_VERSION: ${CBF_VERSION:-v2.0}
                 CONTAINER_NAME: base_container
                 CONTAINER_VERSION: 1.0.8
+<<<<<<< HEAD
+=======
+                DEBUG_TRACE: 0
+>>>>>>> dev
                 FROM_BASE: alpine:3.6
                 TZ: "America/New_York"
             cache_from:
                 - alpine:3.6
             context: ./base_container
             dockerfile: Dockerfile
+<<<<<<< HEAD
         environment:
             DEBUG_TRACE: ${DEBUG_TRACE:-0}
         image: base_container:20180419
+=======
+        image: base_container:20180402
+>>>>>>> dev
 
     carton:
         build:
@@ -40,6 +59,7 @@ services:
                 CBF_VERSION: ${CBF_VERSION:-v2.0}
                 CONTAINER_NAME: perl-carton
                 CONTAINER_VERSION: 1.0.8
+<<<<<<< HEAD
                 FROM_BASE: perl-5.24.3:20180419
             cache_from:
                 - perl-5.24.3:20180419
@@ -50,24 +70,48 @@ services:
         environment:
             DEBUG_TRACE: ${DEBUG_TRACE:-0}
         image: perl-carton:20180419
+=======
+                DEBUG_TRACE: 0
+                FROM_BASE: perl-5.24.3:20180402
+            cache_from:
+                - perl-5.24.3:20180402
+                - base_container:20180402
+                - alpine:3.6
+            context: ./perl-carton
+            dockerfile: Dockerfile
+        image: perl-carton:20180402
+>>>>>>> dev
 
     files-librd:
         build:
             args:
                 CONTAINER_NAME: files-librd
                 CONTAINER_VERSION: 1.0.8
+<<<<<<< HEAD
                 FROM_BASE: perl-carton:20180419
             cache_from:
                 - perl-carton:20180419
                 - perl-5.24.3:20180419
                 - base_container:20180419
+=======
+                DEBUG_TRACE: 0
+                FROM_BASE: perl-carton:20180402
+            cache_from:
+                - perl-carton:20180402
+                - perl-5.24.3:20180402
+                - base_container:20180402
+>>>>>>> dev
                 - alpine:3.6
             context: ./files-librd
             dockerfile: Dockerfile
         environment:
             DEBUG_TRACE: ${DEBUG_TRACE:-0}
         hostname: files-librd
+<<<<<<< HEAD
         image: files-librd:20180419
+=======
+        image: files-librd:20180402
+>>>>>>> dev
         logging:
             driver: json-file
             options:
@@ -83,18 +127,31 @@ services:
             args:
                 CONTAINER_NAME: files-kafka
                 CONTAINER_VERSION: 1.0.8
+<<<<<<< HEAD
                 FROM_BASE: perl-carton:20180419
             cache_from:
                 - perl-carton:20180419
                 - perl-5.24.3:20180419
                 - base_container:20180419
+=======
+                DEBUG_TRACE: 0
+                FROM_BASE: perl-carton:20180402
+            cache_from:
+                - perl-carton:20180402
+                - perl-5.24.3:20180402
+                - base_container:20180402
+>>>>>>> dev
                 - alpine:3.6
             context: ./files-kafka
             dockerfile: Dockerfile
         environment:
             DEBUG_TRACE: ${DEBUG_TRACE:-0}
         hostname: files-kafka
+<<<<<<< HEAD
         image: files-kafka:20180419
+=======
+        image: files-kafka:20180402
+>>>>>>> dev
         logging:
             driver: json-file
             options:
@@ -111,6 +168,7 @@ services:
                 CBF_VERSION: ${CBF_VERSION:-v2.0}
                 CONTAINER_NAME: gradle
                 CONTAINER_VERSION: 1.0.8
+<<<<<<< HEAD
                 FROM_BASE: openjdk_8u131.11-r2:20180419
             cache_from:
                 - openjdk_8u131.11-r2:20180419
@@ -121,24 +179,48 @@ services:
         environment:
             DEBUG_TRACE: ${DEBUG_TRACE:-0}
         image: gradle_4.4.1-jdk8-alpine:20180419
+=======
+                DEBUG_TRACE: 0
+                FROM_BASE: openjdk_8u131.11-r2:20180402
+            cache_from:
+                - openjdk_8u131.11-r2:20180402
+                - base_container:20180402
+                - alpine:3.6
+            dockerfile: Dockerfile
+            context: ./gradle
+        image: gradle_4.4.1-jdk8-alpine:20180402
+>>>>>>> dev
 
     movefiles:
         build:
             args:
                 CONTAINER_NAME: movefiles
                 CONTAINER_VERSION: 1.0.8
+<<<<<<< HEAD
                 FROM_BASE: perl-carton:20180419
             cache_from:
                 - perl-carton:20180419
                 - perl-5.24.3:20180419
                 - base_container:20180419
+=======
+                DEBUG_TRACE: 0
+                FROM_BASE: perl-carton:20180402
+            cache_from:
+                - perl-carton:20180402
+                - perl-5.24.3:20180402
+                - base_container:20180402
+>>>>>>> dev
                 - alpine:3.6
             context: ./movefiles
             dockerfile: Dockerfile
         environment:
             DEBUG_TRACE: ${DEBUG_TRACE:-0}
         hostname: movefiles
+<<<<<<< HEAD
         image: movefiles:20180419
+=======
+        image: movefiles:20180402
+>>>>>>> dev
         logging:
             driver: json-file
             options:
@@ -154,6 +236,7 @@ services:
                 CBF_VERSION: ${CBF_VERSION:-v2.0}
                 CONTAINER_NAME: openjdk_8u131.11-r2
                 CONTAINER_VERSION: 1.0.8
+<<<<<<< HEAD
                 FROM_BASE: base_container:20180419
             cache_from:
                 - base_container:20180419
@@ -163,6 +246,16 @@ services:
         environment:
             DEBUG_TRACE: ${DEBUG_TRACE:-0}
         image: openjdk_8u131.11-r2:20180419 
+=======
+                DEBUG_TRACE: 0
+                FROM_BASE: base_container:20180402
+            cache_from:
+                - base_container:20180402
+                - alpine:3.6
+            context: ./openjdk8
+            dockerfile: Dockerfile
+        image: openjdk_8u131.11-r2:20180402 
+>>>>>>> dev
 
     openjre:
         build:
@@ -170,6 +263,7 @@ services:
                 CBF_VERSION: ${CBF_VERSION:-v2.0}
                 CONTAINER_NAME: openjre_8u131.11-r2
                 CONTAINER_VERSION: 1.0.8
+<<<<<<< HEAD
                 FROM_BASE: base_container:20180419
             cache_from:
                 - base_container:20180419
@@ -178,6 +272,15 @@ services:
         environment:
             DEBUG_TRACE: ${DEBUG_TRACE:-0}
         image: openjre_8u131.11-r2:20180419 
+=======
+                DEBUG_TRACE: 0
+                FROM_BASE: base_container:20180402
+            cache_from:
+                - base_container:20180402
+                - alpine:3.6
+            context: ./openjre8
+        image: openjre_8u131.11-r2:20180402 
+>>>>>>> dev
 
     perl:
         build:
@@ -185,6 +288,7 @@ services:
                 CBF_VERSION: ${CBF_VERSION:-v2.0}
                 CONTAINER_NAME: perl-5.24.3
                 CONTAINER_VERSION: 1.0.8
+<<<<<<< HEAD
                 FROM_BASE: base_container:20180419
             cache_from:
                 - base_container:20180419
@@ -193,6 +297,15 @@ services:
         environment:
             DEBUG_TRACE: ${DEBUG_TRACE:-0}
         image: perl-5.24.3:20180419
+=======
+                DEBUG_TRACE: 0
+                FROM_BASE: base_container:20180402
+            cache_from:
+                - base_container:20180402
+            context: ./perl.5-24-3
+            dockerfile: Dockerfile
+        image: perl-5.24.3:20180402
+>>>>>>> dev
 
     php5:
         build:
@@ -200,6 +313,7 @@ services:
                 CBF_VERSION: ${CBF_VERSION:-v2.0}
                 CONTAINER_NAME: php5
                 CONTAINER_VERSION: 1.0.8
+<<<<<<< HEAD
                 FROM_BASE: supervisord:20180419
             cache_from:
                 - alpine:3.6
@@ -210,6 +324,17 @@ services:
         environment:
             DEBUG_TRACE: ${DEBUG_TRACE:-0}
         image: php5:20180419
+=======
+                DEBUG_TRACE: 0
+                FROM_BASE: supervisord:20180402
+            cache_from:
+                - alpine:3.6
+                - base_container:20180402
+                - supervisord:20180402
+            context: ./php5
+            dockerfile: Dockerfile
+        image: php5:20180402
+>>>>>>> dev
 
     postgres:
         build:
@@ -217,9 +342,16 @@ services:
                 CBF_VERSION: ${CBF_VERSION:-v2.0}
                 CONTAINER_NAME: postgres
                 CONTAINER_VERSION: 1.0.8
+<<<<<<< HEAD
                 FROM_BASE: base_container:20180419
             cache_from:
                 - base_container:20180419
+=======
+                DEBUG_TRACE: 0
+                FROM_BASE: base_container:20180402
+            cache_from:
+                - base_container:20180402
+>>>>>>> dev
                 - alpine:3.6
             context: ./postgres
             dockerfile: Dockerfile
@@ -228,7 +360,11 @@ services:
             DEBUG_TRACE: ${DEBUG_TRACE:-0}
             POSTGRES_PASSWORD: postgres
         hostname: postgres
+<<<<<<< HEAD
         image: postgresql-10.3:20180419
+=======
+        image: postgresql-10.3:20180402
+>>>>>>> dev
         logging:
             driver: json-file
             options:
@@ -249,9 +385,16 @@ services:
                 CBF_VERSION: ${CBF_VERSION:-v2.0}
                 CONTAINER_NAME: supervisord
                 CONTAINER_VERSION: 1.0.8
+<<<<<<< HEAD
                 FROM_BASE: base_container:20180419
             cache_from:
                 - base_container:20180419
+=======
+                DEBUG_TRACE: 0
+                FROM_BASE: base_container:20180402
+            cache_from:
+                - base_container:20180402
+>>>>>>> dev
                 - alpine:3.6
             context: ./supervisord
             dockerfile: Dockerfile
@@ -261,7 +404,11 @@ services:
             SUPERVISORD_PASS: $CFG_PASS
             SUPERVISORD_USER: $CFG_USER
         hostname: supervisord
+<<<<<<< HEAD
         image: supervisord:20180419
+=======
+        image: supervisord:20180402
+>>>>>>> dev
         logging:
             driver: json-file
             options:
