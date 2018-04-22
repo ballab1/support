@@ -12,15 +12,17 @@ declare -i mode=2
 
 if [ $(( $mode & 1 )) -eq 1 ]; then
     cd base_container; docker-compose build 2>&1 | tee -a "$bldlog"
+    cd ../supervisord; docker-compose build 2>&1 | tee -a "$bldlog"
+    cd ../php5; docker-compose build 2>&1 | tee -a "$bldlog"
     cd ../openjdk8; docker-compose build 2>&1 | tee -a "$bldlog"
-    cd ../alpinefull; docker-compose build 2>&1 | tee -a "$bldlog"
-    cd ../openjre8; docker-compose build 2>&1 | tee -a "$bldlog"
     cd ../gradle; docker-compose build 2>&1 | tee -a "$bldlog"
     cd ../perl.5-24-3; docker-compose build 2>&1 | tee -a "$bldlog"
     cd ../perl-carton; docker-compose build 2>&1 | tee -a "$bldlog"
     cd ../files-librd; docker-compose build 2>&1 | tee -a "$bldlog"
     cd ../files-kafka; docker-compose build 2>&1 | tee -a "$bldlog"
     cd ../movefiles; docker-compose build 2>&1 | tee -a "$bldlog"
+    cd ../alpinefull; docker-compose build 2>&1 | tee -a "$bldlog"
+    cd ../openjre8; docker-compose build 2>&1 | tee -a "$bldlog"
     cd ../postgres; docker-compose build 2>&1 | tee -a "$bldlog"
     cd ../supervisord; docker-compose build 2>&1 | tee -a "$bldlog"
     cd ..
@@ -28,15 +30,17 @@ fi
 
 if [ $(( $mode & 2 )) -eq 2 ]; then
     docker-compose build base 2>&1 | tee -a "$bldlog" 
+    docker-compose build supervisord 2>&1 | tee -a "$bldlog"
+    docker-compose build php5 2>&1 | tee -a "$bldlog"
     docker-compose build openjdk 2>&1 | tee -a "$bldlog"
-    docker-compose build alpinefull 2>&1 | tee -a "$bldlog"
-    docker-compose build openjre 2>&1 | tee -a "$bldlog"
     docker-compose build gradle 2>&1 | tee -a "$bldlog"
     docker-compose build perl 2>&1 | tee -a "$bldlog"
     docker-compose build carton 2>&1 | tee -a "$bldlog"
     docker-compose build files-librd 2>&1 | tee -a "$bldlog"
     docker-compose build files-kafka 2>&1 | tee -a "$bldlog"
     docker-compose build movefiles 2>&1 | tee -a "$bldlog"
+    docker-compose build alpinefull 2>&1 | tee -a "$bldlog"
+    docker-compose build openjre 2>&1 | tee -a "$bldlog"
     docker-compose build postgres 2>&1 | tee -a "$bldlog"
     docker-compose build supervisord 2>&1 | tee -a "$bldlog"
 fi
