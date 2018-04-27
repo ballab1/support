@@ -40,3 +40,6 @@
 [submodule "supervisord"]
     path = supervisord
     url = ../supervisord
+[submodule "php7"]
+	path = php7
+	url = https://github.com/ballab1/php7.git
