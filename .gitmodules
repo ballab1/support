@@ -43,3 +43,6 @@
 [submodule "php7"]
 	path = php7
 	url = https://github.com/ballab1/php7.git
+[submodule "nginx_base"]
+	path = nginx_base
+	url = https://github.com/ballab1/nginx_base.git

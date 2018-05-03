@@ -5,7 +5,10 @@ set -o errexit
 set -o nounset
 #set -o verbose
 
+export  CONTAINER_TAG="$( date +%Y%m%d )"
+export  CBF_VERSION=v3.0
 declare bldlog="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/bld.log"
+
 declare -i mode=2
 
 [ -e "$bldlog" ] && rm "$bldlog"
@@ -13,6 +16,7 @@ declare -i mode=2
 if [ $(( $mode & 1 )) -eq 1 ]; then
     cd base_container; docker-compose build 2>&1 | tee -a "$bldlog"
     cd ../supervisord; docker-compose build 2>&1 | tee -a "$bldlog"
+    cd ../nginx_base; docker-compose build 2>&1 | tee -a "$bldlog"
     cd ../php5; docker-compose build 2>&1 | tee -a "$bldlog"
     cd ../php7; docker-compose build 2>&1 | tee -a "$bldlog"
     cd ../openjdk8; docker-compose build 2>&1 | tee -a "$bldlog"
@@ -31,6 +35,7 @@ fi
 if [ $(( $mode & 2 )) -eq 2 ]; then
     docker-compose build base 2>&1 | tee -a "$bldlog" 
     docker-compose build supervisord 2>&1 | tee -a "$bldlog"
+    docker-compose build nginx_base 2>&1 | tee -a "$bldlog"
     docker-compose build php5 2>&1 | tee -a "$bldlog"
     docker-compose build php7 2>&1 | tee -a "$bldlog"
     docker-compose build openjdk 2>&1 | tee -a "$bldlog"

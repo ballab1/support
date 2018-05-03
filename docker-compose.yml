@@ -148,6 +148,37 @@ services:
         volumes:
             - ./movefiles:/usr/src/myapp
 
+    nginx_base:
+        build:
+            args:
+                CBF_VERSION: ${CBF_VERSION:-dev}
+                CONTAINER_NAME: nginx_base
+                CONTAINER_VERSION: 1.0.8
+                FROM_BASE: supervisord:${CONTAINER_TAG:-20180421}
+            cache_from:
+                - alpine:3.6
+                - base_container:${CONTAINER_TAG:-20180421}
+                - supervisord:${CONTAINER_TAG:-20180421}
+            context: ./nginx_base
+            dockerfile: Dockerfile
+        container_name: nginx_base
+        environment:
+            DEBUG_TRACE: ${DEBUG_TRACE:-0}
+            SUPERVISORD_PASS: ${CFG_PASS}
+            SUPERVISORD_USER: ${CFG_USER} 
+        hostname: nginx_base
+        image: nginx_base:${CONTAINER_TAG:-20180421}
+        logging:
+            driver: json-file
+            options:
+                max-file: "3"
+                max-size: "10m"
+        ports:
+           - 8101:80
+           - 9101:9001
+# only use when building a 'service container' # only use when building a 'service container'
+#        restart: unless-stopped
+
     openjdk:
         build:
             args:
@@ -200,21 +231,28 @@ services:
                 CBF_VERSION: ${CBF_VERSION:-v3.0}
                 CONTAINER_NAME: php5
                 CONTAINER_VERSION: 1.0.8
-                FROM_BASE: supervisord:${CONTAINER_TAG:-20180421}
+                FROM_BASE: nginx_base:${CONTAINER_TAG:-20180421}
             cache_from:
                 - alpine:3.6
                 - base_container:${CONTAINER_TAG:-20180421}
                 - supervisord:${CONTAINER_TAG:-20180421}
+                - nginx_base:${CONTAINER_TAG:-20180421}
             context: ./php5
             dockerfile: Dockerfile
         environment:
             DEBUG_TRACE: ${DEBUG_TRACE:-0}
+            SUPERVISORD_PASS: ${CFG_PASS}
+            SUPERVISORD_USER: ${CFG_USER} 
         image: php5:${CONTAINER_TAG:-20180421}
         logging:
             driver: json-file
             options:
                 max-file: "3"
                 max-size: "10m"
+        ports:
+           - 8102:80
+           - 9102:9001
+# only use when building a 'service container' 
         restart: unless-stopped
 
     php7:
@@ -223,16 +261,19 @@ services:
                 CBF_VERSION: ${CBF_VERSION:-dev}
                 CONTAINER_NAME: php7
                 CONTAINER_VERSION: 1.0.8
-                FROM_BASE: supervisord:${CONTAINER_TAG:-20180421}
+                FROM_BASE: nginx_base:${CONTAINER_TAG:-20180421}
             cache_from:
                 - alpine:3.6
                 - base_container:${CONTAINER_TAG:-20180421}
                 - supervisord:${CONTAINER_TAG:-20180421}
+                - nginx_base:${CONTAINER_TAG:-20180421}
             context: ./php7
             dockerfile: Dockerfile
         container_name: php7
         environment:
             DEBUG_TRACE: ${DEBUG_TRACE:-0}
+            SUPERVISORD_PASS: ${CFG_PASS}
+            SUPERVISORD_USER: ${CFG_USER} 
         hostname: php7
         image: php7:${CONTAINER_TAG:-20180421}
         logging:
@@ -240,6 +281,9 @@ services:
             options:
                 max-file: "3"
                 max-size: "10m"
+        ports:
+           - 8103:80
+           - 9103:9001
         restart: unless-stopped
 
     postgres:
