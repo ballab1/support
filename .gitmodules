@@ -13,12 +13,45 @@
 [submodule "files-librd"]
     path = files-librd
     url = ../files-librd.git
+[submodule "grafana"]
+    path = grafana
+    url = ../grafana.git
 [submodule "gradle"]
     path = gradle
     url = ../gradle.git
+[submodule "hubot"]
+    path = hubot
+    url = ../hubot.git
+[submodule "jenkins"]
+    path = jenkins
+    url = ../jenkins.git
+[submodule "kafka-broker"]
+    path = kafka-broker
+    url = ../kafka-broker.git
+[submodule "kafka-manager"]
+    path = kafka-manager
+    url = ../kafka-manager.git
+[submodule "kafka-zookeeper"]
+    path = kafka-zookeeper
+    url = ../kafka-zookeeper.git
 [submodule "movefiles"]
     path = movefiles
     url = ../movefiles.git
+[submodule "mysql"]
+    path = mysql
+    url = ../mysql.git
+[submodule "nagios"]
+    path = nagios
+    url = ../nagios.git
+[submodule "nginx"]
+    path = nginx
+    url = ../nginx.git
+[submodule "nginx_alt"]
+    path = nginx_alt
+    url = ../nginx_alt.git
+[submodule "nginx_base"]
+    path = nginx_base
+    url = ../nginx_base.git
 [submodule "openjdk8"]
     path = openjdk8
     url = ../openjdk8.git
@@ -31,18 +64,27 @@
 [submodule "perl-carton"]
     path = perl-carton
     url = ../perl-carton.git
+[submodule "phpmyadmin"]
+    path = phpmyadmin
+    url = ../phpmyadmin.git
 [submodule "postgres"]
     path = postgres
     url = ../postgres.git
 [submodule "php5"]
     path = php5
     url = ../php5.git
+[submodule "php7"]
+    path = php7
+    url = ../php7.git
 [submodule "supervisord"]
     path = supervisord
     url = ../supervisord
-[submodule "php7"]
-	path = php7
-	url = https://github.com/ballab1/php7.git
-[submodule "nginx_base"]
-	path = nginx_base
-	url = https://github.com/ballab1/nginx_base.git
+[submodule "supervisord-monitor"]
+    path = supervisord-monitor
+    url = ../supervisord-monitor.git
+[submodule "webdav"]
+    path = webdav
+    url = ../webdav.git
+[submodule "zenphoto"]
+    path = zenphoto
+    url = ../zenphoto.git
