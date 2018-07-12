@@ -18,8 +18,8 @@ function build() {
     popd >/dev/null
 }
 
-declare start=$(date +%s) 
-declare -r TOOLS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"   
+declare start=$(date +%s)
+declare -r TOOLS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"    
 
 export CFG_GITHUB_EMAIL=''
 export CFG_GITHUB_HUBOT_TOKEN=''
@@ -40,28 +40,7 @@ export CFG_USER=''
 
 cd "$TOOLS"
 
-CBF_VERSION=v3.0 build base_container
-build supervisord
-build nginx_base
-build php5
-build php7
-build openjdk8
-
-build hubot
-build jenkins
-build kafka-broker
-build kafka-manager
-build kafka-zookeeper
-build mysql
-build nagios
-build nginx
-#build nginx_alt
-build nodervisor
-build phpadmin
-#build supervisord-monitor
-build webdav
-build zenphoto 
-
+CBF_VERSION=dev build base_container
 build perl.5-26-2
 build perl-carton
 build files-kafka
@@ -69,11 +48,6 @@ build files-librd
 #build jenkins-build-events
 #build jira-fd-kafka
 build movefiles
-
-build alpinefull
-build postgres
-build openjre8
-build gradle
 
 
 declare finish=$(date +%s)
