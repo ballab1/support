@@ -218,9 +218,9 @@ services:
             KAFKA_MANAGER_USERNAME: admin
             KAFKA_MANAGER_AUTH_ENABLED: 'false'
             KAFKA_MANAGER_LOGLEVEL: INFO
-            KM_HTTP_CONTEXT: /
-#            KM_HTTP_CONTEXT: /kafkamgr
-            ZK_HOSTS: 10.1.3.6:2181,10.1.3.11:2181
+#            KM_HTTP_CONTEXT: /
+            KM_HTTP_CONTEXT: /kafkamgr
+            ZK_HOSTS: zookeeper:2181,10.1.3.6:2181,10.1.3.11:2181
         image: kafkamgr:${CONTAINER_TAG:-latest}
 
     movefiles:
@@ -299,13 +299,13 @@ services:
                 CBF_VERSION: "${CBF_VERSION:-}"
                 CONTAINER_NAME: nginx
                 CONTAINER_VERSION: ${CONTAINER_VERSION:-3.0.0}
-                FROM_BASE: php5:${CONTAINER_TAG:-latest}
+                FROM_BASE: nginx_base:${CONTAINER_TAG:-latest}
                 SSL_ALREADY_GENERATED: 'true'
             cache_from:
                 - alpine:3.7
                 - supervisord:${CONTAINER_TAG:-latest}
                 - nginx_base:${CONTAINER_TAG:-latest}
-                - php5:${CONTAINER_TAG:-latest}
+#                - php5:${CONTAINER_TAG:-latest}
             context: ./nginx
             dockerfile: Dockerfile
         container_name: nginx
@@ -434,13 +434,13 @@ services:
                 CBF_VERSION: "${CBF_VERSION}"
                 CONTAINER_NAME: phpadmin
                 CONTAINER_VERSION: ${CONTAINER_VERSION:-3.0.0}
-                FROM_BASE: php5:${CONTAINER_TAG:-latest}
+                FROM_BASE: php7:${CONTAINER_TAG:-latest}
             cache_from:
                 - alpine:3.7
                 - base_container:${CONTAINER_TAG:-latest}
                 - supervisord:${CONTAINER_TAG:-latest}
                 - nginx_base:${CONTAINER_TAG:-latest}
-                - php5:${CONTAINER_TAG:-latest}
+                - php7:${CONTAINER_TAG:-latest}
             context: ./phpadmin
             dockerfile: Dockerfile
         container_name: phpadmin
