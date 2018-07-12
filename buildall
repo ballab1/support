@@ -29,9 +29,6 @@ docker-compose build nginx_base
 docker-compose build php5
 docker-compose build php7
 docker-compose build openjdk8
-docker-compose build openjre8
-docker-compose build perl
-docker-compose build carton
 
 docker-compose build hubot
 docker-compose build jenkins
@@ -48,6 +45,9 @@ docker-compose build webdav
 docker-compose build zen
 
 docker-compose build alpinefull
+docker-compose build openjre8
+docker-compose build perl
+docker-compose build carton
 docker-compose build files-kafka
 docker-compose build files-librd
 docker-compose build gradle
