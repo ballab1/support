@@ -53,22 +53,25 @@ build kafka-zookeeper
 build mysql
 build nagios
 build nginx
+#build nginx_alt
+build nodervisor
 build phpadmin
-build supervisord-monitor
+#build supervisord-monitor
 build webdav
 build zenphoto 
 
-build alpinefull
-build postgres
-build openjre8
 build perl.5-26-2
 build perl-carton
 build files-kafka
 build files-librd
-build gradle
 #build jenkins-build-events
 #build jira-fd-kafka
 build movefiles
+
+build alpinefull
+build postgres
+build openjre8
+build gradle
 
 
 declare finish=$(date +%s)

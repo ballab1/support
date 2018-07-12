@@ -1,11 +1,9 @@
 TODO
 ```
 
-Jenkins:   Permission denied: /var/run/docker.sock
 Kafka broker/zookeeper issues
 Grafana update
 Nagios/nconf with php7
-Phpmyadmin configuration
 mysql update
 Smonitor
 SMB write access
@@ -13,16 +11,12 @@ SMB write access
 Track created users for runtime changes
 Separate build, package and deploy/run actions
 Fix up docker dependency script 
-consolidate nginx_alt into nginx_base
 Add getcomposer (for PHP) to php5
 Add getcomposer (for PHP) to php7
 
 
 security
-- mapping layer for ENV variables.  use docker-compose.yml
-- base set going into docker-compose.yml : individual set for each container
-- need layered containers
-- https://stackoverflow.com/questions/5725296/difference-between-sh-and-bash
+- use git crypt
 
 containers
     ubuntu-s1 zookeeper/broker
@@ -35,9 +29,6 @@ configuration
     script to reconfigure demo (change IP addresses in correct places)
     supervisord-monitor
     
-CBF
-    parse Dockerfile for 'sudo' requirement  (USER + VOLUME): warn on 'USER' rather than 'USER_UID'
-    
 
 
 get stuff working:
@@ -47,8 +38,6 @@ get stuff working:
     nagios:
         fcgiwrap: REMOTE_USER not found  - when initial page loads
         nagios logs to supervisord.log
-    phpadmin:
-        resolve login issue where page is left blank
 
         
 enhancements:
@@ -75,7 +64,6 @@ enhancements:
             zen, nagios, phpadmin, grafana, webdav, hubot, jenkins, mysql
     implement jenkins jobs as containers
     tie DBMS backups into startup by copying SQL files to "ubuntu-s:\home\bobb\prod\mysql\vols\loader\dumps" 
-    setup nodervisor  (supervisor views with nodejs)
     make fancy report for 'Jenkins Uptime Pipeline' and export data to kafka
     create/use base containers for 'nginx+php5+fpm'/'nginx+php7+fpm'
     reconfigue nagios
@@ -94,11 +82,22 @@ future development
 
 Done
 =============================================================
+security
+- mapping layer for ENV variables.  use docker-compose.yml
+- base set going into docker-compose.yml : individual set for each container
+- need layered containers
+
+phpadmin:
+    resolve login issue where page is left blank
+Phpmyadmin configuration
+Jenkins:   Permission denied: /var/run/docker.sock
+consolidate nginx_alt into nginx_base
 Move bashlib to action_folder
 Consolidate build & runtime folder structure
 Nagios reverse proxy
 Allow any action to have an osId extension to support conditional actions
-
+setup nodervisor  (supervisor views with nodejs)
+    
 Hubot update
 Zenphoto update
 consolidate nginx_alt into nginx_base
@@ -116,3 +115,6 @@ Add getcomposer (for PHP) to php7
         Always starts up in 'setup / update' mode
     Jenkins errors (on nginx):
                 need dockerentry.sh to set owner of files in .ssh
+    
+CBF
+    parse Dockerfile for 'sudo' requirement  (USER + VOLUME): warn on 'USER' rather than 'USER_UID'

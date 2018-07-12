@@ -46,6 +46,9 @@
 [submodule "nginx"]
     path = nginx
     url = ../nginx.git
+[submodule "nginx_alt"]
+    path = nginx_alt
+    url = ../nginx_alt
 [submodule "nginx_base"]
     path = nginx_base
     url = ../nginx_base.git
@@ -59,7 +62,7 @@
     path = openjre8
     url = ../openjre8.git
 [submodule "perl.5-26-2"]
-	path = perl.5-26-2
+    path = perl.5-26-2
     url = ../perl.5-26-2.git
 [submodule "perl-carton"]
     path = perl-carton
