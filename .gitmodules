@@ -59,7 +59,7 @@
     path = openjre8
     url = ../openjre8.git
 [submodule "perl.5-26-2"]
-    path = perl.5-26.2
+	path = perl.5-26-2
     url = ../perl.5-26-2.git
 [submodule "perl-carton"]
     path = perl-carton
