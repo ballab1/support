@@ -34,11 +34,8 @@ docker-compose build openjre8
 docker-compose build perl
 docker-compose build carton
 
-docker-compose build gradle
 docker-compose build hubot
 docker-compose build jenkins
-#docker-compose build jbe
-#docker-compose build jfdk
 docker-compose build broker
 docker-compose build kafkamgr
 docker-compose build zookeeper
@@ -54,6 +51,9 @@ docker-compose build zen
 docker-compose build alpinefull
 docker-compose build files-kafka
 docker-compose build files-librd
+docker-compose build gradle
+#docker-compose build jbe
+#docker-compose build jfdk
 docker-compose build movefiles
 
 set +o verbose
