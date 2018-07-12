@@ -4,24 +4,24 @@ services:
     alpinefull:
         build:
             args:
-                CBF_VERSION: ${CBF_VERSION:-v3.0}
+                CBF_VERSION: "${CBF_VERSION:-}"
                 CONTAINER_NAME: alpinefull
                 CONTAINER_VERSION: 1.0.8
-                FROM_BASE: base_container:${CONTAINER_TAG:-20180608}
+                FROM_BASE: base_container:${CONTAINER_TAG:-latest}
             cache_from:
-                - base_container:${CONTAINER_TAG:-20180608}
+                - base_container:${CONTAINER_TAG:-latest}
                 - alpine:3.7
             context: ./alpinefull
             dockerfile: Dockerfile
         container_name: alpinefull
         environment:
             DEBUG_TRACE: ${DEBUG_TRACE:-0}
-        image: alpinefull:${CONTAINER_TAG:-20180608}
+        image: alpinefull:${CONTAINER_TAG:-latest}
 
     base:
         build:
             args:
-                CBF_VERSION: ${CBF_VERSION:-v3.0}
+                CBF_VERSION: "${CBF_VERSION:-}"
                 CONTAINER_NAME: base_container
                 CONTAINER_VERSION: 1.0.8
                 FROM_BASE: alpine:3.7
@@ -33,12 +33,12 @@ services:
         container_name: base
         environment:
             DEBUG_TRACE: ${DEBUG_TRACE:-0}
-        image: base_container:${CONTAINER_TAG:-20180608}
+        image: base_container:${CONTAINER_TAG:-latest}
 
     broker:
         build:
             args:
-                CBF_VERSION: "${CBF_VERSION}"
+                CBF_VERSION: "${CBF_VERSION:-}"
                 CONTAINER_NAME: broker
                 CONTAINER_VERSION: 3.0.0
                 FROM_BASE: openjdk_8u131.11-r2:${CONTAINER_TAG:-latest}
@@ -49,7 +49,7 @@ services:
                 - alpine:3.7
                 - base_container:${CONTAINER_TAG:-latest}
                 - openjdk_8u131.11-r2:${CONTAINER_TAG:-latest}
-            context: .
+            context: ./kafka-broker
             dockerfile: Dockerfile
         container_name: broker
 #        depends_on:
@@ -72,49 +72,49 @@ services:
     carton:
         build:
             args:
-                CBF_VERSION: ${CBF_VERSION:-v3.0}
+                CBF_VERSION: "${CBF_VERSION:-}"
                 CONTAINER_NAME: perl-carton
                 CONTAINER_VERSION: 1.0.8
-                FROM_BASE: perl-5.24.3:${CONTAINER_TAG:-20180608}
+                FROM_BASE: perl-5.24.3:${CONTAINER_TAG:-latest}
             cache_from:
-                - perl-5.24.3:${CONTAINER_TAG:-20180608}
-                - base_container:${CONTAINER_TAG:-20180608}
+                - perl-5.24.3:${CONTAINER_TAG:-latest}
+                - base_container:${CONTAINER_TAG:-latest}
                 - alpine:3.7
             context: ./perl-carton
             dockerfile: Dockerfile
         container_name: carton
         environment:
             DEBUG_TRACE: ${DEBUG_TRACE:-0}
-        image: perl-carton:${CONTAINER_TAG:-20180608}
+        image: perl-carton:${CONTAINER_TAG:-latest}
 
     files-librd:
         build:
             args:
                 CONTAINER_NAME: files-librd
                 CONTAINER_VERSION: 1.0.8
-                FROM_BASE: perl-carton:${CONTAINER_TAG:-20180608}
+                FROM_BASE: perl-carton:${CONTAINER_TAG:-latest}
             cache_from:
-                - perl-carton:${CONTAINER_TAG:-20180608}
-                - perl-5.24.3:${CONTAINER_TAG:-20180608}
-                - base_container:${CONTAINER_TAG:-20180608}
+                - perl-carton:${CONTAINER_TAG:-latest}
+                - perl-5.24.3:${CONTAINER_TAG:-latest}
+                - base_container:${CONTAINER_TAG:-latest}
                 - alpine:3.7
             context: ./files-librd
             dockerfile: Dockerfile
         container_name: files-librd
         environment:
             DEBUG_TRACE: ${DEBUG_TRACE:-0}
-        image: files-librd:${CONTAINER_TAG:-20180608}
+        image: files-librd:${CONTAINER_TAG:-latest}
 
     files-kafka:
         build:
             args:
                 CONTAINER_NAME: files-kafka
                 CONTAINER_VERSION: 1.0.8
-                FROM_BASE: perl-carton:${CONTAINER_TAG:-20180608}
+                FROM_BASE: perl-carton:${CONTAINER_TAG:-latest}
             cache_from:
-                - perl-carton:${CONTAINER_TAG:-20180608}
-                - perl-5.24.3:${CONTAINER_TAG:-20180608}
-                - base_container:${CONTAINER_TAG:-20180608}
+                - perl-carton:${CONTAINER_TAG:-latest}
+                - perl-5.24.3:${CONTAINER_TAG:-latest}
+                - base_container:${CONTAINER_TAG:-latest}
                 - alpine:3.7
             context: ./files-kafka
             dockerfile: Dockerfile
@@ -122,39 +122,39 @@ services:
         environment:
             DEBUG_TRACE: ${DEBUG_TRACE:-0}
         hostname: files-kafka
-        image: files-kafka:${CONTAINER_TAG:-20180608}
+        image: files-kafka:${CONTAINER_TAG:-latest}
 
     gradle:
         build:
             args:
-                CBF_VERSION: ${CBF_VERSION:-v3.0}
+                CBF_VERSION: "${CBF_VERSION:-}"
                 CONTAINER_NAME: gradle
                 CONTAINER_VERSION: 1.0.8
-                FROM_BASE: openjdk_8u131.11-r2:${CONTAINER_TAG:-20180608}
+                FROM_BASE: openjdk_8u131.11-r2:${CONTAINER_TAG:-latest}
             cache_from:
-                - openjdk_8u131.11-r2:${CONTAINER_TAG:-20180608}
-                - base_container:${CONTAINER_TAG:-20180608}
+                - openjdk_8u131.11-r2:${CONTAINER_TAG:-latest}
+                - base_container:${CONTAINER_TAG:-latest}
                 - alpine:3.7
-            dockerfile: Dockerfile
             context: ./gradle
+            dockerfile: Dockerfile
         container_name: gradle
         environment:
             DEBUG_TRACE: ${DEBUG_TRACE:-0}
-        image: gradle_4.4.1-jdk8-alpine:${CONTAINER_TAG:-20180608}
+        image: gradle_4.4.1-jdk8-alpine:${CONTAINER_TAG:-latest}
 
     hubot:
         build:
             args:
-                CBF_VERSION: "${CBF_VERSION}"
+                CBF_VERSION: "${CBF_VERSION:-}"
                 CONTAINER_NAME: hubot
                 CONTAINER_VERSION: 3.0.0
                 FROM_BASE: supervisord:${CONTAINER_TAG:-latest}
                 HUBOT_USER: hubot
-            context: .
             cache_from:
                 - alpine:3.7
                 - base_container:${CONTAINER_TAG:-latest}
                 - supervisord:${CONTAINER_TAG:-latest}
+            context: ./hubot
             dockerfile: Dockerfile
         container_name: hubot
         environment:
@@ -168,10 +168,10 @@ services:
             SUPERVISORD_USER: $CFG_USER
         image: hubot:${CONTAINER_TAG:-latest}
  
-   jenkins:
+    jenkins:
         build:
             args:
-                CBF_VERSION: "${CBF_VERSION}"
+                CBF_VERSION: "${CBF_VERSION:-}"
                 CONTAINER_NAME: jenkins
                 CONTAINER_VERSION: 3.0.0
                 FROM_BASE: openjdk_8u131.11-r2:${CONTAINER_TAG:-latest}
@@ -184,7 +184,7 @@ services:
                 - alpine:3.7
                 - base_container:${CONTAINER_TAG:-latest}
                 - openjdk_8u131.11-r2:${CONTAINER_TAG:-latest}
-            context: .
+            context: ./jenkins
             dockerfile: Dockerfile
         container_name: jenkins
         environment:
@@ -197,7 +197,7 @@ services:
     kafkamgr:
         build:
             args:
-                CBF_VERSION: "${CBF_VERSION}"
+                CBF_VERSION: "${CBF_VERSION:-}"
                 CONTAINER_NAME: kafkamgr
                 CONTAINER_VERSION: 3.0.0
                 FROM_BASE: openjdk_8u131.11-r2:${CONTAINER_TAG:-latest}
@@ -206,7 +206,7 @@ services:
                 - alpine:3.7
                 - base_container:${CONTAINER_TAG:-latest}
                 - openjdk_8u131.11-r2:${CONTAINER_TAG:-latest}
-            context: .
+            context: ./kafka-manager
             dockerfile: Dockerfile
         container_name: kafkamgr
         environment:
@@ -228,30 +228,30 @@ services:
             args:
                 CONTAINER_NAME: movefiles
                 CONTAINER_VERSION: 1.0.8
-                FROM_BASE: perl-carton:${CONTAINER_TAG:-20180608}
+                FROM_BASE: perl-carton:${CONTAINER_TAG:-latest}
             cache_from:
-                - perl-carton:${CONTAINER_TAG:-20180608}
-                - perl-5.24.3:${CONTAINER_TAG:-20180608}
-                - base_container:${CONTAINER_TAG:-20180608}
+                - perl-carton:${CONTAINER_TAG:-latest}
+                - perl-5.24.3:${CONTAINER_TAG:-latest}
+                - base_container:${CONTAINER_TAG:-latest}
                 - alpine:3.7
             context: ./movefiles
             dockerfile: Dockerfile
         container_name: moovefiles
         environment:
             DEBUG_TRACE: ${DEBUG_TRACE:-0}
-        image: movefiles:${CONTAINER_TAG:-20180608}
+        image: movefiles:${CONTAINER_TAG:-latest}
 
     mysql:
         build:
             args:
-                CBF_VERSION: "${CBF_VERSION}"
+                CBF_VERSION: "${CBF_VERSION:-}"
                 CONTAINER_NAME: mysql
                 CONTAINER_VERSION: 3.0.0
                 FROM_BASE: mysql:8.0.0
                 TZ: "America/New_York"
             cache_from:
                 - mysql:8.0.0
-            context: .
+            context: ./mysql
             dockerfile: Dockerfile
         container_name: mysql
         environment:
@@ -266,7 +266,7 @@ services:
     nagios:
         build:
             args:
-                CBF_VERSION: "${CBF_VERSION}"
+                CBF_VERSION: "${CBF_VERSION:-}"
                 CONTAINER_NAME: nagios
                 CONTAINER_VERSION: 3.0.0
                 FROM_BASE: php5:${CONTAINER_TAG:-latest}
@@ -275,7 +275,7 @@ services:
                 - base_container:${CONTAINER_TAG:-latest}
                 - supervisord:${CONTAINER_TAG:-latest}
                 - php5:${CONTAINER_TAG:-latest}
-            context: . 
+            context: ./nagios
             dockerfile: Dockerfile
         container_name: nagios
         environment:
@@ -296,7 +296,7 @@ services:
     nginx:
         build:
             args:
-                CBF_VERSION: "${CBF_VERSION}"
+                CBF_VERSION: "${CBF_VERSION:-}"
                 CONTAINER_NAME: nginx
                 CONTAINER_VERSION: 3.0.0
                 FROM_BASE: php5:${CONTAINER_TAG:-latest}
@@ -306,7 +306,7 @@ services:
                 - supervisord:${CONTAINER_TAG:-latest}
                 - nginx_base:${CONTAINER_TAG:-latest}
                 - php5:${CONTAINER_TAG:-latest}
-            context: .
+            context: ./nginx
             dockerfile: Dockerfile
         container_name: nginx
         environment:
@@ -318,7 +318,7 @@ services:
     nginx_alt:
         build:
             args:
-                CBF_VERSION: ${CBF_VERSION:-dev}
+                CBF_VERSION: "${CBF_VERSION:-}"
                 CONTAINER_NAME: nginx_alt
                 CONTAINER_VERSION: 1.0.0
                 FROM_BASE: nginx:1.15.0-alpine
@@ -337,14 +337,14 @@ services:
     nginx_base:
         build:
             args:
-                CBF_VERSION: ${CBF_VERSION:-dev}
+                CBF_VERSION: "${CBF_VERSION:-}"
                 CONTAINER_NAME: nginx_base
                 CONTAINER_VERSION: 1.0.8
-                FROM_BASE: supervisord:${CONTAINER_TAG:-20180608}
+                FROM_BASE: supervisord:${CONTAINER_TAG:-latest}
             cache_from:
                 - alpine:3.7
-                - base_container:${CONTAINER_TAG:-20180608}
-                - supervisord:${CONTAINER_TAG:-20180608}
+                - base_container:${CONTAINER_TAG:-latest}
+                - supervisord:${CONTAINER_TAG:-latest}
             context: ./nginx_base
             dockerfile: Dockerfile
         container_name: nginx_base
@@ -352,71 +352,71 @@ services:
             DEBUG_TRACE: ${DEBUG_TRACE:-0}
             SUPERVISORD_PASS: ${CFG_PASS}
             SUPERVISORD_USER: ${CFG_USER} 
-        image: nginx_base:${CONTAINER_TAG:-20180608}
+        image: nginx_base:${CONTAINER_TAG:-latest}
 
     openjdk8:
         build:
             args:
-                CBF_VERSION: ${CBF_VERSION:-v3.0}
+                CBF_VERSION: "${CBF_VERSION:-}"
                 CONTAINER_NAME: openjdk_8u131.11-r2
                 CONTAINER_VERSION: 1.0.8
-                FROM_BASE: base_container:${CONTAINER_TAG:-20180608}
+                FROM_BASE: base_container:${CONTAINER_TAG:-latest}
             cache_from:
-                - base_container:${CONTAINER_TAG:-20180608}
+                - base_container:${CONTAINER_TAG:-latest}
                 - alpine:3.7
             context: ./openjdk8
             dockerfile: Dockerfile
         container_name: openjdk8
         environment:
             DEBUG_TRACE: ${DEBUG_TRACE:-0}
-        image: openjdk_8u131.11-r2:${CONTAINER_TAG:-20180608} 
+        image: openjdk_8u131.11-r2:${CONTAINER_TAG:-latest}
 
     openjre8:
         build:
             args:
-                CBF_VERSION: ${CBF_VERSION:-v3.0}
+                CBF_VERSION: "${CBF_VERSION:-}"
                 CONTAINER_NAME: openjre_8u131.11-r2
                 CONTAINER_VERSION: 1.0.8
-                FROM_BASE: base_container:${CONTAINER_TAG:-20180608}
+                FROM_BASE: base_container:${CONTAINER_TAG:-latest}
             cache_from:
-                - base_container:${CONTAINER_TAG:-20180608}
+                - base_container:${CONTAINER_TAG:-latest}
                 - alpine:3.7
             context: ./openjre8
         container_name: openjre8
         environment:
             DEBUG_TRACE: ${DEBUG_TRACE:-0}
-        image: openjre_8u131.11-r2:${CONTAINER_TAG:-20180608} 
+        image: openjre_8u131.11-r2:${CONTAINER_TAG:-latest}
 
     perl:
         build:
             args:
-                CBF_VERSION: ${CBF_VERSION:-v3.0}
+                CBF_VERSION: "${CBF_VERSION:-}"
                 CONTAINER_NAME: perl-5.24.3
                 CONTAINER_VERSION: 1.0.8
-                FROM_BASE: base_container:${CONTAINER_TAG:-20180608}
+                FROM_BASE: base_container:${CONTAINER_TAG:-latest}
             cache_from:
-                - base_container:${CONTAINER_TAG:-20180608}
+                - base_container:${CONTAINER_TAG:-latest}
             context: ./perl.5-24-3
             dockerfile: Dockerfile
         container_name: perl
         environment:
             DEBUG_TRACE: ${DEBUG_TRACE:-0}
-        image: perl-5.24.3:${CONTAINER_TAG:-20180608}
+        image: perl-5.24.3:${CONTAINER_TAG:-latest}
 
     php5:
         build:
             args:
-                CBF_VERSION: ${CBF_VERSION:-v3.0}
+                CBF_VERSION: "${CBF_VERSION:-}"
                 CONTAINER_NAME: php5
                 CONTAINER_VERSION: 1.0.8
-##                FROM_BASE: nginx_base:${CONTAINER_TAG:-20180608}
-                FROM_BASE: nginx_alt:${CONTAINER_TAG:-20180608}
+##                FROM_BASE: nginx_base:${CONTAINER_TAG:-latest}
+                FROM_BASE: nginx_alt:${CONTAINER_TAG:-latest}
             cache_from:
                 - alpine:3.7
-##                - base_container:${CONTAINER_TAG:-20180608}
-##                - supervisord:${CONTAINER_TAG:-20180608}
-##                - nginx_base:${CONTAINER_TAG:-20180608}
-                - nginx_alt:${CONTAINER_TAG:-20180608}
+##                - base_container:${CONTAINER_TAG:-latest}
+##                - supervisord:${CONTAINER_TAG:-latest}
+##                - nginx_base:${CONTAINER_TAG:-latest}
+                - nginx_alt:${CONTAINER_TAG:-latest}
             context: ./php5
             dockerfile: Dockerfile
         container_name: php5
@@ -424,20 +424,20 @@ services:
             DEBUG_TRACE: ${DEBUG_TRACE:-0}
             SUPERVISORD_PASS: ${CFG_PASS}
             SUPERVISORD_USER: ${CFG_USER} 
-        image: php5:${CONTAINER_TAG:-20180608}
+        image: php5:${CONTAINER_TAG:-latest}
 
     php7:
         build:
             args:
-                CBF_VERSION: ${CBF_VERSION:-dev}
+                CBF_VERSION: "${CBF_VERSION:-}"
                 CONTAINER_NAME: php7
                 CONTAINER_VERSION: 1.0.8
-                FROM_BASE: nginx_base:${CONTAINER_TAG:-20180608}
+                FROM_BASE: nginx_base:${CONTAINER_TAG:-latest}
             cache_from:
                 - alpine:3.7
-                - base_container:${CONTAINER_TAG:-20180608}
-                - supervisord:${CONTAINER_TAG:-20180608}
-                - nginx_base:${CONTAINER_TAG:-20180608}
+                - base_container:${CONTAINER_TAG:-latest}
+                - supervisord:${CONTAINER_TAG:-latest}
+                - nginx_base:${CONTAINER_TAG:-latest}
             context: ./php7
             dockerfile: Dockerfile
         container_name: php7
@@ -445,17 +445,17 @@ services:
             DEBUG_TRACE: ${DEBUG_TRACE:-0}
             SUPERVISORD_PASS: ${CFG_PASS}
             SUPERVISORD_USER: ${CFG_USER} 
-        image: php7:${CONTAINER_TAG:-20180608}
+        image: php7:${CONTAINER_TAG:-latest}
 
     postgres:
         build:
             args:
-                CBF_VERSION: ${CBF_VERSION:-v3.0}
+                CBF_VERSION: "${CBF_VERSION:-}"
                 CONTAINER_NAME: postgres
                 CONTAINER_VERSION: 1.0.8
-                FROM_BASE: base_container:${CONTAINER_TAG:-20180608}
+                FROM_BASE: base_container:${CONTAINER_TAG:-latest}
             cache_from:
-                - base_container:${CONTAINER_TAG:-20180608}
+                - base_container:${CONTAINER_TAG:-latest}
                 - alpine:3.7
             context: ./postgres
             dockerfile: Dockerfile
@@ -463,12 +463,12 @@ services:
         environment:
             DEBUG_TRACE: ${DEBUG_TRACE:-0}
             POSTGRES_PASSWORD: postgres
-        image: postgresql-10.3:${CONTAINER_TAG:-20180608}
+        image: postgresql-10.3:${CONTAINER_TAG:-latest}
 
     smonitor:
         build:
             args:
-                CBF_VERSION: ${CBF_VERSION:-dev}
+                CBF_VERSION: "${CBF_VERSION:-}"
                 CONTAINER_NAME: smonitor
                 CONTAINER_VERSION: 3.0.0
                 FROM_BASE: php5:${CONTAINER_TAG:-latest}
@@ -478,7 +478,7 @@ services:
                 - supervisord:${CONTAINER_TAG:-latest}
                 - nginx_base:${CONTAINER_TAG:-latest}
                 - php5:${CONTAINER_TAG:-latest}
-            context: .
+            context: ./supervisord-monitor
             dockerfile: Dockerfile
         container_name: smonitor
         environment:
@@ -492,12 +492,12 @@ services:
     supervisord:
         build:
             args:
-                CBF_VERSION: ${CBF_VERSION:-v3.0}
+                CBF_VERSION: "${CBF_VERSION:-}"
                 CONTAINER_NAME: supervisord
                 CONTAINER_VERSION: 1.0.8
-                FROM_BASE: base_container:${CONTAINER_TAG:-20180608}
+                FROM_BASE: base_container:${CONTAINER_TAG:-latest}
             cache_from:
-                - base_container:${CONTAINER_TAG:-20180608}
+                - base_container:${CONTAINER_TAG:-latest}
                 - alpine:3.7
             context: ./supervisord
             dockerfile: Dockerfile
@@ -506,12 +506,12 @@ services:
             DEBUG_TRACE: ${DEBUG_TRACE:-0}
             SUPERVISORD_PASS: $CFG_PASS
             SUPERVISORD_USER: $CFG_USER
-        image: supervisord:${CONTAINER_TAG:-20180608}
+        image: supervisord:${CONTAINER_TAG:-latest}
 
     webdav:
         build:
             args:
-                CBF_VERSION: "${CBF_VERSION}"
+                CBF_VERSION: "${CBF_VERSION:-}"
                 CONTAINER_NAME: webdav
                 CONTAINER_VERSION: 3.0.0
                 FROM_BASE: base_container:${CONTAINER_TAG:-latest}
@@ -521,7 +521,7 @@ services:
             cache_from:
                 - alpine:3.7
                 - base_container:${CONTAINER_TAG:-latest}
-            context: .
+            context: ./webdav
             dockerfile: Dockerfile
         container_name: webdav
         environment:
@@ -536,16 +536,16 @@ services:
     zen:
         build:
             args:
-                CBF_VERSION: "${CBF_VERSION}"
+                CBF_VERSION: "${CBF_VERSION:-}"
                 CONTAINER_NAME: zen
                 CONTAINER_VERSION: 3.0.0
                 FROM_BASE: php7:${CONTAINER_TAG:-latest}
             cache_from:
-		- alpine:3.7
-		- base_container:${CONTAINER_TAG:-latest}
-		- supervisord:${CONTAINER_TAG:-latest}
-		- php7:${CONTAINER_TAG:-latest}
-            context: .
+                - alpine:3.7
+                - base_container:${CONTAINER_TAG:-latest}
+                - supervisord:${CONTAINER_TAG:-latest}
+                - php7:${CONTAINER_TAG:-latest}
+            context: ./zenphoto
             dockerfile: Dockerfile
         container_name: zen
         environment:
@@ -560,7 +560,7 @@ services:
     zookeeper:
         build:
             args:
-                CBF_VERSION: "${CBF_VERSION}"
+                CBF_VERSION: "${CBF_VERSION:-}"
                 CONTAINER_NAME: zookeeper
                 CONTAINER_VERSION: 3.0.0
                 FROM_BASE: openjdk_8u131.11-r2:${CONTAINER_TAG:-latest}
@@ -568,7 +568,7 @@ services:
                 - alpine:3.7
                 - base_container:${CONTAINER_TAG:-latest}
                 - openjdk_8u131.11-r2:${CONTAINER_TAG:-latest}
-            context: .
+            context: ./kafka-zookeeper
             dockerfile: Dockerfile
         container_name: zookeeper
         environment:

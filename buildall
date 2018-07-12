@@ -15,15 +15,17 @@ export CFG_PASS=''
 export CFG_SLACK_HUBOT_TOKEN=''
 export CFG_USER=''
 
+[ -z "${CBF_VERSION:-}" ] || unset CBF_VERSION
+[ -z "${CONTAINER_TAG:-}" ] || unset CONTAINER_TAG
 
 #set -o xtrace
 set -o errexit
 set -o nounset
 set -o verbose
 
-CBF_VERSION=dev docker-compose build base_container
+CBF_VERSION=dev docker-compose build base
 docker-compose build supervisord
-docker-compose build nginx_alt
+CBF_VERSION=dev docker-compose build nginx_alt
 docker-compose build nginx_base
 docker-compose build php5
 docker-compose build php7
