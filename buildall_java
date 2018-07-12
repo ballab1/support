@@ -40,35 +40,13 @@ cd ~/support
 
 CBF_VERSION=dev build base_container
 build supervisord
-build nginx_base
-build php5
-build php7
 build openjdk8
-
-build hubot
 build jenkins
 build kafka-broker
 build kafka-manager
 build kafka-zookeeper
-build mysql
-build nagios
-build nginx
-build phpadmin
-build supervisord-monitor
-build webdav
-build zenphoto 
-
-build alpinefull
-build postgres
 build openjre8
-build perl.5-26-2
-build perl-carton
-build files-kafka
-build files-librd
 build gradle
-#build jenkins-build-events
-#build jira-fd-kafka
-build movefiles
 
 
 declare finish=$(date +%s)
