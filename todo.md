@@ -6,8 +6,6 @@ Kafka broker/zookeeper issues
 Grafana update
 Nagios/nconf with php7
 Phpmyadmin configuration
-Hubot update
-Zenphoto update
 mysql update
 Smonitor
 SMB write access
@@ -27,7 +25,6 @@ security
 - https://stackoverflow.com/questions/5725296/difference-between-sh-and-bash
 
 containers
-    kafkamgr reverse proxy
     ubuntu-s1 zookeeper/broker
     mysql 10.0
     need generic uS for "kafka topic -> DBMS table"
@@ -36,7 +33,6 @@ containers
 configuration
     nagios: load DBMS from config files
     script to reconfigure demo (change IP addresses in correct places)
-    nginx/php5 layers need more work
     supervisord-monitor
     
 CBF
@@ -45,14 +41,7 @@ CBF
 
 
 get stuff working:
-    zen:
-        The plain HTTP request was sent to HTTPS port
-            http://10.1.3.6:443/zp-core/setup/index.php?autorun=gallery
-                        zp-core/htaccess references:  RewriteBase /zenphoto 
-                        zp-core/setup/index.php:  if ($connection && !isset($_zp_options))  [ but file should be index.php.xxx ]
-        Always starts up in 'setup / update' mode
     Jenkins errors (on nginx):
-                need dockerentry.sh to set owner of files in .ssh
                 2018/01/01 16:29:15 [error] 6#6: *9 connect() failed (111: Connection refused) while connecting to upstream, client: 10.1.3.24, server: default, request: "POST /jenkins/ajaxBuildQueue HTTP/1.1", upstream: "http://172.18.0.5:8080/jenkins/ajaxBuildQueue", host: "10.1.3.6", referrer: "https://10.1.3.6/jenkins/"
         2018/01/01 16:29:15 [error] 6#6: *10 connect() failed (111: Connection refused) while connecting to upstream, client: 10.1.3.24, server: default, request: "POST /jenkins/ajaxExecutors HTTP/1.1", upstream: "http://172.18.0.5:8080/jenkins/ajaxExecutors", host: "10.1.3.6", referrer: "https://10.1.3.6/jenkins/" 
     nagios:
@@ -103,10 +92,27 @@ future development
     create a GIT-LFS->raw_fs server for testing
 ```
 
-
 Done
 =============================================================
 Move bashlib to action_folder
 Consolidate build & runtime folder structure
 Nagios reverse proxy
 Allow any action to have an osId extension to support conditional actions
+
+Hubot update
+Zenphoto update
+consolidate nginx_alt into nginx_base
+Add getcomposer (for PHP) to php5
+Add getcomposer (for PHP) to php7
+- need layered containers
+- https://stackoverflow.com/questions/5725296/difference-between-sh-and-bash
+    kafkamgr reverse proxy
+    nginx/php5 layers need more work
+    zen:
+        The plain HTTP request was sent to HTTPS port
+            http://10.1.3.6:443/zp-core/setup/index.php?autorun=gallery
+                        zp-core/htaccess references:  RewriteBase /zenphoto 
+                        zp-core/setup/index.php:  if ($connection && !isset($_zp_options))  [ but file should be index.php.xxx ]
+        Always starts up in 'setup / update' mode
+    Jenkins errors (on nginx):
+                need dockerentry.sh to set owner of files in .ssh

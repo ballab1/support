@@ -1,5 +1,23 @@
 #!/bin/bash
 
+# Use the Unofficial Bash Strict Mode
+set -o errexit
+set -o nounset
+set -o pipefail
+IFS=$'\n\t'
+. ~/bin/trap.bashlib
+
+set +o verbose
+set +o xtrace
+
+function build() {
+    local dir="${1:?}"
+    
+    pushd "$dir" >/dev/null
+    CONTAINER_VERSION="$(git describe --tags --dirty)"  docker-compose build
+    popd >/dev/null
+}
+
 declare start=$(date +%s) 
 
 export CFG_GITHUB_EMAIL=''
@@ -18,44 +36,41 @@ export CFG_USER=''
 [ -z "${CBF_VERSION:-}" ] || unset CBF_VERSION
 [ -z "${CONTAINER_TAG:-}" ] || unset CONTAINER_TAG
 
-#set -o xtrace
-set -o errexit
-set -o nounset
-set -o verbose
+cd ~/support
 
-CBF_VERSION=dev docker-compose build base
-docker-compose build supervisord
-docker-compose build nginx_base
-docker-compose build php5
-docker-compose build php7
-docker-compose build openjdk8
+CBF_VERSION=dev build base_container
+build supervisord
+build nginx_base
+build php5
+build php7
+build openjdk8
 
-docker-compose build hubot
-docker-compose build jenkins
-docker-compose build broker
-docker-compose build kafkamgr
-docker-compose build zookeeper
-docker-compose build mysql
-docker-compose build nagios
-docker-compose build nginx
-docker-compose build phpadmin
-docker-compose build smonitor
-docker-compose build webdav
-docker-compose build zen
+build hubot
+build jenkins
+build kafka-broker
+build kafka-manager
+build kafka-zookeeper
+build mysql
+build nagios
+build nginx
+build phpadmin
+build supervisord-monitor
+build webdav
+build zenphoto 
 
-docker-compose build alpinefull
-docker-compose build postgres
-docker-compose build openjre8
-docker-compose build perl
-docker-compose build carton
-docker-compose build files-kafka
-docker-compose build files-librd
-docker-compose build gradle
+build alpinefull
+build postgres
+build openjre8
+build perl.5-24-3
+build perl-carton
+build files-kafka
+build files-librd
+build gradle
 #docker-compose build jbe
 #docker-compose build jfdk
-docker-compose build movefiles
+build movefiles
 
-set +o verbose
+
 declare finish=$(date +%s)
 declare -i elapsed=$(( finish - start ))
 
