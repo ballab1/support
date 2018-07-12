@@ -52,6 +52,9 @@
 [submodule "nginx_base"]
     path = nginx_base
     url = ../nginx_base.git
+[submodule "nodervisor"]
+    path = nodervisor
+    url = ../nodervisor
 [submodule "openjdk8"]
     path = openjdk8
     url = ../openjdk8.git
@@ -65,7 +68,7 @@
     path = perl-carton
     url = ../perl-carton.git
 [submodule "phpmyadmin"]
-	path = phpadmin
+    path = phpadmin
     url = ../phpmyadmin.git
 [submodule "postgres"]
     path = postgres

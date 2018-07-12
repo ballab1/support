@@ -1,56 +1,64 @@
 #!/bin/bash
 
+declare start=$(date +%s) 
+
+export CFG_GITHUB_EMAIL=''
+export CFG_GITHUB_HUBOT_TOKEN=''
+export CFG_GITHUB_JENKINS_EMAIL=''
+export CFG_GITHUB_JENKINS_NAME=''
+export CFG_GITHUB_JENKINS_TOKEN=''
+export CFG_GITHUB_JENKINS_USER=''
+export CFG_GITHUB_NAME=''
+export CFG_GITHUB_TOKEN=''
+export CFG_GITHUB_USER=''
+export CFG_PASS=''
+export CFG_SLACK_HUBOT_TOKEN=''
+export CFG_USER=''
+
+
 #set -o xtrace
 set -o errexit
 set -o nounset
-#set -o verbose
+set -o verbose
 
-export CONTAINER_TAG="${CONTAINER_TAG:-$( date +%Y%m%d )}"
-echo "CONTAINER_TAG:  $CONTAINER_TAG"
-export CBF_VERSION=${CBF_VERSION:-v3.0}
-echo "CBF_VERSION:    $CBF_VERSION"
-declare bldlog="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )/bld.log"
-echo "bldlog:         $bldlog"
+CBF_VERSION=dev docker-compose build base_container
+docker-compose build supervisord
+docker-compose build nginx_alt
+docker-compose build nginx_base
+docker-compose build php5
+docker-compose build php7
+docker-compose build openjdk8
+docker-compose build openjre8
+docker-compose build perl
+docker-compose build carton
 
-declare -i mode=2
+docker-compose build gradle
+docker-compose build hubot
+docker-compose build jenkins
+#docker-compose build jbe
+#docker-compose build jfdk
+docker-compose build broker
+docker-compose build kafkamgr
+docker-compose build zookeeper
+docker-compose build mysql
+docker-compose build nagios
+docker-compose build nginx
+docker-compose build phpadmin
+docker-compose build postgres
+docker-compose build smonitor
+docker-compose build webdav
+docker-compose build zen
 
-[ -e "$bldlog" ] && rm "$bldlog"
+docker-compose build alpinefull
+docker-compose build files-kafka
+docker-compose build files-librd
+docker-compose build movefiles
 
-if [ $(( $mode & 1 )) -eq 1 ]; then
-    cd base_container; docker-compose build 2>&1 | tee -a "$bldlog"
-    cd ../supervisord; docker-compose build 2>&1 | tee -a "$bldlog"
-    cd ../nginx_alt; docker-compose build 2>&1 | tee -a "$bldlog"
-    cd ../nginx_base; docker-compose build 2>&1 | tee -a "$bldlog"
-    cd ../php5; docker-compose build 2>&1 | tee -a "$bldlog"
-    cd ../php7; docker-compose build 2>&1 | tee -a "$bldlog"
-    cd ../openjdk8; docker-compose build 2>&1 | tee -a "$bldlog"
-    cd ../gradle; docker-compose build 2>&1 | tee -a "$bldlog"
-    cd ../perl.5-24-3; docker-compose build 2>&1 | tee -a "$bldlog"
-    cd ../perl-carton; docker-compose build 2>&1 | tee -a "$bldlog"
-    cd ../files-librd; docker-compose build 2>&1 | tee -a "$bldlog"
-    cd ../files-kafka; docker-compose build 2>&1 | tee -a "$bldlog"
-    cd ../movefiles; docker-compose build 2>&1 | tee -a "$bldlog"
-    cd ../alpinefull; docker-compose build 2>&1 | tee -a "$bldlog"
-    cd ../openjre8; docker-compose build 2>&1 | tee -a "$bldlog"
-    cd ../postgres; docker-compose build 2>&1 | tee -a "$bldlog"
-    cd ..
-fi
+set +o verbose
+declare finish=$(date +%s)
+declare -i elapsed=$(( finish - start ))
 
-if [ $(( $mode & 2 )) -eq 2 ]; then
-    docker-compose build base 2>&1 | tee -a "$bldlog" 
-    docker-compose build supervisord 2>&1 | tee -a "$bldlog"
-    docker-compose build nginx_alt 2>&1 | tee -a "$bldlog"
-    docker-compose build nginx_base 2>&1 | tee -a "$bldlog"
-    docker-compose build php5 2>&1 | tee -a "$bldlog"
-    docker-compose build php7 2>&1 | tee -a "$bldlog"
-    docker-compose build openjdk 2>&1 | tee -a "$bldlog"
-    docker-compose build gradle 2>&1 | tee -a "$bldlog"
-    docker-compose build perl 2>&1 | tee -a "$bldlog"
-    docker-compose build carton 2>&1 | tee -a "$bldlog"
-    docker-compose build files-librd 2>&1 | tee -a "$bldlog"
-    docker-compose build files-kafka 2>&1 | tee -a "$bldlog"
-    docker-compose build movefiles 2>&1 | tee -a "$bldlog"
-    docker-compose build alpinefull 2>&1 | tee -a "$bldlog"
-    docker-compose build openjre 2>&1 | tee -a "$bldlog"
-    docker-compose build postgres 2>&1 | tee -a "$bldlog"
-fi
+echo ''
+echo ''
+TZ='America/New_York' date
+printf "Time elapsed: %02d:%02d:%02d\n"  $((elapsed / 3600)) $((elapsed % 3600 / 60)) $((elapsed % 60))  
