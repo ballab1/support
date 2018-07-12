@@ -66,8 +66,8 @@ build perl-carton
 build files-kafka
 build files-librd
 build gradle
-#docker-compose build jbe
-#docker-compose build jfdk
+#build jenkins-build-events
+#build jira-fd-kafka
 build movefiles
 
 
