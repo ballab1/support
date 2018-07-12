@@ -315,25 +315,6 @@ services:
             SUPERVISORD_USER: $CFG_USER
         image: nginx:${CONTAINER_TAG:-latest}
 
-    nginx_alt:
-        build:
-            args:
-                CBF_VERSION: "${CBF_VERSION:-}"
-                CONTAINER_NAME: nginx_alt
-                CONTAINER_VERSION: ${CONTAINER_VERSION:-3.0.0}
-                FROM_BASE: nginx:1.15.0-alpine
-            cache_from:
-                - nginx:1.15.0-alpine
-                - alpine:3.7
-            context: ./nginx_alt
-            dockerfile: Dockerfile
-        container_name: nginx_alt
-        environment:
-            DEBUG_TRACE: ${DEBUG_TRACE:-0}
-            SUPERVISORD_PASS: $CFG_PASS
-            SUPERVISORD_USER: $CFG_USER
-        image: nginx_alt:${CONTAINER_TAG:-latest}
-
     nginx_base:
         build:
             args:
@@ -409,14 +390,14 @@ services:
                 CBF_VERSION: "${CBF_VERSION:-}"
                 CONTAINER_NAME: php5
                 CONTAINER_VERSION: ${CONTAINER_VERSION:-3.0.0}
-##                FROM_BASE: nginx_base:${CONTAINER_TAG:-latest}
-                FROM_BASE: nginx_alt:${CONTAINER_TAG:-latest}
+                FROM_BASE: nginx_base:${CONTAINER_TAG:-latest}
+##                FROM_BASE: nginx_alt:${CONTAINER_TAG:-latest}
             cache_from:
                 - alpine:3.7
-##                - base_container:${CONTAINER_TAG:-latest}
-##                - supervisord:${CONTAINER_TAG:-latest}
-##                - nginx_base:${CONTAINER_TAG:-latest}
-                - nginx_alt:${CONTAINER_TAG:-latest}
+                - base_container:${CONTAINER_TAG:-latest}
+                - supervisord:${CONTAINER_TAG:-latest}
+                - nginx_base:${CONTAINER_TAG:-latest}
+##                - nginx_alt:${CONTAINER_TAG:-latest}
             context: ./php5
             dockerfile: Dockerfile
         container_name: php5
