@@ -65,7 +65,7 @@
     path = perl-carton
     url = ../perl-carton.git
 [submodule "phpmyadmin"]
-    path = phpmyadmin
+	path = phpadmin
     url = ../phpmyadmin.git
 [submodule "postgres"]
     path = postgres
