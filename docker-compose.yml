@@ -178,8 +178,8 @@ services:
                 JENKINS_HOME: ${JENKINS_HOME:-/var/jenkins_home}
                 docker_gid: 999
                 docker_uid: 999
-                jenkins_gid: 1953
-                jenkins_uid: 1953
+                jenkins_gid: 1000
+                jenkins_uid: 1004
             cache_from:
                 - alpine:3.7
                 - base_container:${CONTAINER_TAG:-latest}

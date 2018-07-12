@@ -1,12 +1,14 @@
 TODO
 ```
 
+Jenkins:   Permission denied: /var/run/docker.sock
 Kafka broker/zookeeper issues
 Grafana update
 Nagios/nconf with php7
 Phpmyadmin configuration
 Hubot update
 Zenphoto update
+mysql update
 Smonitor
 SMB write access
 
