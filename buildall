@@ -25,7 +25,6 @@ set -o verbose
 
 CBF_VERSION=dev docker-compose build base
 docker-compose build supervisord
-#CBF_VERSION=dev docker-compose build nginx_alt
 docker-compose build nginx_base
 docker-compose build php5
 docker-compose build php7

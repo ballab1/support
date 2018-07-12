@@ -46,9 +46,6 @@
 [submodule "nginx"]
     path = nginx
     url = ../nginx.git
-[submodule "nginx_alt"]
-    path = nginx_alt
-    url = ../nginx_alt.git
 [submodule "nginx_base"]
     path = nginx_base
     url = ../nginx_base.git
