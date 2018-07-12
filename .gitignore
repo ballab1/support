@@ -17,6 +17,9 @@ build/container_build_framework*
 .directory
 .Trash-*
 vols/*
+
+# gradle support
 .gradle/
+gradle/wrapper
 gradlew
 gradlew.bat
