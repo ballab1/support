@@ -1,0 +1,142 @@
+version: '3.3'
+
+services:
+    alpinefull:
+        extends:
+            file: alpinefull/docker-compose.yml
+            service: alpinefull
+
+    base:
+        extends:
+            file: base_container/docker-compose.yml
+            service: base
+    
+    broker:
+        extends:
+            file: kafka-broker/docker-compose.yml
+            service: broker
+
+    carton:
+        extends:
+            file: perl-carton/docker-compose.yml
+            service: carton
+
+    files-kafka:
+        extends:
+            file: files-kafka/docker-compose.yml
+            service: files-kafka
+
+    files-librd:
+        extends:
+            file: files-librd/docker-compose.yml
+            service: files-librd
+
+    gradle:
+        extends:
+            file: gradle/docker-compose.yml
+            service: gradle
+
+    hubot:
+        extends:
+            file: hubot/docker-compose.yml
+            service: hubot
+ 
+    jenkins:
+        extends:
+            file: jenkins/docker-compose.yml
+            service: jenkins
+
+    kafkamgr:
+        extends:
+            file: kafka-manager/docker-compose.yml
+            service: kafkamgr
+
+    movefiles:
+        extends:
+            file: movefiles/docker-compose.yml
+            service: movefiles
+
+    mysql:
+        extends:
+            file: mysql/docker-compose.yml
+            service: mysql
+
+    nagios:
+        extends:
+            file: nagios/docker-compose.yml
+            service: nagios
+
+    nginx:
+        extends:
+            file: nginx/docker-compose.yml
+            service: nginx
+
+    nginx_alt:
+        extends:
+            file: nginx_alt/docker-compose.yml
+            service: nginx_alt
+
+    nginx_base:
+        extends:
+            file: nginx_base/docker-compose.yml
+            service: nginx_base
+
+    openjdk8:
+        extends:
+            file: openjdk8/docker-compose.yml
+            service: openjdk8
+
+    openjre8:
+        extends:
+            file: openjre8/docker-compose.yml
+            service: openjre8
+
+    perl:
+        extends:
+            file: perl.5-24-3/docker-compose.yml
+            service: perl
+
+    php5:
+        extends:
+            file: php5/docker-compose.yml
+            service: php5
+
+    php7:
+        extends:
+            file: php7/docker-compose.yml
+            service: php7
+
+    phpadmin:
+        extends:
+            file: phpadmin/docker-compose.yml
+            service: phpadmin
+
+    postgres:
+        extends:
+            file: postgres/docker-compose.yml
+            service: postgres
+
+    smonitor:
+        extends:
+            file: supervisord-monitor/docker-compose.yml
+            service: smonitor
+
+    supervisord:
+        extends:
+            file: supervisord/docker-compose.yml
+            service: supervisord
+
+    webdav:
+        extends:
+            file: webdav/docker-compose.yml
+            service: webdav
+
+    zen:
+        extends:
+            file: zenphoto/docker-compose.yml
+            service: zen
+
+    zookeeper:
+        extends:
+            file: zookeeper/docker-compose.yml
+            service: zookeeper
