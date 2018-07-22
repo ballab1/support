@@ -1,0 +1,96 @@
+#!/bin/bash
+
+##############################################################################################
+function build.singleContainer()
+{
+    local dir="${1:?}"
+    pushd "$dir" >/dev/null
+
+    local -r url="$( git remote get-url origin )"
+    local -r repo="$( echo "$url" | awk -F '/' '{ print $5 }' | sed 's|.git||' )"
+    local -r branch="$(git rev-parse --abbrev-ref HEAD)"
+    local -r version="${repo}:${branch}:$(git describe --tags --dirty)"
+    local -r commit=$(git rev-parse HEAD)
+
+    local -r image="$( docker-compose config 2>/dev/null | grep 'image:' | awk '{print $2}')"
+    local -r versionedImage="${image//:latest}:$commit"
+
+    export CONTAINER_FINGERPRINT='TBD'
+    export CONTAINER_GIT_BRANCH="$branch"
+    export CONTAINER_GIT_COMMIT="$commit"
+    export CONTAINER_GIT_URL="$url"
+    export CONTAINER_ORIGIN="$version"
+    
+    unset CBF_VERSION
+    [ "$dir" = base_container ] && export CBF_VERSION=v3.0
+
+    # check if there is a local image with the correct fingerprint
+    if [ 0 = 1 ]; then
+        echo image has not changed.
+
+
+    # check if there is an image in the registry with the correct fingerprint
+    elif [ 0 = 1 ]; then
+        #download image from registry
+        docker pull "$versionedImage"
+        docker tag "$versionedImage" "$image"
+        docker rmi "$versionedImage"
+
+    else
+        # rebuild container because no container exists with the correct fingerprint
+        docker-compose build
+        if [[ $version != *dirty ]] && [ ${image//:latest} != $image ]; then
+            docker-compose push
+            docker tag "$image" "$versionedImage"
+            docker push "$versionedImage"
+            docker rmi "$versionedImage"
+        fi
+    fi
+    popd >/dev/null
+}
+
+##############################################################################################
+
+function build.allContainers()
+{
+    local -a modules=( "$@" )
+
+    # Use the Unofficial Bash Strict Mode
+    set -o errexit
+    set -o nounset
+    set -o pipefail
+    IFS=$'\n\t'
+
+    set +o verbose
+    set +o xtrace
+
+    local start=$(date +%s)
+    [ -f ~/bin/trap.bashlib ] && source ~/bin/trap.bashlib
+
+    export CFG_GITHUB_EMAIL=''
+    export CFG_GITHUB_HUBOT_TOKEN=''
+    export CFG_GITHUB_JENKINS_EMAIL=''
+    export CFG_GITHUB_JENKINS_NAME=''
+    export CFG_GITHUB_JENKINS_TOKEN=''
+    export CFG_GITHUB_JENKINS_USER=''
+    export CFG_GITHUB_NAME=''
+    export CFG_GITHUB_TOKEN=''
+    export CFG_GITHUB_USER=''
+    export CFG_PASS=''
+    export CFG_SLACK_HUBOT_TOKEN=''
+    export CFG_USER=''
+    export DOCKER_REGISTRY=ubuntu-s1:5000/
+    export CONTAINER_TAG=latest
+
+    for dir in "${modules[@]}"; do
+        build.singleContainer "$dir"
+    done
+
+    local finish=$(date +%s)
+    local -i elapsed=$(( finish - start ))
+
+    echo ''
+    echo ''
+    TZ='America/New_York' date
+    printf "Time elapsed: %02d:%02d:%02d\n"  $((elapsed / 3600)) $((elapsed % 3600 / 60)) $((elapsed % 60))
+}
