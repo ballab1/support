@@ -1,56 +1,6 @@
 #!/bin/bash
 
 ##############################################################################################
-function build.singleContainer()
-{
-    local dir="${1:?}"
-    pushd "$dir" >/dev/null
-
-    local -r url="$( git remote get-url origin )"
-    local -r repo="$( echo "$url" | awk -F '/' '{ print $5 }' | sed 's|.git||' )"
-    local -r branch="$(git rev-parse --abbrev-ref HEAD)"
-    local -r version="${repo}:${branch}:$(git describe --tags --dirty)"
-    local -r commit=$(git rev-parse HEAD)
-
-    local -r image="$( docker-compose config 2>/dev/null | grep 'image:' | awk '{print $2}')"
-    local -r versionedImage="${image//:latest}:$commit"
-
-    export CONTAINER_FINGERPRINT='TBD'
-    export CONTAINER_GIT_BRANCH="$branch"
-    export CONTAINER_GIT_COMMIT="$commit"
-    export CONTAINER_GIT_URL="$url"
-    export CONTAINER_ORIGIN="$version"
-    
-    unset CBF_VERSION
-    [ "$dir" = base_container ] && export CBF_VERSION=v3.0
-
-    # check if there is a local image with the correct fingerprint
-    if [ 0 = 1 ]; then
-        echo image has not changed.
-
-
-    # check if there is an image in the registry with the correct fingerprint
-    elif [ 0 = 1 ]; then
-        #download image from registry
-        docker pull "$versionedImage"
-        docker tag "$versionedImage" "$image"
-        docker rmi "$versionedImage"
-
-    else
-        # rebuild container because no container exists with the correct fingerprint
-        docker-compose build
-        if [[ $version != *dirty ]] && [ ${image//:latest} != $image ]; then
-            docker-compose push
-            docker tag "$image" "$versionedImage"
-            docker push "$versionedImage"
-            docker rmi "$versionedImage"
-        fi
-    fi
-    popd >/dev/null
-}
-
-##############################################################################################
-
 function build.allContainers()
 {
     local -a modules=( "$@" )
@@ -79,11 +29,14 @@ function build.allContainers()
     export CFG_PASS=''
     export CFG_SLACK_HUBOT_TOKEN=''
     export CFG_USER=''
-    export DOCKER_REGISTRY=ubuntu-s1:5000/
-    export CONTAINER_TAG=latest
+    export DOCKER_REGISTRY=ubuntu-s2:5000/
 
     for dir in "${modules[@]}"; do
-        build.singleContainer "$dir"
+        pushd "$dir" >/dev/null
+        unset CBF_VERSION
+        [ "$dir" = base_container ] && export CBF_VERSION=v3.0
+        build.updateContainer "$dir"
+        popd >/dev/null
     done
 
     local finish=$(date +%s)
@@ -93,4 +46,73 @@ function build.allContainers()
     echo ''
     TZ='America/New_York' date
     printf "Time elapsed: %02d:%02d:%02d\n"  $((elapsed / 3600)) $((elapsed % 3600 / 60)) $((elapsed % 60))
+}
+
+##############################################################################################
+function build.calculateFingerprint()
+{
+    # get the following
+    #  - git tree hash
+    #  - container digest of layer that we are building on top of
+    # all arguements (ARG) to 'docker build'
+    local -r baseImageFingerprint=${1:?}
+
+    local dependents
+    mapfile -t dependents < <(git ls-tree HEAD -- . | awk '{print $3}')
+    dependents+=( "$baseImageFingerprint" )
+    (sha256sum | cut -d' ' -f1) <<< $dependents)
+}
+
+##############################################################################################
+function build.imageExists()
+{
+    local -r fingerPrint=${1:?}
+
+    local cmd="curl --silent --unix-socket /var/run/docker.sock http://localhost/images/json?all='true' | jq '.[] | select(.Labels.container.fingerprint == \"$fingerPrint\")'"
+    eval $cmd
+}
+
+##############################################################################################
+function build.updateContainer()
+{
+    local dir="${1:?}"
+
+    local baseImageFingerprint
+    export CONTAINER_TAG="$(build.calculateFingerprint "$baseImageFingerprint")"
+
+    # check if there is a local image with the correct fingerprint
+    if [ $(build.imageExists "$CONTAINER_TAG") ]; then
+        echo 'image has not changed.'
+        return
+    fi
+
+    local -r image="$( docker-compose config 2>/dev/null | grep 'image:' | awk '{print $2}')"
+    local -r latestImage="${image%:*}:latest"
+
+    # check if there is an image in the registry with the correct fingerprint
+    if docker pull "$image" 2>/dev/null; then
+        #downloaded image from registry
+        docker rmi "$latestImage"
+        docker tag "$image" "$latestIage"
+        docker rmi "$image"
+        return
+    fi
+
+    # setup environment for 'docker-compose build'
+    export CONTAINER_FINGERPRINT="$CONTAINER_TAG"
+    export CONTAINER_GIT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+    export CONTAINER_GIT_COMMIT="$(git rev-parse HEAD)"
+    export CONTAINER_GIT_URL="$(git remote get-url origin)"
+    export CONTAINER_ORIGIN="$version"
+
+    # rebuild container because no container exists with the correct fingerprint
+    docker-compose build
+    if [[ "$(git describe --tags --dirty)" != *dirty ]]; then
+        docker push "$image"
+        docker push "$latestImage"
+    fi
+    docker rmi "$latestImage"
+    docker tag "$image" "$latestImage"
+    docker rmi "$image"
+    fi
 }

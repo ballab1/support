@@ -8,9 +8,10 @@ declare -a modules=(base_container \
                     perl-carton \
                     files-kafka \
                     files-librd \
-                    \ #jenkins-build-events
-                    \ #jira-fd-kafka
                     movefiles )
+
+#jenkins-build-events
+#jira-fd-kafka
 
 cd "$TOOLS"
 build.allContainers "${modules[@]}"
