@@ -3,17 +3,17 @@
 declare -r TOOLS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"   
 source "${TOOLS}/build.bashlib"
 
-declare -a modules=(base_container \
-                    supervisord \
-                    nginx_base \
-                    php5 \
-                    php7 \
-                    hubot \
-                    nagios \
-                    nginx \
-                    phpadmin \
-                    supervisord-monitor \
-                    webdav \
+declare -a modules=(base_container
+                    supervisord
+                    nginx_base
+                    php5
+                    php7
+                    hubot
+                    nagios
+                    nginx
+                    phpadmin
+                    supervisord-monitor
+                    webdav
                     zenphoto )
 
 cd "$TOOLS"

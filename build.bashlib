@@ -35,7 +35,7 @@ function build.allContainers()
         pushd "$dir" >/dev/null
         unset CBF_VERSION
         [ "$dir" = base_container ] && export CBF_VERSION=v3.0
-        build.updateContainer "$dir"
+        build.updateContainer
         popd >/dev/null
     done
 
@@ -51,16 +51,19 @@ function build.allContainers()
 ##############################################################################################
 function build.calculateFingerprint()
 {
+    local -r image=${1:?}
+    local -r config=${2:?}
+
     # get the following
     #  - git tree hash
     #  - container digest of layer that we are building on top of
     # all arguements (ARG) to 'docker build'
-    local -r baseImageFingerprint=${1:?}
-
-    local dependents
+    local -a dependents
     mapfile -t dependents < <(git ls-tree HEAD -- . | awk '{print $3}')
-    dependents+=( "$baseImageFingerprint" )
-    (sha256sum | cut -d' ' -f1) <<< $dependents)
+    dependents+=( $(docker inspect "$image" | jq '.[].RootFS.Layers[]?')
+                  "$(eval echo $(jq '.build.args?'<<< $config))"
+                 )
+    (sha256sum | cut -d' ' -f1) <<< "${dependents[*]}"
 }
 
 ##############################################################################################
@@ -73,12 +76,23 @@ function build.imageExists()
 }
 
 ##############################################################################################
+function build.jsonCompose()
+{
+    local jsonConfig=$(python -c 'import sys, yaml, json; json.dump(yaml.load(sys.stdin), sys.stdout, indent=4)' < docker-compose.yml | jq '.services?')
+    if [ "${jsonConfig:-}" ]; then
+        local -r service="$(eval echo $(jq 'keys[0]?' <<< "$jsonConfig"))"
+       [ -z "${service:-}" ] || jq $(eval echo "'.\"$service\"?'") <<< "$jsonConfig"
+    fi
+}
+
+##############################################################################################
 function build.updateContainer()
 {
-    local dir="${1:?}"
+    local config=$(build.jsonCompose)
+    local -r actualImage="$(eval echo $(jq '.image?' <<< $config))"
 
-    local baseImageFingerprint
-    export CONTAINER_TAG="$(build.calculateFingerprint "$baseImageFingerprint")"
+    
+    export CONTAINER_TAG="$(build.calculateFingerprint "$actualImage" "$config")"
 
     # check if there is a local image with the correct fingerprint
     if [ $(build.imageExists "$CONTAINER_TAG") ]; then
@@ -86,15 +100,15 @@ function build.updateContainer()
         return
     fi
 
-    local -r image="$( docker-compose config 2>/dev/null | grep 'image:' | awk '{print $2}')"
-    local -r latestImage="${image%:*}:latest"
+    local -r latestImage="${actualImage%:*}:latest"
 
+    echo building $latestImage
     # check if there is an image in the registry with the correct fingerprint
-    if docker pull "$image" 2>/dev/null; then
+    if docker pull "$actualImage" 2>/dev/null; then
         #downloaded image from registry
         docker rmi "$latestImage"
-        docker tag "$image" "$latestIage"
-        docker rmi "$image"
+        docker tag "$actualImage" "$latestIage"
+        docker rmi "$actualImage"
         return
     fi
 
@@ -107,12 +121,11 @@ function build.updateContainer()
 
     # rebuild container because no container exists with the correct fingerprint
     docker-compose build
-    if [[ "$(git describe --tags --dirty)" != *dirty ]]; then
-        docker push "$image"
+    if [ "$CONTAINER_GIT_BRANCH" = 'master' ] && [[ "$(git describe --tags --dirty)" != *dirty ]]; then
+        docker push "$actualImage"
         docker push "$latestImage"
     fi
     docker rmi "$latestImage"
-    docker tag "$image" "$latestImage"
-    docker rmi "$image"
-    fi
+    docker tag "$actualImage" "$latestImage"
+    docker rmi "$actualImage"
 }

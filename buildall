@@ -3,38 +3,41 @@
 declare -r TOOLS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"   
 source "${TOOLS}/build.bashlib"
 
-declare -a modules=(base_container \
-                    supervisord \
-                    nginx_base \
-                    php5 \
-                    php7 \
+declare -a modules=(base_container)
+
+#jira-fd-kafka
+#jenkins-build-events
+#nginx_alt
+
+declare -a xmodules=(base_container
+                    supervisord
+                    nginx_base
+                    php5
+                    php7
                     openjdk8
-                    hubot \
-                    jenkins \
-                    kafka-broker \
-                    kafka-manager \
-                    kafka-zookeeper \
-                    mysql \
-                    nagios \
-                    nginx \
-                    nodervisor \
-                    phpadmin \
-                    supervisord-monitor \
-                    webdav \
-                    zenphoto \
-                    perl.5-26-2 \
-                    perl-carton \
-                    files-kafka \
-                    files-librd \
-                    movefiles \
-                    alpinefull \
-                    postgres \
-                    openjre8 \
+                    hubot
+                    jenkins
+                    kafka-broker
+                    kafka-manager
+                    kafka-zookeeper
+                    mysql
+                    nagios
+                    nginx
+                    nodervisor
+                    phpadmin
+                    supervisord-monitor
+                    webdav
+                    zenphoto
+                    perl
+                    perl-carton
+                    files-kafka
+                    files-librd
+                    movefiles
+                    alpinefull
+                    postgres
+                    openjre8
                     gradle )
 
-#nginx_alt
-#jenkins-build-events
-#jira-fd-kafka
 
 cd "$TOOLS"
 build.allContainers "${modules[@]}"

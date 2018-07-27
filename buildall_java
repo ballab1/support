@@ -3,14 +3,14 @@
 declare -r TOOLS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"   
 source "${TOOLS}/build.bashlib"
 
-declare -a modules=(base_container \
-                    supervisord \
-                    openjdk8 \
-                    jenkins \
-                    kafka-broker \
-                    kafka-manager \
-                    kafka-zookeeper \
-                    openjre8 \
+declare -a modules=(base_container
+                    supervisord
+                    openjdk8
+                    jenkins
+                    kafka-broker
+                    kafka-manager
+                    kafka-zookeeper
+                    openjre8
                     gradle )
 
 cd "$TOOLS"
