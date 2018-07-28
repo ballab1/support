@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# Use the Unofficial Bash Strict Mode
+set -o errexit
+set -o nounset
+set -o pipefail
+IFS=$'\n\t'
+ 
+declare -r TOOLS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"   
+[ -e ~/bin/trap.bashlib ] && source ~/bin/trap.bashlib
+source "${TOOLS}/build.bashlib"
+
+
+cd "$TOOLS"
+declare -a catalog=()
+mapfile -t catalog < <(registry.getCatalog)
+
+declare -i index=0    
+for entry in "${catalog[@]}";do 
+    (( index++ )) || true
+    declare -a tags=( $(registry.getTags "$entry") )
+    printf "%s,%s,%s\n" $index $entry $(printf "%s " ${tags[@]})
+done

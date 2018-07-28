@@ -3,13 +3,11 @@
 declare -r TOOLS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"   
 source "${TOOLS}/build.bashlib"
 
-declare -a modules=(base_container)
-
 #jira-fd-kafka
 #jenkins-build-events
 #nginx_alt
 
-declare -a xmodules=(base_container
+declare -a modules=(base_container
                     supervisord
                     nginx_base
                     php5

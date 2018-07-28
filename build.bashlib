@@ -1,5 +1,14 @@
 #!/bin/bash
 
+declare REGISTRY_URL=http://ubuntu-s2:5000/v2
+
+##############################################################################################
+function die()
+{
+    echo "***ERROR: $1" >&2
+    exit 1
+}
+
 ##############################################################################################
 function build.allContainers()
 {
@@ -51,81 +60,128 @@ function build.allContainers()
 ##############################################################################################
 function build.calculateFingerprint()
 {
-    local -r image=${1:?}
-    local -r config=${2:?}
+    local -r config=${1:?}
+    local -r image=${2:?}
 
     # get the following
     #  - git tree hash
     #  - container digest of layer that we are building on top of
     # all arguements (ARG) to 'docker build'
+
     local -a dependents
     mapfile -t dependents < <(git ls-tree HEAD -- . | awk '{print $3}')
-    dependents+=( $(docker inspect "$image" | jq '.[].RootFS.Layers[]?')
-                  "$(eval echo $(jq '.build.args?'<<< $config))"
-                 )
+    dependents+=( "$(eval echo $(jq '.build.args?'<<< $config))" )
+    local base=$(eval echo $( jq '.build.args.FROM_BASE' <<< "$config" ))
+    if [ -z "$(build.imageExists "$base")" ]; then
+        docker pull "$base" >&2 || die "No base image '$base' for $image: unable to calulate fingerprint."
+    fi
+    dependents+=( $(docker inspect "$base" | jq '.[].Id' ) )
     (sha256sum | cut -d' ' -f1) <<< "${dependents[*]}"
+}
+
+##############################################################################################
+function build.dockerCompose()
+{
+    local jsonConfig=$(python -c 'import sys, yaml, json; json.dump(yaml.load(sys.stdin), sys.stdout, indent=4)' < docker-compose.yml | jq '.services?')
+    if [ "${jsonConfig:-}" ]; then
+        local -r service="$(eval echo $(jq 'keys[0]?' <<< "$jsonConfig"))"
+        [ -z "${service:-}" ] || jq $(eval echo "'.\"$service\"?'") <<< "$jsonConfig"
+    fi
 }
 
 ##############################################################################################
 function build.imageExists()
 {
-    local -r fingerPrint=${1:?}
+    local -r image=${1:?}
 
-    local cmd="curl --silent --unix-socket /var/run/docker.sock http://localhost/images/json?all='true' | jq '.[] | select(.Labels.container.fingerprint == \"$fingerPrint\")'"
-    eval $cmd
-}
-
-##############################################################################################
-function build.jsonCompose()
-{
-    local jsonConfig=$(python -c 'import sys, yaml, json; json.dump(yaml.load(sys.stdin), sys.stdout, indent=4)' < docker-compose.yml | jq '.services?')
-    if [ "${jsonConfig:-}" ]; then
-        local -r service="$(eval echo $(jq 'keys[0]?' <<< "$jsonConfig"))"
-       [ -z "${service:-}" ] || jq $(eval echo "'.\"$service\"?'") <<< "$jsonConfig"
-    fi
+    local cmd="$(curl --silent --unix-socket /var/run/docker.sock http://localhost/images/json?all='true' | jq ".[]|select(.RepoTags != null)|select(.RepoTags|contains([\"$image\"])).Id")"
+    eval echo $cmd
 }
 
 ##############################################################################################
 function build.updateContainer()
 {
-    local config=$(build.jsonCompose)
-    local -r actualImage="$(eval echo $(jq '.image?' <<< $config))"
+    local config=$(build.dockerCompose)
+    local latestImage="$(eval echo $(jq '.image?' <<< $config))"
+    latestImage="${latestImage%:*}:latest"
 
-    
-    export CONTAINER_TAG="$(build.calculateFingerprint "$actualImage" "$config")"
+    export CONTAINER_TAG="$(build.calculateFingerprint "$config" "$latestImage")"
+    [ "${CONTAINER_TAG:-}" ] || exit
+    actualImage="$(eval echo $(jq '.image?' <<< $config))"
 
     # check if there is a local image with the correct fingerprint
-    if [ $(build.imageExists "$CONTAINER_TAG") ]; then
-        echo 'image has not changed.'
+    if [ $(build.imageExists "$actualImage") ]; then
+        echo "${latestImage} has not changed."
         return
     fi
 
-    local -r latestImage="${actualImage%:*}:latest"
-
-    echo building $latestImage
+    echo "building $actualImage"
     # check if there is an image in the registry with the correct fingerprint
     if docker pull "$actualImage" 2>/dev/null; then
         #downloaded image from registry
-        docker rmi "$latestImage"
-        docker tag "$actualImage" "$latestIage"
+        [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}' | grep "$latestImage")" ] || docker rmi "$latestImage"
+        docker tag "$actualImage" "$latestImage"
         docker rmi "$actualImage"
         return
     fi
 
     # setup environment for 'docker-compose build'
-    export CONTAINER_FINGERPRINT="$CONTAINER_TAG"
+    export CONTAINER_FINGERPRINT="${CONTAINER_TAG:-}"
     export CONTAINER_GIT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
     export CONTAINER_GIT_COMMIT="$(git rev-parse HEAD)"
     export CONTAINER_GIT_URL="$(git remote get-url origin)"
-    export CONTAINER_ORIGIN="$version"
+    export CONTAINER_ORIGIN="${version:-}"
 
     # rebuild container because no container exists with the correct fingerprint
-    docker-compose build
-    if [ "$CONTAINER_GIT_BRANCH" = 'master' ] && [[ "$(git describe --tags --dirty)" != *dirty ]]; then
+    docker-compose build  ||  die "Build failure"
+
+    [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}' | grep "$latestImage")" ] || docker rmi "$latestImage"
+    docker tag "$actualImage" "$latestImage"
+#    if [ "$CONTAINER_GIT_BRANCH" = 'master' ] && [[ "$(git describe --tags --dirty)" != *dirty ]]; then
         docker push "$actualImage"
         docker push "$latestImage"
-    fi
-    docker rmi "$latestImage"
-    docker tag "$actualImage" "$latestImage"
+#    fi
     docker rmi "$actualImage"
+}
+
+##############################################################################################
+function registry.getCatalog()
+{
+    local -a entries=()
+    local -r catalog=$(curl -k -s -X GET "${REGISTRY_URL}/_catalog")
+    [ -z "${catalog:-}" ] || [[ "$catalog" =~ *error* ]] ||  mapfile -t entries < <(jq '.repositories[]' <<< "$catalog")
+    for entry in "${entries[@]}"; do
+        eval echo $entry
+    done
+}
+
+##############################################################################################
+function registry.getLayer()
+{
+    local -r name=${1:?}
+    local -r digest=${2:?}
+
+    curl -k -s -X GET "${REGISTRY_URL}/${name}/blobs/${digest}"
+}
+
+##############################################################################################
+function registry.getManifest()
+{
+    local -r name=${1:?}
+    local -r reference=${2:?}
+
+    curl -k -s -X GET "${REGISTRY_URL}/${name}/manifests/${reference}"
+}
+
+##############################################################################################
+function registry.getTags()
+{
+    local -r name=${1:?}
+
+    local -a tags=()
+    local -r manifest=$(curl -k -s -X GET "${REGISTRY_URL}/${name}/tags/list")
+    [ -z "${manifest:-}" ] || [[ "$manifest" =~ *error* ]] ||  mapfile -t tags < <(jq '.tags[]' <<< "$manifest")
+    for tag in "${tags[@]}"; do
+        eval echo $tag
+    done
 }
