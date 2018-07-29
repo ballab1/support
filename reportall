@@ -12,12 +12,14 @@ source "${TOOLS}/build.bashlib"
 
 
 cd "$TOOLS"
-declare -a catalog=()
+declare -a catalog
 mapfile -t catalog < <(registry.getCatalog)
 
 declare -i index=0    
-for entry in "${catalog[@]}";do 
+for entry in $(printf "%s\n" "${catalog[@]}" | sort);do 
     (( index++ )) || true
-    declare -a tags=( $(registry.getTags "$entry") )
-    printf "%s,%s,%s\n" $index $entry $(printf "%s " ${tags[@]})
+    declare -a tags=()
+    mapfile -t tags < <(registry.getTags "$entry")
+    printf "%05d,%s,%d:\n" $index $entry ${#tags[*]}
+    printf "       %s\n" "${tags[@]}" | sort
 done
