@@ -11,7 +11,7 @@ declare -a modules=(base_container
                     hubot
                     nagios
                     nginx
-                    phpadmin
+                    phpmyadmin
                     supervisord-monitor
                     webdav
                     zenphoto )

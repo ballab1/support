@@ -70,7 +70,11 @@ function build.calculateFingerprint()
 
     local -a dependents
     mapfile -t dependents < <(git ls-tree HEAD -- . | awk '{print $3}')
-    dependents+=( "$(eval echo $(jq '.build.args?'<<< $config))" )
+    local a args
+    mapfile -t args < <(jq '.build.args?'<<< $config)
+    for arg in "${args[@]}"; do
+        dependents+=( "$(eval echo $arg)" )
+    done
     local base=$(eval echo $( jq '.build.args.FROM_BASE' <<< "$config" ))
     if [ -z "$(build.imageExists "$base")" ]; then
         docker pull "$base" >&2 || die "No base image '$base' for $image: unable to calulate fingerprint."
@@ -94,7 +98,9 @@ function build.imageExists()
 {
     local -r image=${1:?}
 
-    local cmd="$(curl --silent --unix-socket /var/run/docker.sock http://localhost/images/json?all='true' | jq ".[]|select(.RepoTags != null)|select(.RepoTags|contains([\"$image\"])).Id")"
+    local cmd="$(curl --silent \
+                      --unix-socket /var/run/docker.sock http://localhost/images/json?all='true' \
+                 | jq ".[]|select(.RepoTags != null)|select(.RepoTags|contains([\"$image\"])).Id")"
     eval echo $cmd
 }
 
@@ -102,6 +108,7 @@ function build.imageExists()
 function build.updateContainer()
 {
     local config=$(build.dockerCompose)
+
     local latestImage="$(eval echo $(jq '.image?' <<< $config))"
     latestImage="${latestImage%:*}:latest"
 
@@ -148,11 +155,25 @@ function build.updateContainer()
 function registry.getCatalog()
 {
     local -a entries=()
-    local -r catalog=$(curl -k -s -X GET "${REGISTRY_URL}/_catalog")
+    local -r catalog=$(curl --insecure --silent --request GET "${REGISTRY_URL}/_catalog")
     [ -z "${catalog:-}" ] || [[ "$catalog" =~ *error* ]] ||  mapfile -t entries < <(jq '.repositories[]' <<< "$catalog")
     for entry in "${entries[@]}"; do
         eval echo $entry
     done
+}
+
+##############################################################################################
+function registry.getDigest()
+{
+    local -r name=${1:?}
+    local -r tag=${2:?}
+
+    local -r digest="$(curl --header "Accept: application/vnd.docker.distribution.manifest.v2+json" \
+                            --insecure \
+                            --silent \
+                            --request GET "${REGISTRY_URL}/${name}/manifests/${tag}" \
+                       | jq '.config.digest' )"
+    eval echo $digest
 }
 
 ##############################################################################################
@@ -161,7 +182,7 @@ function registry.getLayer()
     local -r name=${1:?}
     local -r digest=${2:?}
 
-    curl -k -s -X GET "${REGISTRY_URL}/${name}/blobs/${digest}"
+    curl --insecure --silent --request GET "${REGISTRY_URL}/${name}/blobs/${digest}"
 }
 
 ##############################################################################################
@@ -170,7 +191,7 @@ function registry.getManifest()
     local -r name=${1:?}
     local -r reference=${2:?}
 
-    curl -k -s -X GET "${REGISTRY_URL}/${name}/manifests/${reference}"
+    curl --insecure --silent --request GET "${REGISTRY_URL}/${name}/manifests/${reference}"
 }
 
 ##############################################################################################
@@ -179,9 +200,19 @@ function registry.getTags()
     local -r name=${1:?}
 
     local -a tags=()
-    local -r manifest=$(curl -k -s -X GET "${REGISTRY_URL}/${name}/tags/list")
+    local -r manifest=$(curl --insecure --silent --request GET "${REGISTRY_URL}/${name}/tags/list")
     [ -z "${manifest:-}" ] || [[ "$manifest" =~ *error* ]] ||  mapfile -t tags < <(jq '.tags[]' <<< "$manifest")
     for tag in "${tags[@]}"; do
         eval echo $tag
     done
+}
+
+##############################################################################################
+function registry.deleteImage()
+{
+    local -r name=${1:?}
+    local -r tag=${2:?}
+
+    local -r digest="$(registry.getDigest "$name" "$tag")"
+    curl --insecure --silent --request DELETE "${REGISTRY_URL}/${name}/manifests/${digest}"
 }

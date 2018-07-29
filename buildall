@@ -7,7 +7,7 @@ source "${TOOLS}/build.bashlib"
 #jenkins-build-events
 #nginx_alt
 
-declare -a modules=(base_container
+declare -a xmodules=(base_container
                     supervisord
                     nginx_base
                     php5
@@ -22,7 +22,7 @@ declare -a modules=(base_container
                     nagios
                     nginx
                     nodervisor
-                    phpadmin
+                    phpmyadmin
                     supervisord-monitor
                     webdav
                     zenphoto
@@ -32,10 +32,11 @@ declare -a modules=(base_container
                     files-librd
                     movefiles
                     alpinefull
-                    postgres
+                    postgresql
                     openjre8
                     gradle )
 
+declare -a modules=(kafka-zookeeper)
 
 cd "$TOOLS"
 build.allContainers "${modules[@]}"
