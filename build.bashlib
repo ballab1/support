@@ -38,6 +38,7 @@ function build.allContainers()
     export CFG_PASS=''
     export CFG_SLACK_HUBOT_TOKEN=''
     export CFG_USER=''
+    export BASE_TAG=${BASE_TAG:-latest}
     export DOCKER_REGISTRY=ubuntu-s2:5000/
 
     for dir in "${modules[@]}"; do
@@ -66,17 +67,14 @@ function build.calculateFingerprint()
     # get the following
     #  - git tree hash
     #  - container digest of layer that we are building on top of
-    # all arguements (ARG) to 'docker build'
+    # resolved 'docker build.args' config from docker-compose.yml
 
     local -a dependents
     mapfile -t dependents < <(git ls-tree HEAD -- . | awk '{print $3}')
-    local a args
-    mapfile -t args < <(jq '.build.args?'<<< $config)
-    for arg in "${args[@]}"; do
-        dependents+=( "$(eval echo $arg)" )
-    done
+    dependents+=( "$(eval echo $(jq '.build.args?' <<< "$config"))" )
     local base=$(eval echo $( jq '.build.args.FROM_BASE' <<< "$config" ))
-    if [ -z "$(build.imageExists "$base")" ]; then
+
+    if [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}' | grep "$base")" ]; then
         docker pull "$base" >&2 || die "No base image '$base' for $image: unable to calulate fingerprint."
     fi
     dependents+=( $(docker inspect "$base" | jq '.[].Id' ) )
@@ -94,14 +92,17 @@ function build.dockerCompose()
 }
 
 ##############################################################################################
-function build.imageExists()
+function build.findIdsWithFingerprint()
 {
-    local -r image=${1:?}
+    local -r fingerprint=${1:?}
 
-    local cmd="$(curl --silent \
-                      --unix-socket /var/run/docker.sock http://localhost/images/json?all='true' \
-                 | jq ".[]|select(.RepoTags != null)|select(.RepoTags|contains([\"$image\"])).Id")"
-    eval echo $cmd
+    local -a ids
+    mapfile -t ids < <(curl --silent \
+                            --unix-socket /var/run/docker.sock http://localhost/images/json?all='true' \
+                       | jq ".[]|select(.Labels.\"container.fingerprint\" == \"$fingerprint\").Id")
+    for id in "${ids[@]}"; do
+        eval echo $id
+    done
 }
 
 ##############################################################################################
@@ -109,25 +110,30 @@ function build.updateContainer()
 {
     local config=$(build.dockerCompose)
 
-    local latestImage="$(eval echo $(jq '.image?' <<< $config))"
-    latestImage="${latestImage%:*}:latest"
+    local taggedImage="$(eval echo $(jq '.image?' <<< $config))"
+    taggedImage="${taggedImage%:*}:${BASE_TAG}"
 
-    export CONTAINER_TAG="$(build.calculateFingerprint "$config" "$latestImage")"
-    [ "${CONTAINER_TAG:-}" ] || exit
-    actualImage="$(eval echo $(jq '.image?' <<< $config))"
+    local revision="$(git describe --tags --dirty)"
+    local -r fingerprint="$(build.calculateFingerprint "$config" "$taggedImage")"
+    [ "${fingerprint:-}" ] || exit
 
     # check if there is a local image with the correct fingerprint
-    if [ $(build.imageExists "$actualImage") ]; then
-        echo "${latestImage} has not changed."
+    local -a images
+    mapfile -t images < <(build.findIdsWithFingerprint "$fingerprint")
+    if [ ${#images[*]} -gt 0 ]; then
+        echo "${taggedImage} has not changed."
         return
     fi
+
+    export CONTAINER_TAG="$fingerprint"
+    local actualImage="$(eval echo $(jq '.image?' <<< $config))"
 
     echo "building $actualImage"
     # check if there is an image in the registry with the correct fingerprint
     if docker pull "$actualImage" 2>/dev/null; then
         #downloaded image from registry
-        [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}' | grep "$latestImage")" ] || docker rmi "$latestImage"
-        docker tag "$actualImage" "$latestImage"
+        [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}' | grep "$taggedImage")" ] || docker rmi "$taggedImage"
+        docker tag "$actualImage" "$taggedImage"
         docker rmi "$actualImage"
         return
     fi
@@ -137,18 +143,42 @@ function build.updateContainer()
     export CONTAINER_GIT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
     export CONTAINER_GIT_COMMIT="$(git rev-parse HEAD)"
     export CONTAINER_GIT_URL="$(git remote get-url origin)"
-    export CONTAINER_ORIGIN="${version:-}"
+    export CONTAINER_ORIGIN="$revision"
 
     # rebuild container because no container exists with the correct fingerprint
     docker-compose build  ||  die "Build failure"
 
-    [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}' | grep "$latestImage")" ] || docker rmi "$latestImage"
-    docker tag "$actualImage" "$latestImage"
-#    if [ "$CONTAINER_GIT_BRANCH" = 'master' ] && [[ "$(git describe --tags --dirty)" != *dirty ]]; then
+    [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}' | grep "$taggedImage")" ] || docker rmi "$taggedImage"
+    docker tag "$actualImage" "$taggedImage"
+#    if [ "$CONTAINER_GIT_BRANCH" = 'master' ] && [[ "$revision" != *dirty ]]; then
         docker push "$actualImage"
-        docker push "$latestImage"
+        docker push "$taggedImage"
 #    fi
     docker rmi "$actualImage"
+}
+
+##############################################################################################
+function build.XupdateContainer()
+{
+    local config=$(build.dockerCompose)
+
+    local taggedImage="$(eval echo $(jq '.image?' <<< $config))"
+    taggedImage="${taggedImage%:*}:${BASE_TAG}"
+
+    export CONTAINER_TAG="$(build.calculateFingerprint "$config" "$taggedImage")"
+    [ "${CONTAINER_TAG:-}" ] || exit
+    actualImage="$(eval echo $(jq '.image?' <<< $config))"
+
+
+    # setup environment for 'docker-compose build'
+    export CONTAINER_FINGERPRINT="${CONTAINER_TAG:-}"
+    export CONTAINER_GIT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+    export CONTAINER_GIT_COMMIT="$(git rev-parse HEAD)"
+    export CONTAINER_GIT_URL="$(git remote get-url origin)"
+    export CONTAINER_ORIGIN="$(git describe --tags --dirty)"
+
+    # rebuild container because no container exists with the correct fingerprint
+    docker-compose build  ||  die "Build failure"
 }
 
 ##############################################################################################
