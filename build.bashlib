@@ -62,22 +62,40 @@ function build.allContainers()
 function build.calculateFingerprint()
 {
     local -r config=${1:?}
-    local -r image=${2:?}
 
     # get the following
     #  - git tree hash
+    #  - resolved 'docker build.args' config from docker-compose.yml
     #  - container digest of layer that we are building on top of
-    # resolved 'docker build.args' config from docker-compose.yml
+    #  - anything dirty in workspace
 
+
+    # git tree hash
     local -a dependents
     mapfile -t dependents < <(git ls-tree HEAD -- . | awk '{print $3}')
-    dependents+=( "$(eval echo $(jq '.build.args?' <<< "$config"))" )
-    local base=$(eval echo $( jq '.build.args.FROM_BASE' <<< "$config" ))
 
+    # resolved 'docker build.args' config from docker-compose.yml
+    dependents+=( "$(eval echo $(jq '.build.args?' <<< "$config"))" )
+
+    # container digest of layer that we are building on top of
+    local base=$(eval echo $( jq '.build.args.FROM_BASE' <<< "$config" ))
     if [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}' | grep "$base")" ]; then
-        docker pull "$base" >&2 || die "No base image '$base' for $image: unable to calulate fingerprint."
+        docker pull "$base" >&2 || return
     fi
     dependents+=( $(docker inspect "$base" | jq '.[].Id' ) )
+
+    # anything dirty in workspace
+    for line in $(git status --porcelain); do
+        local file=$(awk '{print $2}' <<< "$line")
+        case $(awk '{print $1}' <<< "$line") in
+            A|M)
+                dependents+=( "$(sha256sum "$file")" );;
+            *)
+                dependents+=( "$line" );;
+        esac
+    done
+
+    # generate fingerprint from all our dependents
     (sha256sum | cut -d' ' -f1) <<< "${dependents[*]}"
 }
 
@@ -113,9 +131,8 @@ function build.updateContainer()
     local taggedImage="$(eval echo $(jq '.image?' <<< $config))"
     taggedImage="${taggedImage%:*}:${BASE_TAG}"
 
-    local revision="$(git describe --tags --dirty)"
-    local -r fingerprint="$(build.calculateFingerprint "$config" "$taggedImage")"
-    [ "${fingerprint:-}" ] || exit
+    local -r fingerprint="$(build.calculateFingerprint "$config")"
+    [ "${fingerprint:-}" ] || die "No base image found for $taggedImage: unable to calulate fingerprint."
 
     # check if there is a local image with the correct fingerprint
     local -a images
@@ -125,18 +142,21 @@ function build.updateContainer()
         return
     fi
 
+    # get image tagged with fingerprint
     export CONTAINER_TAG="$fingerprint"
     local actualImage="$(eval echo $(jq '.image?' <<< $config))"
 
     echo "building $actualImage"
     # check if there is an image in the registry with the correct fingerprint
     if docker pull "$actualImage" 2>/dev/null; then
-        #downloaded image from registry
+        # downloaded image from registry
         [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}' | grep "$taggedImage")" ] || docker rmi "$taggedImage"
         docker tag "$actualImage" "$taggedImage"
         docker rmi "$actualImage"
         return
     fi
+
+    local -r revision="$(git describe --tags --dirty)"
 
     # setup environment for 'docker-compose build'
     export CONTAINER_FINGERPRINT="${CONTAINER_TAG:-}"
@@ -150,10 +170,10 @@ function build.updateContainer()
 
     [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}' | grep "$taggedImage")" ] || docker rmi "$taggedImage"
     docker tag "$actualImage" "$taggedImage"
-#    if [ "$CONTAINER_GIT_BRANCH" = 'master' ] && [[ "$revision" != *dirty ]]; then
+    if [ "$CONTAINER_GIT_BRANCH" = 'master' ] && [[ "$revision" != *dirty ]]; then
         docker push "$actualImage"
         docker push "$taggedImage"
-#    fi
+    fi
     docker rmi "$actualImage"
 }
 
