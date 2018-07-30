@@ -25,7 +25,7 @@ builds
 
 enhancements:
     setup elasticsearch
-    split 'production' into two: "broker,zookeeper,hubot,mysql", "other"
+    setup private docker registry
     container kafka logging with https://hub.docker.com/r/mickyg/kafka-logdriver/
     security
         - use git crypt
@@ -63,6 +63,7 @@ enhancements:
         provide build options
             Add getcomposer (for debugging PHP) to php5
             Add getcomposer (for debugging PHP) to php7
+        move PHP to port 9000 so we can move it out of nginx
     nginx
         improve extensibility
             change usage fromo conf.d to sites_enabled
@@ -113,6 +114,7 @@ Nagios reverse proxy
 Allow any action to have an osId extension to support conditional actions
 setup nodervisor  (supervisor views with nodejs)
     supervisord-monitor configuration
+split 'production' into two: "broker,zookeeper,hubot,mysql", "other"
 
 Hubot update
 Zenphoto update

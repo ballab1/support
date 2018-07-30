@@ -62,16 +62,16 @@
     path = openjre8
     url = ../openjre8.git
 [submodule "perl.5-26-2"]
-    path = perl.5-26-2
+	path = perl
     url = ../perl.5-26-2.git
 [submodule "perl-carton"]
     path = perl-carton
     url = ../perl-carton.git
 [submodule "phpmyadmin"]
-    path = phpadmin
+	path = phpmyadmin
     url = ../phpmyadmin.git
 [submodule "postgres"]
-    path = postgres
+	path = postgresql
     url = ../postgres.git
 [submodule "php5"]
     path = php5

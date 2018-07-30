@@ -1,85 +1,41 @@
 #!/bin/bash
 
-# Use the Unofficial Bash Strict Mode
-set -o errexit
-set -o nounset
-set -o pipefail
-IFS=$'\n\t'
-. ~/bin/trap.bashlib
-
-set +o verbose
-set +o xtrace
-
-function build() {
-    local dir="${1:?}"
-    
-    pushd "$dir" >/dev/null
-    CONTAINER_VERSION="$(git describe --tags --dirty)"  docker-compose build
-    popd >/dev/null
-}
-
-declare start=$(date +%s) 
 declare -r TOOLS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"   
+source "${TOOLS}/build.bashlib"
 
-export CFG_GITHUB_EMAIL=''
-export CFG_GITHUB_HUBOT_TOKEN=''
-export CFG_GITHUB_JENKINS_EMAIL=''
-export CFG_GITHUB_JENKINS_NAME=''
-export CFG_GITHUB_JENKINS_TOKEN=''
-export CFG_GITHUB_JENKINS_USER=''
-export CFG_GITHUB_NAME=''
-export CFG_GITHUB_TOKEN=''
-export CFG_GITHUB_USER=''
-export CFG_PASS=''
-export CFG_SLACK_HUBOT_TOKEN=''
-export CFG_USER=''
+#jira-fd-kafka
+#jenkins-build-events
+#nginx_alt
 
-[ -z "${CBF_VERSION:-}" ] || unset CBF_VERSION
-[ -z "${CONTAINER_TAG:-}" ] || unset CONTAINER_TAG
-[ -z "${DOCKER_REGISTRY:-}" ] || unset DOCKER_REGISTRY
+declare -a modules=(base_container
+                    supervisord
+                    nginx_base
+                    php5
+                    php7
+                    openjdk8
+                    hubot
+                    jenkins
+                    kafka-broker
+                    kafka-manager
+                    kafka-zookeeper
+                    mysql
+                    nagios
+                    nginx
+                    nodervisor
+                    phpmyadmin
+                    supervisord-monitor
+                    webdav
+                    zenphoto
+                    perl
+                    perl-carton
+                    files-kafka
+                    files-librd
+                    movefiles
+                    alpinefull
+                    postgresql
+                    openjre8
+                    gradle )
 
 cd "$TOOLS"
+build.allContainers "${modules[@]}"
 
-CBF_VERSION=v3.0 build base_container
-build supervisord
-build nginx_base
-build php5
-build php7
-build openjdk8
-
-build hubot
-build jenkins
-build kafka-broker
-build kafka-manager
-build kafka-zookeeper
-build mysql
-build nagios
-build nginx
-#build nginx_alt
-build nodervisor
-build phpadmin
-#build supervisord-monitor
-build webdav
-build zenphoto 
-
-build perl.5-26-2
-build perl-carton
-build files-kafka
-build files-librd
-#build jenkins-build-events
-#build jira-fd-kafka
-build movefiles
-
-build alpinefull
-build postgres
-build openjre8
-build gradle
-
-
-declare finish=$(date +%s)
-declare -i elapsed=$(( finish - start ))
-
-echo ''
-echo ''
-TZ='America/New_York' date
-printf "Time elapsed: %02d:%02d:%02d\n"  $((elapsed / 3600)) $((elapsed % 3600 / 60)) $((elapsed % 60))  
