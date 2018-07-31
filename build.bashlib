@@ -178,30 +178,6 @@ function build.updateContainer()
 }
 
 ##############################################################################################
-function build.XupdateContainer()
-{
-    local config=$(build.dockerCompose)
-
-    local taggedImage="$(eval echo $(jq '.image?' <<< $config))"
-    taggedImage="${taggedImage%:*}:${BASE_TAG}"
-
-    export CONTAINER_TAG="$(build.calculateFingerprint "$config" "$taggedImage")"
-    [ "${CONTAINER_TAG:-}" ] || exit
-    actualImage="$(eval echo $(jq '.image?' <<< $config))"
-
-
-    # setup environment for 'docker-compose build'
-    export CONTAINER_FINGERPRINT="${CONTAINER_TAG:-}"
-    export CONTAINER_GIT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
-    export CONTAINER_GIT_COMMIT="$(git rev-parse HEAD)"
-    export CONTAINER_GIT_URL="$(git remote get-url origin)"
-    export CONTAINER_ORIGIN="$(git describe --tags --dirty)"
-
-    # rebuild container because no container exists with the correct fingerprint
-    docker-compose build  ||  die "Build failure"
-}
-
-##############################################################################################
 function registry.getCatalog()
 {
     local -a entries=()
@@ -221,9 +197,11 @@ function registry.getDigest()
     local -r digest="$(curl --header "Accept: application/vnd.docker.distribution.manifest.v2+json" \
                             --insecure \
                             --silent \
+                            --head \
                             --request GET "${REGISTRY_URL}/${name}/manifests/${tag}" \
                        | jq '.config.digest' )"
-    eval echo $digest
+
+    echo $digest | grep 'Docker-Content-Digest:' | awk '{print $2}'
 }
 
 ##############################################################################################
@@ -251,7 +229,7 @@ function registry.getTags()
 
     local -a tags=()
     local -r manifest=$(curl --insecure --silent --request GET "${REGISTRY_URL}/${name}/tags/list")
-    [ -z "${manifest:-}" ] || [[ "$manifest" =~ *error* ]] ||  mapfile -t tags < <(jq '.tags[]' <<< "$manifest")
+    [ -z "${manifest:-}" ] || [[ "$manifest" =~ *error* ]] ||  mapfile -t tags < <(jq '.tags[]?' <<< "$manifest")
     for tag in "${tags[@]}"; do
         eval echo $tag
     done
@@ -264,5 +242,5 @@ function registry.deleteImage()
     local -r tag=${2:?}
 
     local -r digest="$(registry.getDigest "$name" "$tag")"
-    curl --insecure --silent --request DELETE "${REGISTRY_URL}/${name}/manifests/${digest}"
+    curl --insecure --verbose --request DELETE "${REGISTRY_URL}/${name}/manifests/${digest}"
 }

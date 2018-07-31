@@ -15,10 +15,11 @@ cd "$TOOLS"
 declare -a catalog
 mapfile -t catalog < <(registry.getCatalog)
 
+declare -a tags
 declare -i index=0    
 for entry in $(printf "%s\n" "${catalog[@]}" | sort);do 
     (( index++ )) || true
-    declare -a tags=()
+    tags=()
     mapfile -t tags < <(registry.getTags "$entry")
     printf "%05d,%s,%d:\n" $index $entry ${#tags[*]}
     printf "       %s\n" "${tags[@]}" | sort
