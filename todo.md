@@ -25,7 +25,6 @@ builds
 
 enhancements:
     setup elasticsearch
-    setup private docker registry
     container kafka logging with https://hub.docker.com/r/mickyg/kafka-logdriver/
     security
         - use git crypt
@@ -80,6 +79,8 @@ enhancements:
             add side menu for categories filtering
             backup needs more intelegence + moved to jenkinsfile
     jenkins
+        scan registry and delete folders with no sub-folders in
+            /var/lib/docker-registry/docker/registry/v2/repositories/<name>/_manifests/tags/
         implement jenkins jobs as containers
         make fancy report for 'Jenkins Uptime Pipeline' and export data to kafka
         review list of plugins and dependents to ensure all loaded plugins are explicity defined
@@ -97,6 +98,7 @@ Done
 Kafka broker/zookeeper issues
 Grafana update
 mysql update
+setup private docker registry
 
 security
 - mapping layer for ENV variables.  use docker-compose.yml
