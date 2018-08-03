@@ -43,8 +43,8 @@ function build.allContainers()
 
     for dir in "${modules[@]}"; do
         pushd "$dir" >/dev/null
-        unset CBF_VERSION
-        [ "$dir" = base_container ] && export CBF_VERSION=v3.0
+#        export CBF_VERSION=master
+        [ "$dir" = base_container ] || unset CBF_VERSION
         build.updateContainer
         popd >/dev/null
     done
