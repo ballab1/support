@@ -75,12 +75,23 @@ function build.calculateFingerprint()
     mapfile -t dependents < <(git ls-tree HEAD -- . | awk '{print $3}')
 
     # resolved 'docker build.args' config from docker-compose.yml
-    dependents+=( "$(eval echo $(jq '.build.args?' <<< "$config"))" )
+    dependents+=( "$(eval echo $(jq '.build.args?' <<< "$config"))"
+                  "${CBF_VERSION:-}"
+                )
+    
+    # add any local 'build/container_build_framework' folder
+    local -a files
+    set +o pipefail
+    mapfile -t files < <(find build/container_build_framework* -type f -name '*' 2>/dev/null | true)
+    set -o pipefail
+    for file in "${files[@]}"; do
+        dependents+=( "$(sha256sum "$file")" )
+    done
 
     # container digest of layer that we are building on top of
     local base=$(eval echo $( jq '.build.args.FROM_BASE' <<< "$config" ))
     if [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}' | grep "$base")" ]; then
-        echo pulling parent image: "$base"
+        echo pulling parent image: "$base" >&2
         docker pull "$base" >&2 || return 0
     fi
     dependents+=( $(docker inspect "$base" | jq '.[].Id' ) )
@@ -125,6 +136,17 @@ function build.findIdsWithFingerprint()
 }
 
 ##############################################################################################
+function build.releaseImage()
+{
+    local image=${1:?}
+
+    [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}' | grep "$image")" ] && return
+    [ "$(docker ps --format '{{.Image}}' | grep "$image")" ] && return
+
+    docker rmi "$image"
+}
+
+##############################################################################################
 function build.updateContainer()
 {
     local config=$(build.dockerCompose)
@@ -151,7 +173,7 @@ function build.updateContainer()
     # check if there is an image in the registry with the correct fingerprint
     if docker pull "$actualImage" 2>/dev/null; then
         # downloaded image from registry
-        [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}' | grep "$taggedImage")" ] || docker rmi "$taggedImage"
+        build.releaseImage "$taggedImage"
         docker tag "$actualImage" "$taggedImage"
         docker rmi "$actualImage"
         return 0
@@ -170,13 +192,20 @@ function build.updateContainer()
     # rebuild container because no container exists with the correct fingerprint
     docker-compose build  ||  die "Build failure"
 
-    [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}' | grep "$taggedImage")" ] || docker rmi "$taggedImage"
+    build.releaseImage "$taggedImage"
     docker tag "$actualImage" "$taggedImage"
-    if [ "$CONTAINER_GIT_BRANCH" = 'master' ] && [[ "$revision" != *dirty ]]; then
+    if registry.canPush && [[ "$revision" != *dirty ]]; then
         docker push "$actualImage"
         docker push "$taggedImage"
     fi
     docker rmi "$actualImage"
+    return 0
+}
+
+##############################################################################################
+function registry.canPush()
+{
+#    [ "$CONTAINER_GIT_BRANCH" = 'master' ]
     return 0
 }
 
@@ -202,6 +231,21 @@ function registry.getCatalog()
 }
 
 ##############################################################################################
+function registry.getCreateTime()
+{
+    local -r name=${1:?}
+    local -r tag=${2:?}
+
+    local -r manifests="$(registry.getManifest "$name" "$tag" )"
+
+    if [ -z "$manifests" ]; then
+        echo '                      '
+    else
+        (jq '[ .history[].v1Compatibility|fromjson.created | sub("\\.\\d+Z"; "Z") | fromdate] | max | todate' ) <<< "$manifests"
+    fi
+}
+
+##############################################################################################
 function registry.getDigest()
 {
     local -r name=${1:?}
@@ -213,7 +257,7 @@ function registry.getDigest()
                             --head \
                             --request GET "${REGISTRY_URL}/${name}/manifests/${tag}" )"
 
-    (grep 'Docker-Content-Digest:' | awk '{print $2}') <<< "$digest"
+    ( awk '{gsub(/\r/,"");if ($1 == "Docker-Content-Digest:") {print $2}}') <<< "$digest"
 }
 
 ##############################################################################################
@@ -256,20 +300,17 @@ function registry.reportCatalog()
 
     local -A tags
     local -i index=0
-    for entry in $(printf "%s\n" "${catalog[@]}" | sort);do 
+    for entry in $(printf "%s\n" "${catalog[@]}" | sort);do
         (( index++ )) || true
         eval tags=( $(registry.getTags "$entry") )
-        printf "%05d,%s,%d:\n" $index $entry ${#tags[*]}
+        printf "%05d,%d,%s:\n" $index ${#tags[*]} $entry
+
         local latest="${tags['latest']:-}"
-        for tag in $(printf "%s\n" "${!tags[@]}" | sort); do
-            if [ "${latest:-}" ]; then
-                [ "$tag" = 'latest' ] && continue
-                if [ "$latest" = "${tags[$tag]}" ]; then
-                    printf "       %s latest\n" "$tag"
-                    continue
-                fi
-            fi
-            printf "       %s\n" "$tag"
-        done
+        (for tag in "${!tags[@]}"; do
+             [ "${latest:-}" ] && [ "$tag" = 'latest' ] && [ ${#tags[@]} -gt 1 ] && continue
+             printf "       %s %s" "$(registry.getCreateTime "$entry" "$tag")" "$tag"
+             [ "${latest:-}" ] && [ "$latest" = "${tags[$tag]}" ] && [ ${#tags[@]} -gt 1 ] && printf " latest"
+             echo
+         done) | sort
     done
 }
