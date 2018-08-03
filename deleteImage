@@ -12,7 +12,3 @@ source "${TOOLS}/build.bashlib"
 
 
 cd "$TOOLS"
-set -x
-registry.deleteImage phpadmin 39a3f99e0033474a33a69fa6d978ee9fa63ecaefe9e3dc76537df35596cd922a
-registry.deleteImage phpadmin latest
-set +x

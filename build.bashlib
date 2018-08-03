@@ -80,7 +80,8 @@ function build.calculateFingerprint()
     # container digest of layer that we are building on top of
     local base=$(eval echo $( jq '.build.args.FROM_BASE' <<< "$config" ))
     if [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}' | grep "$base")" ]; then
-        docker pull "$base" >&2 || return
+        echo pulling parent image: "$base"
+        docker pull "$base" >&2 || return 0
     fi
     dependents+=( $(docker inspect "$base" | jq '.[].Id' ) )
 
@@ -139,7 +140,7 @@ function build.updateContainer()
     mapfile -t images < <(build.findIdsWithFingerprint "$fingerprint")
     if [ ${#images[*]} -gt 0 ]; then
         echo "${taggedImage} has not changed."
-        return
+        return 0
     fi
 
     # get image tagged with fingerprint
@@ -153,12 +154,13 @@ function build.updateContainer()
         [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}' | grep "$taggedImage")" ] || docker rmi "$taggedImage"
         docker tag "$actualImage" "$taggedImage"
         docker rmi "$actualImage"
-        return
+        return 0
     fi
 
     local -r revision="$(git describe --tags --dirty)"
 
     # setup environment for 'docker-compose build'
+    export CONTAINER_BUILD_TIME=$(date +%Y%m%d-%H%M%S.%N -u)
     export CONTAINER_FINGERPRINT="${CONTAINER_TAG:-}"
     export CONTAINER_GIT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
     export CONTAINER_GIT_COMMIT="$(git rev-parse HEAD)"
@@ -175,6 +177,17 @@ function build.updateContainer()
         docker push "$taggedImage"
     fi
     docker rmi "$actualImage"
+    return 0
+}
+
+##############################################################################################
+function registry.deleteImage()
+{
+    local -r name=${1:?}
+    local -r tag=${2:?}
+
+    local -r digest="$(registry.getDigest "$name" "$tag")"
+    curl --insecure --verbose --request DELETE "${REGISTRY_URL}/${name}/manifests/${digest}"
 }
 
 ##############################################################################################
@@ -198,10 +211,9 @@ function registry.getDigest()
                             --insecure \
                             --silent \
                             --head \
-                            --request GET "${REGISTRY_URL}/${name}/manifests/${tag}" \
-                       | jq '.config.digest' )"
+                            --request GET "${REGISTRY_URL}/${name}/manifests/${tag}" )"
 
-    echo $digest | grep 'Docker-Content-Digest:' | awk '{print $2}'
+    (grep 'Docker-Content-Digest:' | awk '{print $2}') <<< "$digest"
 }
 
 ##############################################################################################
@@ -231,16 +243,33 @@ function registry.getTags()
     local -r manifest=$(curl --insecure --silent --request GET "${REGISTRY_URL}/${name}/tags/list")
     [ -z "${manifest:-}" ] || [[ "$manifest" =~ *error* ]] ||  mapfile -t tags < <(jq '.tags[]?' <<< "$manifest")
     for tag in "${tags[@]}"; do
-        eval echo $tag
+        tag=$(eval echo $tag)
+        printf "['%s']='%s'\n" "$tag" "$(registry.getDigest "$name" "$tag")"
     done
 }
 
 ##############################################################################################
-function registry.deleteImage()
+function registry.reportCatalog()
 {
-    local -r name=${1:?}
-    local -r tag=${2:?}
+    local -a catalog
+    mapfile -t catalog < <(registry.getCatalog)
 
-    local -r digest="$(registry.getDigest "$name" "$tag")"
-    curl --insecure --verbose --request DELETE "${REGISTRY_URL}/${name}/manifests/${digest}"
+    local -A tags
+    local -i index=0
+    for entry in $(printf "%s\n" "${catalog[@]}" | sort);do 
+        (( index++ )) || true
+        eval tags=( $(registry.getTags "$entry") )
+        printf "%05d,%s,%d:\n" $index $entry ${#tags[*]}
+        local latest="${tags['latest']:-}"
+        for tag in $(printf "%s\n" "${!tags[@]}" | sort); do
+            if [ "${latest:-}" ]; then
+                [ "$tag" = 'latest' ] && continue
+                if [ "$latest" = "${tags[$tag]}" ]; then
+                    printf "       %s latest\n" "$tag"
+                    continue
+                fi
+            fi
+            printf "       %s\n" "$tag"
+        done
+    done
 }
