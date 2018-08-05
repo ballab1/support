@@ -79,8 +79,6 @@ enhancements:
             add side menu for categories filtering
             backup needs more intelegence + moved to jenkinsfile
     jenkins
-        scan registry and delete folders with no sub-folders in
-            /var/lib/docker-registry/docker/registry/v2/repositories/<name>/_manifests/tags/
         implement jenkins jobs as containers
         make fancy report for 'Jenkins Uptime Pipeline' and export data to kafka
         review list of plugins and dependents to ensure all loaded plugins are explicity defined
@@ -88,7 +86,6 @@ enhancements:
 
 future development  
     create container which has a firewall
-    encode/decode files (aka GIT-LFS encoding) which are protected so they can go into GIT
     create a GIT-LFS->raw_fs server for testing
 ```
 
@@ -117,6 +114,7 @@ Allow any action to have an osId extension to support conditional actions
 setup nodervisor  (supervisor views with nodejs)
     supervisord-monitor configuration
 split 'production' into two: "broker,zookeeper,hubot,mysql", "other"
+git-grypt: encode/decode files (aka GIT-LFS encoding) which are protected so they can go into GIT
 
 Hubot update
 Zenphoto update
@@ -135,6 +133,9 @@ Add getcomposer (for PHP) to php7
         Always starts up in 'setup / update' mode
     Jenkins errors (on nginx):
                 need dockerentry.sh to set owner of files in .ssh
+Jenkins jobs
+        scan registry and delete folders with no sub-folders in
+            /var/lib/docker-registry/docker/registry/v2/repositories/<name>/_manifests/tags/
 
 LABELS in images
     - git remote get-url origin
