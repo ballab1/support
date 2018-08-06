@@ -43,7 +43,6 @@ function build.allContainers()
 
     for dir in "${modules[@]}"; do
         pushd "$dir" >/dev/null
-#        export CBF_VERSION=master
         [ "$dir" = base_container ] || unset CBF_VERSION
         build.updateContainer
         popd >/dev/null
@@ -52,8 +51,8 @@ function build.allContainers()
     local finish=$(date +%s)
     local -i elapsed=$(( finish - start ))
 
-    echo ''
-    echo ''
+    echo
+    echo
     TZ='America/New_York' date
     printf "Time elapsed: %02d:%02d:%02d\n"  $((elapsed / 3600)) $((elapsed % 3600 / 60)) $((elapsed % 60))
 }
@@ -128,7 +127,7 @@ function build.findIdsWithFingerprint()
 
     local -a ids
     mapfile -t ids < <(curl --silent \
-                            --unix-socket /var/run/docker.sock http://localhost/images/json?all='true' \
+                            --unix-socket /var/run/docker.sock http://localhost/images/json \
                        | jq ".[]|select(.Labels.\"container.fingerprint\" == \"$fingerprint\").Id")
     for id in "${ids[@]}"; do
         eval echo $id
@@ -212,8 +211,11 @@ function registry.canPush()
 ##############################################################################################
 function registry.deleteImage()
 {
-    local -r name=${1:?}
-    local -r tag=${2:?}
+    local -r id=${1:?}
+
+    local -r name="${id%:*}"
+    local -r tag="${id##*:}" 
+    [ "${name:-}" ] && [ "${tag:-}" ] || die "Invalid $id specified" 
 
     local -r digest="$(registry.getDigest "$name" "$tag")"
     curl --insecure --verbose --request DELETE "${REGISTRY_URL}/${name}/manifests/${digest}"
@@ -295,21 +297,22 @@ function registry.getTags()
 ##############################################################################################
 function registry.reportCatalog()
 {
-    local -a catalog
-    mapfile -t catalog < <(registry.getCatalog)
+    local -a catalog=( "$@" )
+    [ ${#catalog[*]} -eq 0 ] && mapfile -t catalog < <(registry.getCatalog)
 
     local -A tags
     local -i index=0
+    local -r ref='latest'
     for entry in $(printf "%s\n" "${catalog[@]}" | sort);do
         (( index++ )) || true
         eval tags=( $(registry.getTags "$entry") )
         printf "%05d,%d,%s:\n" $index ${#tags[*]} $entry
 
-        local latest="${tags['latest']:-}"
+        local latest="${tags[$ref]:-}"
         (for tag in "${!tags[@]}"; do
-             [ "${latest:-}" ] && [ "$tag" = 'latest' ] && [ ${#tags[@]} -gt 1 ] && continue
+             [ "${latest:-}" ] && [ "$tag" = "$ref" ] && [ ${#tags[@]} -gt 1 ] && continue
              printf "       %s %s" "$(registry.getCreateTime "$entry" "$tag")" "$tag"
-             [ "${latest:-}" ] && [ "$latest" = "${tags[$tag]}" ] && [ ${#tags[@]} -gt 1 ] && printf " latest"
+             [ "${latest:-}" ] && [ "$latest" = "${tags[$tag]}" ] && [ ${#tags[@]} -gt 1 ] && printf " $ref"
              echo
          done) | sort
     done
