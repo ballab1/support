@@ -10,5 +10,5 @@ declare -r TOOLS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 [ -e ~/bin/trap.bashlib ] && source ~/bin/trap.bashlib
 source "${TOOLS}/build.bashlib"
 
-
 cd "$TOOLS"
+registry.deleteImage ${1:?"must entry a valid repository:tag"}
