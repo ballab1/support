@@ -9,6 +9,7 @@ source "${TOOLS}/build.bashlib"
 
 declare -a modules=(base_container
                     supervisord
+                    cesi
                     nginx_base
                     php5
                     php7

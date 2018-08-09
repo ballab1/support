@@ -42,10 +42,14 @@ function build.allContainers()
     export DOCKER_REGISTRY=ubuntu-s2:5000/
 
     for dir in "${modules[@]}"; do
-        pushd "$dir" >/dev/null
-        [ "$dir" = base_container ] || unset CBF_VERSION
-        build.updateContainer
-        popd >/dev/null
+        if [ -d "$dir" ]; then
+             pushd "$dir" >/dev/null
+            [ "$dir" = base_container ] || unset CBF_VERSION
+            build.updateContainer
+            popd >/dev/null
+        else
+            echo "invalid project directoryt: $dir"
+        fi
     done
 
     local finish=$(date +%s)
@@ -74,9 +78,11 @@ function build.calculateFingerprint()
     mapfile -t dependents < <(git ls-tree HEAD -- . | awk '{print $3}')
 
     # resolved 'docker build.args' config from docker-compose.yml
+    set +u
     dependents+=( "$(eval echo $(jq '.build.args?' <<< "$config"))"
                   "${CBF_VERSION:-}"
                 )
+    set -u
     
     # add any local 'build/container_build_framework' folder
     local -a files

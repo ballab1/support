@@ -91,3 +91,6 @@
 [submodule "zenphoto"]
     path = zenphoto
     url = ../zenphoto.git
+[submodule "cesi"]
+	path = cesi
+	url = https://github.com/ballab1/cesi.git
