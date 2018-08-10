@@ -1,6 +1,7 @@
 #!/bin/bash
 
-declare REGISTRY_URL=http://ubuntu-s2:5000/v2
+declare DOCKER_REGISTRY=ubuntu-s2:5000/
+declare REGISTRY_URL=http://${DOCKER_REGISTRY}v2
 
 ##############################################################################################
 function die()
@@ -39,7 +40,7 @@ function build.allContainers()
     export CFG_SLACK_HUBOT_TOKEN=''
     export CFG_USER=''
     export BASE_TAG=${BASE_TAG:-latest}
-    export DOCKER_REGISTRY=ubuntu-s2:5000/
+    export DOCKER_REGISTRY
 
     for dir in "${modules[@]}"; do
         if [ -d "$dir" ]; then

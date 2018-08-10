@@ -13,9 +13,6 @@
 [submodule "files-librd"]
     path = files-librd
     url = ../files-librd.git
-[submodule "grafana"]
-    path = grafana
-    url = ../grafana.git
 [submodule "gradle"]
     path = gradle
     url = ../gradle.git
