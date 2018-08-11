@@ -197,8 +197,7 @@ function build.updateContainer()
     # check if there is an image in the registry with the correct fingerprint
     if [ -z "${ALWAYS_BUILD:-}" ] && docker pull "$actualImage" 2>/dev/null; then
         # downloaded image from registry
-        build.releaseImage "$taggedImage"
-        docker tag "$actualImage" "$taggedImage"
+        build.changeImage "$taggedImage" "$actualImage"
         docker rmi "$actualImage"
         return 0
     fi
