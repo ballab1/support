@@ -106,7 +106,7 @@ function build.calculateFingerprint()
     for line in $(git status --porcelain); do
         local file=$(awk '{print $2}' <<< "$line")
         case $(awk '{print $1}' <<< "$line") in
-            A|M)
+            A|M|MM)
                 dependents+=( "$(sha256sum "$file")" );;
             *)
                 dependents+=( "$line" );;
@@ -115,6 +115,20 @@ function build.calculateFingerprint()
 
     # generate fingerprint from all our dependents
     (sha256sum | cut -d' ' -f1) <<< "${dependents[*]}"
+}
+
+##############################################################################################
+function build.changeImage()
+{
+    local taggedImage=${1:?}
+    local actualImage=${2:?}
+
+    [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}'  --filter "reference=$taggedImage")" ] || \
+        [ "$(docker ps --format '{{.Image}}' | grep "$taggedImage")" ] || \
+        docker rmi "$taggedImage"
+
+    [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}' --filter "reference=$taggedImage")" ] && \
+        docker tag "$actualImage" "$taggedImage"
 }
 
 ##############################################################################################
@@ -142,14 +156,16 @@ function build.findIdsWithFingerprint()
 }
 
 ##############################################################################################
-function build.releaseImage()
+function build.push()
 {
-    local image=${1:?}
+    local -r image=${1:?}
 
-    [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}' | grep "$image")" ] && return
-    [ "$(docker ps --format '{{.Image}}' | grep "$image")" ] && return
-
-    docker rmi "$image"
+    local attempts
+    for attempt in {0..2}; do
+        docker push "$image" && return
+        [ $attempt -eq 2 ] && die "Failed to push $image"
+        echo 'retrying...'
+    done
 }
 
 ##############################################################################################
@@ -198,11 +214,12 @@ function build.updateContainer()
     # rebuild container because no container exists with the correct fingerprint
     docker-compose build  ||  die "Build failure"
 
-    build.releaseImage "$taggedImage"
-    docker tag "$actualImage" "$taggedImage"
-    if registry.canPush && [[ "$revision" != *dirty ]]; then
-        docker push "$actualImage"
-        docker push "$taggedImage"
+    build.changeImage "$taggedImage" "$actualImage"
+    [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}' --filter "reference=$taggedImage")" ] && docker tag "$actualImage" "$taggedImage"
+
+    if registry.canPush "$revision"; then
+        build.push "$actualImage"
+        build.push "$taggedImage"
     fi
     docker rmi "$actualImage"
     return 0
@@ -211,7 +228,13 @@ function build.updateContainer()
 ##############################################################################################
 function registry.canPush()
 {
+    local -r revision=${1:?}
+
+    [ "${DOCKER_ALWAYS_PUSH:-}" ] && return 0
+    [[ "$revision" != *dirty ]] || return 1
+
 #    [ "$CONTAINER_GIT_BRANCH" = 'master' ]
+
     return 0
 }
 
