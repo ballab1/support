@@ -96,7 +96,7 @@ function build.calculateFingerprint()
 
     # container digest of layer that we are building on top of
     local base=$(eval echo $( jq '.build.args.FROM_BASE' <<< "$config" ))
-    if [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}' | grep "$base")" ]; then
+    if [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}' --filter "reference=$base")" ]; then
         echo pulling parent image: "$base" >&2
         docker pull "$base" >&2 || return 0
     fi
@@ -127,7 +127,7 @@ function build.changeImage()
         [ "$(docker ps --format '{{.Image}}' | grep "$taggedImage")" ] || \
         docker rmi "$taggedImage"
 
-    [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}' --filter "reference=$taggedImage")" ] && \
+    [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}' --filter "reference=$actualImage")" ] || \
         docker tag "$actualImage" "$taggedImage"
 }
 
