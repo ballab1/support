@@ -179,28 +179,30 @@ function build.updateContainer()
     local -r fingerprint="$(build.calculateFingerprint "$config")"
     [ "${fingerprint:-}" ] || die "No base image found for $taggedImage: unable to calulate fingerprint."
 
-    # check if there is a local image with the correct fingerprint
-    local -a images
-    mapfile -t images < <(build.findIdsWithFingerprint "$fingerprint")
-    if [ ${#images[*]} -gt 0 ]; then
-        echo "${taggedImage} has not changed."
-        return 0
+    if [ -z "${ALWAYS_BUILD:-}" ]; then
+        # check if there is a local image with the correct fingerprint
+        local -a images
+        mapfile -t images < <(build.findIdsWithFingerprint "$fingerprint")
+        if [ ${#images[*]} -gt 0 ]; then
+            echo "${taggedImage} has not changed."
+            return 0
+        fi
     fi
 
-    # get image tagged with fingerprint
-    export CONTAINER_TAG="$fingerprint"
-    local actualImage="$(eval echo $(jq '.image?' <<< $config))"
+        # get image tagged with fingerprint
+        export CONTAINER_TAG="$fingerprint"
+        local actualImage="$(eval echo $(jq '.image?' <<< $config))"
 
     echo "building $actualImage"
     # check if there is an image in the registry with the correct fingerprint
-    if docker pull "$actualImage" 2>/dev/null; then
+    if [ -z "${ALWAYS_BUILD:-}" ] && docker pull "$actualImage" 2>/dev/null; then
         # downloaded image from registry
         build.releaseImage "$taggedImage"
         docker tag "$actualImage" "$taggedImage"
         docker rmi "$actualImage"
         return 0
     fi
-
+    
     local -r revision="$(git describe --tags --dirty)"
 
     # setup environment for 'docker-compose build'
