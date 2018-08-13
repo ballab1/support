@@ -9,10 +9,11 @@ source "${TOOLS}/build.bashlib"
 
 declare -a modules=(base_container
                     supervisord
+                    cesi
                     nginx_base
                     php5
                     php7
-                    openjdk8
+                    openjdk
                     hubot
                     jenkins
                     kafka-broker
@@ -33,7 +34,7 @@ declare -a modules=(base_container
                     movefiles
                     alpinefull
                     postgresql
-                    openjre8
+                    openjre
                     gradle )
 
 cd "$TOOLS"

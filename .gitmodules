@@ -13,9 +13,6 @@
 [submodule "files-librd"]
     path = files-librd
     url = ../files-librd.git
-[submodule "grafana"]
-    path = grafana
-    url = ../grafana.git
 [submodule "gradle"]
     path = gradle
     url = ../gradle.git
@@ -56,10 +53,10 @@
     path = nodervisor
     url = ../nodervisor
 [submodule "openjdk8"]
-    path = openjdk8
+	path = openjdk
     url = ../openjdk8.git
 [submodule "openjre8"]
-    path = openjre8
+	path = openjre
     url = ../openjre8.git
 [submodule "perl.5-26-2"]
 	path = perl
@@ -91,3 +88,6 @@
 [submodule "zenphoto"]
     path = zenphoto
     url = ../zenphoto.git
+[submodule "cesi"]
+	path = cesi
+	url = https://github.com/ballab1/cesi.git

@@ -1,6 +1,7 @@
 #!/bin/bash
 
-declare REGISTRY_URL=http://ubuntu-s2:5000/v2
+declare DOCKER_REGISTRY=ubuntu-s2:5000/
+declare REGISTRY_URL=http://${DOCKER_REGISTRY}v2
 
 ##############################################################################################
 function die()
@@ -39,13 +40,17 @@ function build.allContainers()
     export CFG_SLACK_HUBOT_TOKEN=''
     export CFG_USER=''
     export BASE_TAG=${BASE_TAG:-latest}
-    export DOCKER_REGISTRY=ubuntu-s2:5000/
+    export DOCKER_REGISTRY
 
     for dir in "${modules[@]}"; do
-        pushd "$dir" >/dev/null
-        [ "$dir" = base_container ] || unset CBF_VERSION
-        build.updateContainer
-        popd >/dev/null
+        if [ -d "$dir" ]; then
+             pushd "$dir" >/dev/null
+            [ "$dir" = base_container ] || unset CBF_VERSION
+            build.updateContainer
+            popd >/dev/null
+        else
+            echo "invalid project directoryt: $dir"
+        fi
     done
 
     local finish=$(date +%s)
@@ -74,9 +79,11 @@ function build.calculateFingerprint()
     mapfile -t dependents < <(git ls-tree HEAD -- . | awk '{print $3}')
 
     # resolved 'docker build.args' config from docker-compose.yml
+    set +u
     dependents+=( "$(eval echo $(jq '.build.args?' <<< "$config"))"
                   "${CBF_VERSION:-}"
                 )
+    set -u
     
     # add any local 'build/container_build_framework' folder
     local -a files
@@ -89,7 +96,7 @@ function build.calculateFingerprint()
 
     # container digest of layer that we are building on top of
     local base=$(eval echo $( jq '.build.args.FROM_BASE' <<< "$config" ))
-    if [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}' | grep "$base")" ]; then
+    if [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}' --filter "reference=$base")" ]; then
         echo pulling parent image: "$base" >&2
         docker pull "$base" >&2 || return 0
     fi
@@ -99,7 +106,7 @@ function build.calculateFingerprint()
     for line in $(git status --porcelain); do
         local file=$(awk '{print $2}' <<< "$line")
         case $(awk '{print $1}' <<< "$line") in
-            A|M)
+            A|M|MM)
                 dependents+=( "$(sha256sum "$file")" );;
             *)
                 dependents+=( "$line" );;
@@ -108,6 +115,20 @@ function build.calculateFingerprint()
 
     # generate fingerprint from all our dependents
     (sha256sum | cut -d' ' -f1) <<< "${dependents[*]}"
+}
+
+##############################################################################################
+function build.changeImage()
+{
+    local taggedImage=${1:?}
+    local actualImage=${2:?}
+
+    [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}'  --filter "reference=$taggedImage")" ] || \
+        [ "$(docker ps --format '{{.Image}}' | grep "$taggedImage")" ] || \
+        docker rmi "$taggedImage"
+
+    [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}' --filter "reference=$actualImage")" ] || \
+        docker tag "$actualImage" "$taggedImage"
 }
 
 ##############################################################################################
@@ -135,14 +156,16 @@ function build.findIdsWithFingerprint()
 }
 
 ##############################################################################################
-function build.releaseImage()
+function build.push()
 {
-    local image=${1:?}
+    local -r image=${1:?}
 
-    [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}' | grep "$image")" ] && return
-    [ "$(docker ps --format '{{.Image}}' | grep "$image")" ] && return
-
-    docker rmi "$image"
+    local attempts
+    for attempt in {0..2}; do
+        docker push "$image" && return
+        [ $attempt -eq 2 ] && die "Failed to push $image"
+        echo 'retrying...'
+    done
 }
 
 ##############################################################################################
@@ -156,28 +179,29 @@ function build.updateContainer()
     local -r fingerprint="$(build.calculateFingerprint "$config")"
     [ "${fingerprint:-}" ] || die "No base image found for $taggedImage: unable to calulate fingerprint."
 
-    # check if there is a local image with the correct fingerprint
-    local -a images
-    mapfile -t images < <(build.findIdsWithFingerprint "$fingerprint")
-    if [ ${#images[*]} -gt 0 ]; then
-        echo "${taggedImage} has not changed."
-        return 0
+    if [ -z "${ALWAYS_BUILD:-}" ]; then
+        # check if there is a local image with the correct fingerprint
+        local -a images
+        mapfile -t images < <(build.findIdsWithFingerprint "$fingerprint")
+        if [ ${#images[*]} -gt 0 ]; then
+            echo "${taggedImage} has not changed."
+            return 0
+        fi
     fi
 
-    # get image tagged with fingerprint
-    export CONTAINER_TAG="$fingerprint"
-    local actualImage="$(eval echo $(jq '.image?' <<< $config))"
+        # get image tagged with fingerprint
+        export CONTAINER_TAG="$fingerprint"
+        local actualImage="$(eval echo $(jq '.image?' <<< $config))"
 
     echo "building $actualImage"
     # check if there is an image in the registry with the correct fingerprint
-    if docker pull "$actualImage" 2>/dev/null; then
+    if [ -z "${ALWAYS_BUILD:-}" ] && docker pull "$actualImage" 2>/dev/null; then
         # downloaded image from registry
-        build.releaseImage "$taggedImage"
-        docker tag "$actualImage" "$taggedImage"
+        build.changeImage "$taggedImage" "$actualImage"
         docker rmi "$actualImage"
         return 0
     fi
-
+    
     local -r revision="$(git describe --tags --dirty)"
 
     # setup environment for 'docker-compose build'
@@ -191,11 +215,12 @@ function build.updateContainer()
     # rebuild container because no container exists with the correct fingerprint
     docker-compose build  ||  die "Build failure"
 
-    build.releaseImage "$taggedImage"
-    docker tag "$actualImage" "$taggedImage"
-    if registry.canPush && [[ "$revision" != *dirty ]]; then
-        docker push "$actualImage"
-        docker push "$taggedImage"
+    build.changeImage "$taggedImage" "$actualImage"
+    [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}' --filter "reference=$taggedImage")" ] && docker tag "$actualImage" "$taggedImage"
+
+    if registry.canPush "$revision"; then
+        build.push "$actualImage"
+        build.push "$taggedImage"
     fi
     docker rmi "$actualImage"
     return 0
@@ -204,7 +229,13 @@ function build.updateContainer()
 ##############################################################################################
 function registry.canPush()
 {
+    local -r revision=${1:?}
+
+    [ "${DOCKER_ALWAYS_PUSH:-}" ] && return 0
+    [[ "$revision" != *dirty ]] || return 1
+
 #    [ "$CONTAINER_GIT_BRANCH" = 'master' ]
+
     return 0
 }
 
