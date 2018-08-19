@@ -22,9 +22,7 @@ declare -a modules=(base_container
                     mysql
                     nagios
                     nginx
-                    nodervisor
                     phpmyadmin
-                    supervisord-monitor
                     webdav
                     zenphoto
                     perl
@@ -35,7 +33,9 @@ declare -a modules=(base_container
                     alpinefull
                     postgresql
                     openjre
-                    gradle )
+                    gradle
+                    nodervisor
+                    supervisord-monitor )
 
 cd "$TOOLS"
 [ $# -gt 0 ] && modules=( "$@" )
