@@ -1,8 +1,23 @@
 TODO
 ```
 get stuff working:
-    Smonitor/nodervisor
-    SMB write access
+   SMB write access
+   completion of CD install
+   ubuntu-s1 production and build
+   reverse proxy for cesi
+   configure Jenkins with official builds & deploys
+   nagiosgraph issues
+
+   issues pushing/pulling to registry
+        sometimes ':latest' not defined, sometimes 'fingerprint' not defined		
+        projects should have definition of /version:tags
+            so we can have
+           	jenkins/2.121.2:latest
+           	jenkins/2.121.3:latest
+           	jenkins:latest
+        need a way to 'just push'
+
+
     Jenkins errors (on nginx):
         need to examine/tune Garbage collection
         	https://www.slideshare.net/TidharKleinOrbach/why-does-my-jenkins-freeze-sometimes-and-what-can-i-do-about-it
@@ -35,9 +50,6 @@ enhancements:
     containers
         base jenkins and webdav on supervisord image
         tie DBMS backups into startup by copying SQL files to "ubuntu-s:\home\bobb\prod\mysql\vols\loader\dumps" 
-        add ENV for HOST_IP
-        every container should update config with HOST_IP
-            script to reconfigure demo (change IP addresses in correct places)
         improve logging   (make use of /dev/fd/1 or /dev/fd/2)
         ubuntu-s1 zookeeper/broker
         need generic uS for "kafka topic -> DBMS table"
@@ -97,11 +109,16 @@ Grafana update
 mysql update
 setup private docker registry
 
+
 security
 - mapping layer for ENV variables.  use docker-compose.yml
 - base set going into docker-compose.yml : individual set for each container
 - need layered containers
 
+CI/CD
+    add ENV for HOST_IP
+    every container should update config with HOST_IP
+        script to reconfigure demo (change IP addresses in correct places)
 phpadmin:
     resolve login issue where page is left blank
 Phpmyadmin configuration
@@ -116,6 +133,7 @@ setup nodervisor  (supervisor views with nodejs)
 split 'production' into two: "broker,zookeeper,hubot,mysql", "other"
 git-grypt: encode/decode files (aka GIT-LFS encoding) which are protected so they can go into GIT
 
+Smonitor/nodervisor
 Hubot update
 Zenphoto update
 consolidate nginx_alt into nginx_base
