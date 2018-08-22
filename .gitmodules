@@ -41,7 +41,7 @@
     path = nagios
     url = ../nagios.git
 [submodule "nginx"]
-    path = nginx
+	path = nginx_proxy
     url = ../nginx.git
 [submodule "nginx_alt"]
     path = nginx_alt

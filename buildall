@@ -21,7 +21,7 @@ declare -a modules=(base_container
                     kafka-zookeeper
                     mysql
                     nagios
-                    nginx
+                    nginx_proxy
                     phpmyadmin
                     webdav
                     zenphoto
