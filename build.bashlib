@@ -43,16 +43,71 @@ function build.allContainers()
     export BASE_TAG=${BASE_TAG:-latest}
     export DOCKER_REGISTRY
 
+    local logDir=logs
+    [ -d "$logDir" ] || mkdir -p "$logDir"
+
+
+    echo
+    echo "building $(git remote get-url origin)"
+    echo "    refs:           ($(git log -n1 --oneline --decorate | sed 's/[^\(]*(\([^\)]*\)).*/\1/'))"
+    echo "    commitId:       $(git rev-parse HEAD)"
+    echo "    revision:       $(git describe --tags --dirty)"
+    exec 3>&1  # create special stdout
+
+    CBF_VERSION=${CBF_VERSION:-master}
     for dir in "${modules[@]}"; do
         if [ -d "$dir" ]; then
-             pushd "$dir" >/dev/null
+            pushd "$dir" >/dev/null
             [ "$dir" = base_container ] || unset CBF_VERSION
-            build.updateContainer
+
+            local config=$(build.dockerCompose)
+            local taggedImage="$(eval echo $(jq '.image?' <<< $config))"
+            taggedImage="${taggedImage%:*}:${BASE_TAG}"
+
+            # setup environment for 'docker-compose build'
+            export CONTAINER_BUILD_TIME=$(date +%Y%m%d-%H%M%S.%N -u)
+            export CONTAINER_FINGERPRINT="$(build.calculateFingerprint "$config")"
+            export CONTAINER_GIT_BRANCH="($(git log -n1 --oneline --decorate | sed 's/[^\(]*(\([^\)]*\)).*/\1/'))"
+            export CONTAINER_GIT_COMMIT="$(git rev-parse HEAD)"
+            export CONTAINER_GIT_URL="$(git remote get-url origin)"
+            export CONTAINER_ORIGIN="$(git describe --tags --dirty)"
+
+            echo
+            echo "building $taggedImage"
+            echo "    refs:           ${CONTAINER_GIT_BRANCH:-}"
+            echo "    commitId:       ${CONTAINER_GIT_COMMIT:-}"
+            echo "    fingerprint:    ${CONTAINER_FINGERPRINT:-}"
+            echo "    revision:       ${CONTAINER_ORIGIN:-}"
+
+            [ "${CONTAINER_FINGERPRINT:-}" ] || die "No base image found for $taggedImage: unable to calulate fingerprint."
+
+
+            # get name of image tagged with fingerprint
+            export CONTAINER_TAG="$CONTAINER_FINGERPRINT"
+            local actualImage="$(eval echo $(jq '.image?' <<< $config))"
+
+            # rebuild container because no container exists with the correct fingerprint
+            if [ "${BUILD_URL:-}" ]; then
+                # this on Jenkins
+                local logBase="${logDir}/$dir"
+                build.updateContainer "$taggedImage" "$actualImage" >"../${logBase}.out" 2>"../${logBase}.err"
+
+                # show location of log files if they have any content
+                local log_display_base="${BUILD_URL}artifact/$logBase"
+                [ -s "../${logBase}.out" ] && echo "    STDOUT log:  ${log_display_base}.out/*view*/"
+                [ -s "../${logBase}.err" ] && echo "    STDERR log:  ${log_display_base}.err/*view*/"
+
+            else
+                build.updateContainer "$taggedImage" "$actualImage"
+            fi
             popd >/dev/null
         else
-            echo "invalid project directoryt: $dir"
+            echo "invalid project directory: $dir"
         fi
     done
+    exec 3>&-   # close special stdout
+    # delete empty logs
+    find "$logDir" -type f -size 0 -delete
 
     local finish=$(date +%s)
     local -i elapsed=$(( finish - start ))
@@ -85,7 +140,7 @@ function build.calculateFingerprint()
                   "${CBF_VERSION:-}"
                 )
     set -u
-    
+
     # add any local 'build/container_build_framework' folder
     local -a files
     set +o pipefail
@@ -99,7 +154,7 @@ function build.calculateFingerprint()
     local base=$(eval echo $( jq '.build.args.FROM_BASE' <<< "$config" ))
     if [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}' --filter "reference=$base")" ]; then
         echo pulling parent image: "$base" >&2
-        docker pull "$base" >&2 || return 0
+        [ "$(docker image ls "$base" | awk 'NR != 1')" ] || docker pull "$base" >&2 || return 0
     fi
     dependents+=( $(docker inspect "$base" | jq '.[].Id' ) )
 
@@ -197,50 +252,34 @@ function build.push()
 ##############################################################################################
 function build.updateContainer()
 {
-    local config=$(build.dockerCompose)
-
-    local taggedImage="$(eval echo $(jq '.image?' <<< $config))"
-    taggedImage="${taggedImage%:*}:${BASE_TAG}"
-
-    local -r fingerprint="$(build.calculateFingerprint "$config")"
-    [ "${fingerprint:-}" ] || die "No base image found for $taggedImage: unable to calulate fingerprint."
+    local taggedImage=${1:?}
+    local actualImage=${2:?}
 
     if [ -z "${ALWAYS_BUILD:-}" ]; then
-        # check if there is a local image with the correct fingerprint
+        echo "    checking for local $taggedImage with the correct fingerprint" >&3
         local -a images
-        mapfile -t images < <(build.findIdsWithFingerprint "$fingerprint")
+        mapfile -t images < <(build.findIdsWithFingerprint "$CONTAINER_FINGERPRINT")
         if [ ${#images[*]} -gt 0 ]; then
-            echo "${taggedImage} has not changed."
+            echo "    ${taggedImage} has not changed." >&3
+            [ -z "${DOCKER_ALWAYS_PUSH:-}" ] || build.push "$taggedImage"
+            return 0
+        fi
+
+        # check if there is an image in the registry with the correct fingerprint
+        echo "    checking for $actualImage available in registry" >&3
+        if docker pull "$actualImage" 2>/dev/null; then
+            # downloaded image from registry
+            build.changeImage "$taggedImage" "$actualImage"
+            [ -z "${DOCKER_ALWAYS_PUSH:-}" ] || build.push "$taggedImage" "$actualImage"
+            docker rmi "$actualImage"
             return 0
         fi
     fi
 
-    # get image tagged with fingerprint
-    export CONTAINER_TAG="$fingerprint"
-    local actualImage="$(eval echo $(jq '.image?' <<< $config))"
-
-
-    echo "building $actualImage"
-    # check if there is an image in the registry with the correct fingerprint
-    if [ -z "${ALWAYS_BUILD:-}" ] && docker pull "$actualImage" 2>/dev/null; then
-        # downloaded image from registry
-        build.changeImage "$taggedImage" "$actualImage"
-        docker rmi "$actualImage"
-        return 0
-    fi
-    
-    local -r revision="$(git describe --tags --dirty)"
-
-    # setup environment for 'docker-compose build'
-    export CONTAINER_BUILD_TIME=$(date +%Y%m%d-%H%M%S.%N -u)
-    export CONTAINER_FINGERPRINT="${CONTAINER_TAG:-}"
-    export CONTAINER_GIT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
-    export CONTAINER_GIT_COMMIT="$(git rev-parse HEAD)"
-    export CONTAINER_GIT_URL="$(git remote get-url origin)"
-    export CONTAINER_ORIGIN="$revision"
-
     # rebuild container because no container exists with the correct fingerprint
-    docker-compose build  ||  die "Build failure"
+    echo "    building $actualImage" >&3
+    docker-compose build || die "Build failure"
+
 
     build.changeImage "$taggedImage" "$actualImage"
     [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}' --filter "reference=$taggedImage")" ] && docker tag "$actualImage" "$taggedImage"
@@ -257,10 +296,10 @@ function build.yamlToJson()
 {
     local -r yamlFile=${1:?}
     if [ -e $yamlFile  ]; then
-        "${YAML_TO_JSON[@]}" < $yamlFile
+        "${YAML_TO_JSON[@]}" < "$yamlFile"
 
     elif [[ $yamlFile == http* ]]; then
-        "${YAML_TO_JSON[@]}" <<< $(curl --insecure --silent --request GET  "$yamlFile")
+        "${YAML_TO_JSON[@]}" <<< "$(curl --insecure --silent --request GET  "$yamlFile")"
 
     else
         "${YAML_TO_JSON[@]}" <<< "$yamlFile"
@@ -275,7 +314,7 @@ function registry.canPush()
     [ "${DOCKER_ALWAYS_PUSH:-}" ] && return 0
     [[ "$revision" != *dirty ]] || return 1
 
-#    [ "$CONTAINER_GIT_BRANCH" = 'master' ]
+#    [ "$CONTAINER_GIT_REFS" = 'master' ]
 
     return 0
 }
@@ -286,8 +325,8 @@ function registry.deleteImage()
     local -r id=${1:?}
 
     local -r name="${id%:*}"
-    local -r tag="${id##*:}" 
-    [ "${name:-}" ] && [ "${tag:-}" ] || die "Invalid $id specified" 
+    local -r tag="${id##*:}"
+    [ "${name:-}" ] && [ "${tag:-}" ] || die "Invalid $id specified"
 
     local -r digest="$(registry.getDigest "$name" "$tag")"
     curl --insecure --verbose --request DELETE "${REGISTRY_URL}/${name}/manifests/${digest}"
@@ -374,7 +413,7 @@ function registry.reportCatalog()
     local -A tags
     local -i index=0
     local -r ref='latest'
-    for entry in $(printf "%s\n" "${catalog[@]}" | sort);do
+    for entry in $(printf "%s\n" "${catalog[@]}" | sort); do
         (( index++ )) || true
         eval tags=( $(registry.getTags "$entry") )
         printf "%05d,%d,%s:\n" $index ${#tags[*]} $entry

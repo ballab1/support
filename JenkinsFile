@@ -1,0 +1,10 @@
+
+stage 'Perform Update'
+    ws {
+      checkout scm
+      def branch=sh 'git rev-parse --abbrev-ref HEAD'
+      if (branch ==~ /master.*/) {
+          branch = 'master'
+      }
+      sh "CONTAINER_TAG=${branch} ./buildall"
+    }
