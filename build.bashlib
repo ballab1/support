@@ -67,14 +67,14 @@ function build.allContainers()
             # setup environment for 'docker-compose build'
             export CONTAINER_BUILD_TIME=$(date +%Y%m%d-%H%M%S.%N -u)
             export CONTAINER_FINGERPRINT="$(build.calculateFingerprint "$config")"
-            export CONTAINER_GIT_BRANCH="($(git log -n1 --oneline --decorate | sed 's/[^\(]*(\([^\)]*\)).*/\1/'))"
+            export CONTAINER_GIT_REFS="($(git log -n1 --oneline --decorate | sed 's/[^\(]*(\([^\)]*\)).*/\1/'))"
             export CONTAINER_GIT_COMMIT="$(git rev-parse HEAD)"
             export CONTAINER_GIT_URL="$(git remote get-url origin)"
             export CONTAINER_ORIGIN="$(git describe --tags --dirty)"
 
             echo
             echo "building $taggedImage"
-            echo "    refs:           ${CONTAINER_GIT_BRANCH:-}"
+            echo "    refs:           ${CONTAINER_GIT_REFS:-}"
             echo "    commitId:       ${CONTAINER_GIT_COMMIT:-}"
             echo "    fingerprint:    ${CONTAINER_FINGERPRINT:-}"
             echo "    revision:       ${CONTAINER_ORIGIN:-}"
@@ -90,7 +90,7 @@ function build.allContainers()
             if [ "${BUILD_URL:-}" ]; then
                 # this on Jenkins
                 local logBase="${logDir}/$dir"
-                build.updateContainer "$taggedImage" "$actualImage" >"../${logBase}.out" 2>"../${logBase}.err"
+                build.updateContainer "$taggedImage" "$actualImage" "$CONTAINER_ORIGIN" >"../${logBase}.out" 2>"../${logBase}.err"
 
                 # show location of log files if they have any content
                 local log_display_base="${BUILD_URL}artifact/$logBase"
@@ -98,7 +98,7 @@ function build.allContainers()
                 [ -s "../${logBase}.err" ] && echo "    STDERR log:  ${log_display_base}.err/*view*/"
 
             else
-                build.updateContainer "$taggedImage" "$actualImage"
+                build.updateContainer "$taggedImage" "$actualImage" "$CONTAINER_ORIGIN"
             fi
             popd >/dev/null
         else
@@ -252,8 +252,9 @@ function build.push()
 ##############################################################################################
 function build.updateContainer()
 {
-    local taggedImage=${1:?}
-    local actualImage=${2:?}
+    local -r taggedImage=${1:?}
+    local -r actualImage=${2:?}
+    local -r revision=${3:-}
 
     if [ -z "${ALWAYS_BUILD:-}" ]; then
         echo "    checking for local $taggedImage with the correct fingerprint" >&3
