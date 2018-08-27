@@ -1,0 +1,135 @@
+#!/bin/bash
+
+declare DOCKER_REGISTRY=ubuntu-s2:5000/
+declare REGISTRY_URL=http://${DOCKER_REGISTRY}v2
+
+##############################################################################################
+function registry.canPush()
+{
+    local -r revision=${1:?}
+
+    [ "${DOCKER_ALWAYS_PUSH:-}" ] && return 0
+    [[ "$revision" != *dirty ]] || return 1
+
+#    [ "$CONTAINER_GIT_REFS" = 'master' ]
+
+    return 0
+}
+export -f registry.canPush
+
+##############################################################################################
+function registry.deleteImage()
+{
+    local -r id=${1:?}
+
+    local -r name="${id%:*}"
+    local -r tag="${id##*:}"
+    [ "${name:-}" ] && [ "${tag:-}" ] || trap.die "Invalid $id specified"
+
+    local -r digest="$(registry.getDigest "$name" "$tag")"
+    curl --insecure --verbose --request DELETE "${REGISTRY_URL}/${name}/manifests/${digest}"
+}
+export -f registry.deleteImage
+
+##############################################################################################
+function registry.getCatalog()
+{
+    local -a entries=()
+    local -r catalog=$(curl --insecure --silent --request GET "${REGISTRY_URL}/_catalog")
+    [ -z "${catalog:-}" ] || [[ "$catalog" =~ *error* ]] ||  mapfile -t entries < <(jq '.repositories[]' <<< "$catalog")
+    for entry in "${entries[@]}"; do
+        eval echo $entry
+    done
+}
+export -f registry.getCatalog
+
+##############################################################################################
+function registry.getCreateTime()
+{
+    local -r name=${1:?}
+    local -r tag=${2:?}
+
+    local -r manifests="$(registry.getManifest "$name" "$tag" )"
+    if [ -z "$manifests" ] || [[ $manifests =~ MANIFEST_INVALID ]]; then
+        echo '                      '
+    else
+        (jq '[ .history[].v1Compatibility|fromjson.created | sub("\\.\\d+Z"; "Z") | fromdate] | max | todate' ) <<< "$manifests"
+    fi
+}
+export -f registry.getCreateTime
+
+##############################################################################################
+function registry.getDigest()
+{
+    local -r name=${1:?}
+    local -r tag=${2:?}
+
+    local -r digest="$(curl --header "Accept: application/vnd.docker.distribution.manifest.v2+json" \
+                            --insecure \
+                            --silent \
+                            --head \
+                            --request GET "${REGISTRY_URL}/${name}/manifests/${tag}" )"
+
+    ( awk '{gsub(/\r/,"");if ($1 == "Docker-Content-Digest:") {print $2}}') <<< "$digest"
+}
+export -f registry.getDigest
+
+##############################################################################################
+function registry.getLayer()
+{
+    local -r name=${1:?}
+    local -r digest=${2:?}
+
+    curl --insecure --silent --request GET "${REGISTRY_URL}/${name}/blobs/${digest}"
+}
+export -f registry.getLayer
+
+##############################################################################################
+function registry.getManifest()
+{
+    local -r name=${1:?}
+    local -r reference=${2:?}
+
+    curl --insecure --silent --request GET "${REGISTRY_URL}/${name}/manifests/${reference}"
+}
+export -f registry.getManifest
+
+##############################################################################################
+function registry.getTags()
+{
+    local -r name=${1:?}
+
+    local -a tags=()
+    local -r manifest=$(curl --insecure --silent --request GET "${REGISTRY_URL}/${name}/tags/list")
+    [ -z "${manifest:-}" ] || [[ "$manifest" =~ MANIFEST_INVALID ]] || mapfile -t tags < <(jq '.tags[]?' <<< "$manifest")
+    for tag in "${tags[@]}"; do
+        tag=$(eval echo $tag)
+        printf "['%s']='%s'\n" "$tag" "$(registry.getDigest "$name" "$tag")"
+    done
+}
+export -f registry.getTags
+
+##############################################################################################
+function registry.reportCatalog()
+{
+    local -a catalog=( "$@" )
+    [ ${#catalog[*]} -eq 0 ] && mapfile -t catalog < <(registry.getCatalog)
+
+    local -A tags
+    local -i index=0
+    local -r ref='latest'
+    for entry in $(printf "%s\n" "${catalog[@]}" | sort); do
+        (( index++ )) || true
+        eval tags=( $(registry.getTags "$entry") )
+        printf "%05d,%d,%s:\n" $index ${#tags[*]} $entry
+
+        local latest="${tags[$ref]:-}"
+        (for tag in "${!tags[@]}"; do
+             [ "${latest:-}" ] && [ "$tag" = "$ref" ] && [ ${#tags[@]} -gt 1 ] && continue
+             printf "       %s %s" "$(registry.getCreateTime "$entry" "$tag")" "$tag"
+             [ "${latest:-}" ] && [ "$latest" = "${tags[$tag]}" ] && [ ${#tags[@]} -gt 1 ] && printf " $ref"
+             echo
+         done) | sort
+    done
+}
+export -f registry.reportCatalog

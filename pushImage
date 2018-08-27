@@ -3,4 +3,4 @@
 declare -r TOOLS="$( cd "$( dirname "${BASH_SOURCE[0]}" )/libs" && pwd )"   
 source "${TOOLS}/loadLibraries.sh"
 
-registry.reportCatalog "$@"
+build.push "$@"

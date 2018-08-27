@@ -1,14 +1,6 @@
 #!/bin/bash
 
-# Use the Unofficial Bash Strict Mode
-set -o errexit
-set -o nounset
-set -o pipefail
-IFS=$'\n\t'
- 
-declare -r TOOLS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"   
-[ -e ~/bin/trap.bashlib ] && source ~/bin/trap.bashlib
-source "${TOOLS}/build.bashlib"
+declare -r TOOLS="$( cd "$( dirname "${BASH_SOURCE[0]}" )/libs" && pwd )"   
+source "${TOOLS}/loadLibraries.sh"
 
-cd "$TOOLS"
 registry.deleteImage ${1:?"must entry a valid repository:tag"}
