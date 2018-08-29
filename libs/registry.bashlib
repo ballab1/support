@@ -110,6 +110,45 @@ function registry.getTags()
 export -f registry.getTags
 
 ##############################################################################################
+function registry.push()
+{
+    local -ra images=( "$@" )
+
+    local -a allImages=()
+    for image in "${images[@]}"; do
+        allImages+=( "$image" )
+        local fp="$( eval echo $(docker inspect "$image" | jq '.[].Config.Labels."container.fingerprint"?') )"
+        if [ "${fp:-}" ]; then
+            allImages+=( "${image%:*}:${fp}" )
+            docker tag "$image" "${image%:*}:${fp}"  > /dev/null 2>&1 || : # ignore any errors
+        fi
+    done
+    mapfile -t allImages < <(printf "%s\n" "${allImages[@]}" | uniq)
+
+    local attempts
+    for image in "${allImages[@]}"; do
+        for attempt in {0..2}; do
+            echo -e "    \e[94mPushing ${image}\e[0m\n"
+            docker push "$image" && break
+            [ $attempt -eq 2 ] && trap.die "Failed to push $image"
+            echo 'retrying...'
+        done
+    done
+
+    for image in "${allImages[@]}"; do
+        local -i wasTagged=0
+        for inp in "${images[@]}"; do
+            if [ "$inp" = "$image" ]; then
+                wasTagged=1
+                break
+            fi
+        done
+        [ "$wasTagged" -eq 1 ] || docker rmi "$image"
+    done
+}
+export -f registry.push
+
+##############################################################################################
 function registry.reportCatalog()
 {
     local -a catalog=( "$@" )
