@@ -13,6 +13,7 @@ node('ubuntu-s4') {
                        ])
             sh 'git submodule update --init'
             sh "git submodule foreach git checkout ${BRANCH}"
+            sh "git submodule foreach git pull"
         }
     }    
     stage('Build') {
