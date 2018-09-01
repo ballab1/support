@@ -62,18 +62,20 @@ export CONTAINER_NAME=xxx
 source "$( cd "${cbf_dir}/cbf/bin" && pwd )/init.libraries"
 
 # only load libraries from bashlib (not below). Sort to be deterministic
-declare __libdir="$(cd $(dirname ${BASH_SOURCE[0]}) && pwd)"
+declare __libdir="$(readlink -f "$(dirname ${BASH_SOURCE[0]})")"
 declare -a __libs
 mapfile -t __libs < <(find "$__libdir" -maxdepth 1 -mindepth 1 -name '*.bashlib' | sort)
 if [ ${#__libs[*]} -gt 0 ]; then
     echo "INFO: libraries loaded from $__libdir"
     printf '     \e[35m'
     for __lib in "${__libs[@]}"; do
-        printf " $(basename "$__lib")"
+        echo -n " $(basename "$__lib")"
         source "$__lib"
     done
-    printf "\e[0m\n"
+    echo -e '\e[0m'
     unset __lib
 fi
+source "${__libdir}/init.cache"
 unset __libs
 unset __libdir
+

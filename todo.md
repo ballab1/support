@@ -8,17 +8,7 @@ get stuff working:
    configure Jenkins with official builds & deploys
    nagiosgraph issues
 
-   issues pushing/pulling to registry
-        sometimes ':latest' not defined, sometimes 'fingerprint' not defined		
-        projects should have definition of /version:tags
-            so we can have
-           	jenkins/2.121.2:latest
-           	jenkins/2.121.3:latest
-           	jenkins:latest
-        need a way to 'just push'
-
-
-    Jenkins errors (on nginx):
+   Jenkins errors (on nginx):
         need to examine/tune Garbage collection
         	https://www.slideshare.net/TidharKleinOrbach/why-does-my-jenkins-freeze-sometimes-and-what-can-i-do-about-it
         	http://engineering.taboola.com/5-simple-tips-boosting-jenkins-performance/
@@ -132,6 +122,16 @@ setup nodervisor  (supervisor views with nodejs)
     supervisord-monitor configuration
 split 'production' into two: "broker,zookeeper,hubot,mysql", "other"
 git-grypt: encode/decode files (aka GIT-LFS encoding) which are protected so they can go into GIT
+
+issues pushing/pulling to registry
+     sometimes ':latest' not defined, sometimes 'fingerprint' not defined		
+     projects should have definition of /version:tags
+         so we can have
+        	jenkins/2.121.2:latest
+        	jenkins/2.121.3:latest
+        	jenkins:latest
+     need a way to 'just push'
+
 
 Smonitor/nodervisor
 Hubot update
