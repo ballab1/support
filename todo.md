@@ -8,7 +8,9 @@ get stuff working:
    configure Jenkins with official builds & deploys
    nagiosgraph issues
 
-   Jenkins errors (on nginx):
+   Jenkins
+     rename all pipelines to *.jenkinsfile
+     (on nginx):
         need to examine/tune Garbage collection
         	https://www.slideshare.net/TidharKleinOrbach/why-does-my-jenkins-freeze-sometimes-and-what-can-i-do-about-it
         	http://engineering.taboola.com/5-simple-tips-boosting-jenkins-performance/
@@ -22,8 +24,28 @@ get stuff working:
         nagios logs to supervisord.log
     complete unit tests
 
-builds
+CBF:
+    query github for CBF reference when it is downloaded
+    	- make something up if it is included
+    	- add reference to directories
+             curl -k -u <...>:<...> -X GET https://api.github.com/repos/ballab1/support/branches
+    	- add reference to labels
+             curl -k -u <...>:<...> -X GET https://api.github.com/repos/ballab1/support/tags
+    	- if not downloaded, use parent to add to labels
     Track created users for runtime changes
+
+builds
+    quality ladder:  dev -> staging -> masater
+        - dev:  where we make changes
+        - staging: PRs from dev + CI builds
+        - master: production
+        - consolidate setupProduction and restartProd
+    docker-registry
+        - handle more tags to fingerprint lookup (ex: latest, master, staging)
+        - move old named content to new repos
+        - curate content on the fly
+        - configure to use redis
+             https://github.com/docker-library/redis/blob/e95c0cf4ffd9a52aa48d05b93fe3b42069c05032/5.0-rc/32bit/Dockerfile
     Separate build, package and deploy/run actions
         Fix up docker dependency script
     when ENTRYPOINT is not defined, and CMD is, how does startup behave?
@@ -97,9 +119,10 @@ Done
 Kafka broker/zookeeper issues
 Grafana update
 mysql update
-setup private docker registry
 
-
+docker-registry
+- setup private docker registry
+- improve error handling
 security
 - mapping layer for ENV variables.  use docker-compose.yml
 - base set going into docker-compose.yml : individual set for each container
@@ -121,7 +144,7 @@ Allow any action to have an osId extension to support conditional actions
 setup nodervisor  (supervisor views with nodejs)
     supervisord-monitor configuration
 split 'production' into two: "broker,zookeeper,hubot,mysql", "other"
-git-grypt: encode/decode files (aka GIT-LFS encoding) which are protected so they can go into GIT
+git-crypt: encode/decode files (aka GIT-LFS encoding) which are protected so they can go into GIT
 
 issues pushing/pulling to registry
      sometimes ':latest' not defined, sometimes 'fingerprint' not defined		

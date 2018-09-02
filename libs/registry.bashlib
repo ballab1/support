@@ -1,5 +1,51 @@
 #!/bin/bash
 
+#"No HTTP secret provided - generated random secret. This may cause problems with uploads
+#"redis not configured"
+#"using inmemory blob descriptor cache"
+
+#----------------------------------------------------------------------------------------------
+function registry.DELETE()
+{
+    registry.io --request DELETE "$@"
+}
+
+#----------------------------------------------------------------------------------------------
+function registry.GET()
+{
+    registry.io --request GET "$@"
+}
+
+#----------------------------------------------------------------------------------------------
+function registry.POST()
+{
+    registry.io --request POST "$@"
+}
+
+#----------------------------------------------------------------------------------------------
+function registry.PUT()
+{
+    registry.io --request PUST "$@"
+}
+
+#----------------------------------------------------------------------------------------------
+function registry.SERVER()
+{
+    echo "${_REGISTRY_SERVER:=$(lib.getProperty "${FUNCNAME[0]##*.}" "$( registry.propertiesFile )")}"
+}
+
+#----------------------------------------------------------------------------------------------
+function registry.URL()
+{
+    echo "${_REGISTRY_URL:=$(lib.getProperty "${FUNCNAME[0]##*.}" "$( registry.propertiesFile )")}"
+}
+
+#----------------------------------------------------------------------------------------------
+function registry.USER()
+{
+    echo "${_REGISTRY_USER:=$(lib.getProperty "${FUNCNAME[0]##*.}" "$( registry.propertiesFile )")}"
+}
+
 #----------------------------------------------------------------------------------------------
 function registry.propFile()
 {
@@ -23,6 +69,14 @@ function registry.canPush()
 export -f registry.canPush
 
 #----------------------------------------------------------------------------------------------
+function registry.catalog()
+{
+    local -a entries=()
+    registry.GET --silent "$(registry.URL)/_catalog" | jq '.repositories| sort[]? ' | tr -d '"'
+}
+export -f registry.catalog
+
+#----------------------------------------------------------------------------------------------
 function registry.credentials()
 {
     local -r user=${1:-"${USERNAME:-$USER}"}
@@ -30,6 +84,21 @@ function registry.credentials()
 #    echo "$user:$(lib.getProperty "$user" "$( registry.propertiesFile )")"
 }
 export -f registry.credentials
+
+#----------------------------------------------------------------------------------------------
+function registry.createTime()
+{
+    local -r name=${1:?}
+    local -r tag=${2:?}
+
+    local -r manifests="$(registry.manifest "$name" "$tag" )"
+    if [ -z "$manifests" ] || [[ $manifests =~ MANIFEST_INVALID ]]; then
+        echo '                      '
+    else
+        (jq '[ .history[].v1Compatibility|fromjson.created | sub("\\.\\d+Z"; "Z") | fromdate] | max | todate' ) <<< "$manifests"
+    fi
+}
+export -f registry.createTime
 
 #----------------------------------------------------------------------------------------------
 function registry.deleteImage()
@@ -40,36 +109,13 @@ function registry.deleteImage()
     local -r tag="${id##*:}"
     [ "${name:-}" ] && [ "${tag:-}" ] || trap.die "Invalid $id specified"
 
-    local -r digest="$(registry.getDigest "$name" "$tag")"
+    local -r digest="$(registry.digest "$name" "$tag")"
     [ -z "${digest}" ] || registry.DELETE --show-error --write-out '\n%{http_code}\n' --verbose "$(registry.URL)/${name}/manifests/${digest}"
 }
 export -f registry.deleteImage
 
 #----------------------------------------------------------------------------------------------
-function registry.getCatalog()
-{
-    local -a entries=()
-    registry.GET --silent "$(registry.URL)/_catalog" | jq '.repositories| sort[]? ' | tr -d '"'
-}
-export -f registry.getCatalog
-
-#----------------------------------------------------------------------------------------------
-function registry.getCreateTime()
-{
-    local -r name=${1:?}
-    local -r tag=${2:?}
-
-    local -r manifests="$(registry.getManifest "$name" "$tag" )"
-    if [ -z "$manifests" ] || [[ $manifests =~ MANIFEST_INVALID ]]; then
-        echo '                      '
-    else
-        (jq '[ .history[].v1Compatibility|fromjson.created | sub("\\.\\d+Z"; "Z") | fromdate] | max | todate' ) <<< "$manifests"
-    fi
-}
-export -f registry.getCreateTime
-
-#----------------------------------------------------------------------------------------------
-function registry.getDigest()
+function registry.digest()
 {
     local -r name=${1:?}
     local -r tag=${2:?}
@@ -79,44 +125,61 @@ function registry.getDigest()
                                     --head \
                                     "$(registry.URL)/${name}/manifests/${tag}" )"
 
-    ( awk '{gsub(/\r/,"");if ($1 == "Docker-Content-Digest:") {print $2}}') <<< "$digest"
+    [ -z "$digest" ] || ( awk '{gsub(/\r/,"");if ($1 == "Docker-Content-Digest:") {print $2}}') <<< "$digest"
 }
-export -f registry.getDigest
+export -f registry.digest
 
 #----------------------------------------------------------------------------------------------
-function registry.getLayer()
+function registry.io()
+{
+    local -r response=$(curl --insecure "$@")
+#         --user "$(registry.credentials "$(registry.USER)")" \
+#    local status=$?
+#    if [ $status -eq 0 ]; then
+    if [[ "$response" != '{"errors":['* ]]; then
+        echo "$response"
+        return 0
+    fi
+
+    # an error occurred
+    local -r errors="$(jq '.errors[]' <<< "$response")"
+
+    local curl_cmd=( 'curl' '--insecure' "${@}" )
+    local -a vals=()
+    for val in "${curl_cmd[@]}"; do
+        vals+=( "$(echo $val | sed -Ee 's/[\r\n]//g' -Ee 's/^\s+(\w)/\1/' -Ee 's/(\w)\s+$/\1/')" )
+    done
+
+    echo
+    term.log "***ERROR: failure to complete registry request
+    command:       $(printf '%s ' "${vals[@]}")
+    error code:    $(jq '.code' <<< "$errors")
+    error message: $(jq '.message' <<< "$errors")
+    error details: $(jq '.detail' <<< "$errors")
+    " 'warn' >&2
+
+    return 1
+}
+
+#----------------------------------------------------------------------------------------------
+function registry.layer()
 {
     local -r name=${1:?}
     local -r digest=${2:?}
 
     registry.GET --silent "$(registry.URL)/${name}/blobs/${digest}"
 }
-export -f registry.getLayer
+export -f registry.layer
 
 #----------------------------------------------------------------------------------------------
-function registry.getManifest()
+function registry.manifest()
 {
     local -r name=${1:?}
     local -r reference=${2:?}
 
     registry.GET --silent "$(registry.URL)/${name}/manifests/${reference}"
 }
-export -f registry.getManifest
-
-#----------------------------------------------------------------------------------------------
-function registry.getTags()
-{
-    local -r name=${1:?}
-
-    local -a tags=()
-    local -r manifest=$(registry.GET --silent "$(registry.URL)/${name}/tags/list")
-    [ -z "${manifest:-}" ] || [[ "$manifest" =~ MANIFEST_INVALID ]] || mapfile -t tags < <(jq '.tags[]?' <<< "$manifest")
-    for tag in "${tags[@]}"; do
-        tag=$(eval echo $tag)
-        printf "['%s']='%s'\n" "$tag" "$(registry.getDigest "$name" "$tag")"
-    done
-}
-export -f registry.getTags
+export -f registry.manifest
 
 #----------------------------------------------------------------------------------------------
 function registry.propertiesFile()
@@ -145,7 +208,7 @@ function registry.push()
     local attempt
     for image in "${allImages[@]}"; do
         for attempt in {0..2}; do
-            echo -e "    \e[94mPushing ${image}\e[0m\n"
+            echo -e "    \e[94mPushing ${image}\e[0m"
             docker push "$image" && break
             [ $attempt -eq 2 ] && trap.die "Failed to push $image"
             echo 'retrying...'
@@ -166,23 +229,53 @@ function registry.push()
 export -f registry.push
 
 #----------------------------------------------------------------------------------------------
+function registry.rename()
+{
+    local src=${1:?}
+    local dst=${2:?}
+
+    # strip name of server
+    src=${src#$(registry.SERVER)}
+    dst=${dst#$(registry.SERVER)}
+
+    local srcName="${src%:*}"
+    local srcTag="${src##*:}"
+    [ "${srcName:-}" ] && [ "${srcTag:-}" ] || trap.die "Invalid $src specified"
+
+    local dstName="${dst%:*}"
+    local dstTag="${dst##*:}"
+
+    [ "${dstTag:-}" ] || dstTag="$srcTag"
+    [ "${dstName:-}" ] && [ "$dstName" != "$dstTag" ] || $dstName="$srcName"
+    [ "$srcName" != "$dstName" ] || [ "$srcTag" != "$dstTag" ] || trap.die "$src & $dst specify same image"
+
+    local exists=$(docker image ls --quiet "$(registry.SERVER)$src")
+    [ "${exists:-}" ] || docker pull "$(registry.SERVER)$src"
+    docker tag "$(registry.SERVER)$src" "$(registry.SERVER)${dstName}:$dstTag"
+    registry.push "$(registry.SERVER)${dstName}:$dstTag"
+    [ "${exists:-}" ] || docker rmi "$(registry.SERVER)$src"
+    registry.deleteImage "$(registry.SERVER)$src"
+}
+export -f registry.rename
+
+#----------------------------------------------------------------------------------------------
 function registry.reportCatalog()
 {
     local -a catalog=( "$@" )
-    [ ${#catalog[*]} -eq 0 ] && mapfile -t catalog < <(registry.getCatalog)
+    [ ${#catalog[*]} -eq 0 ] && mapfile -t catalog < <(registry.catalog)
 
     local -A tags
     local -i index=0
     local -r ref='latest'
     for entry in "${catalog[@]}"; do
         (( index++ )) || true
-        eval tags=( $(registry.getTags "$entry") )
+        eval tags=( $(registry.tags "$entry") )
         printf '%05d,%d,%s:\n' $index ${#tags[*]} $entry
 
         local latest="${tags[$ref]:-}"
         (for tag in "${!tags[@]}"; do
              [ "${latest:-}" ] && [ "$tag" = "$ref" ] && [ ${#tags[@]} -gt 1 ] && continue
-             printf '       %s %s' "$(registry.getCreateTime "$entry" "$tag")" "$tag"
+             printf '       %s %s' "$(registry.createTime "$entry" "$tag")" "$tag"
              [ "${latest:-}" ] && [ "$latest" = "${tags[$tag]}" ] && [ ${#tags[@]} -gt 1 ] && echo -n " $ref"
              echo
          done) | sort
@@ -191,47 +284,16 @@ function registry.reportCatalog()
 export -f registry.reportCatalog
 
 #----------------------------------------------------------------------------------------------
-function registry.io()
+function registry.tags()
 {
-    curl --insecure \
-         "$@"
-#         --user "$(registry.credentials "$(registry.USER)")" \
-}
-#----------------------------------------------------------------------------------------------
-function registry.DELETE()
-{
-    registry.io --request DELETE "$@"
-}
-#----------------------------------------------------------------------------------------------
-function registry.GET()
-{
-    registry.io --request GET "$@"
-}
-#----------------------------------------------------------------------------------------------
-function registry.POST()
-{
-    registry.io --request POST "$@"
-}
-#----------------------------------------------------------------------------------------------
-function registry.PUT()
-{
-    registry.io --request PUST "$@"
-}
+    local -r name=${1:?}
 
-#----------------------------------------------------------------------------------------------
-function registry.SERVER()
-{
-    echo "${_REGISTRY_SERVER:=$(lib.getProperty "${FUNCNAME[0]##*.}" "$( registry.propertiesFile )")}"
-}
+    local -a tags=()
+    local -r manifest=$(registry.GET --silent "$(registry.URL)/${name}/tags/list")
 
-#----------------------------------------------------------------------------------------------
-function registry.URL()
-{
-    echo "${_REGISTRY_URL:=$(lib.getProperty "${FUNCNAME[0]##*.}" "$( registry.propertiesFile )")}"
+    [ -z "${manifest:-}" ] || mapfile -t tags < <(jq '.tags[]?' <<< "$manifest" | tr -d '"')
+    for tag in "${tags[@]}"; do
+        printf "['%s']='%s'\n" "$tag" "$(registry.digest "$name" "$tag")"
+    done
 }
-
-#----------------------------------------------------------------------------------------------
-function registry.USER()
-{
-    echo "${_REGISTRY_USER:=$(lib.getProperty "${FUNCNAME[0]##*.}" "$( registry.propertiesFile )")}"
-}
+export -f registry.tags
