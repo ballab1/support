@@ -4,6 +4,9 @@
 [submodule "base_container"]
     path = base_container
     url = ../base_container.git
+[submodule "cesi"]
+    path = cesi
+    url = ../cesi.git
 [submodule "container_build_framework"]
     path = container_build_framework
     url = ../container_build_framework.git
@@ -41,7 +44,7 @@
     path = nagios
     url = ../nagios.git
 [submodule "nginx"]
-	path = nginx_proxy
+    path = nginx_proxy
     url = ../nginx.git
 [submodule "nginx_alt"]
     path = nginx_alt
@@ -53,22 +56,22 @@
     path = nodervisor
     url = ../nodervisor
 [submodule "openjdk8"]
-	path = openjdk
+    path = openjdk
     url = ../openjdk8.git
 [submodule "openjre8"]
-	path = openjre
+    path = openjre
     url = ../openjre8.git
 [submodule "perl.5-26-2"]
-	path = perl
+    path = perl
     url = ../perl.5-26-2.git
 [submodule "perl-carton"]
     path = perl-carton
     url = ../perl-carton.git
 [submodule "phpmyadmin"]
-	path = phpmyadmin
+    path = phpmyadmin
     url = ../phpmyadmin.git
 [submodule "postgres"]
-	path = postgresql
+    path = postgresql
     url = ../postgres.git
 [submodule "php5"]
     path = php5
@@ -88,6 +91,3 @@
 [submodule "zenphoto"]
     path = zenphoto
     url = ../zenphoto.git
-[submodule "cesi"]
-	path = cesi
-	url = https://github.com/ballab1/cesi.git

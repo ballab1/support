@@ -6,7 +6,10 @@
 build/container_build_framework*
 **/*.bak
 *.log
+*.json
 bld.*
+log/*
+logs/*
 
 # OSX
 .DS_Store
