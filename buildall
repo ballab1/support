@@ -1,7 +1,7 @@
 #!/bin/bash
 
-declare -r TOOLS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"   
-source "${TOOLS}/build.bashlib"
+declare -r TOOLS="$( cd "$( dirname "${BASH_SOURCE[0]}" )/libs" && pwd )"   
+source "${TOOLS}/loadLibraries.sh"
 
 #jira-fd-kafka
 #jenkins-build-events
@@ -37,7 +37,7 @@ declare -a modules=(base_container
                     nodervisor
                     supervisord-monitor )
 
-cd "$TOOLS"
+cd "$TOOLS/.."
 [ $# -gt 0 ] && modules=( "$@" )
 build.allContainers "${modules[@]}"
 
