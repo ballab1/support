@@ -35,6 +35,7 @@ function build.allContainers()
     export CFG_SLACK_HUBOT_TOKEN=''
     export CFG_USER=''
     export BASE_TAG=${BASE_TAG:-latest}
+    export OS="${OS:-alpine/}"
     export DOCKER_REGISTRY=$(registry.SERVER)
 
     local logDir=logs
@@ -291,6 +292,7 @@ function build.me()
         [ -s "../${logBase}.err" ] && echo "    STDERR log:  ${log_display_base}.err/*view*/"
 
         if [ $status -ne 0 ]; then
+          term.log "\n"
           term.log "***Error occurred while generating $taggedImage" 'error'
           echo
           echo '----------------------------------------------------------------------------------------------'
