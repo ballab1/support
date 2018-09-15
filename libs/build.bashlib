@@ -340,7 +340,11 @@ function build.updateContainer()
         mapfile -t images < <(build.findIdsWithFingerprint "$CONTAINER_FINGERPRINT")
         if [ ${#images[*]} -gt 0 ]; then
             build.logger "${taggedImage} has not changed."
-            [ -z "${DOCKER_ALWAYS_PUSH:-}" ] || registry.push "$taggedImage"
+            if [ -z "${DOCKER_ALWAYS_PUSH:-}" ]; then
+                rm "$PROGRESS_LOG"
+            else
+                registry.push "$taggedImage"
+            fi
             return 0
         fi
 
@@ -352,6 +356,8 @@ function build.updateContainer()
             if [ "${DOCKER_ALWAYS_PUSH:-}" ]; then
                 build.logger "pushing ${taggedImage} to registry"
                 registry.push "$taggedImage" "$actualImage"
+            else
+                rm "$PROGRESS_LOG"
             fi
             docker rmi "$actualImage"
             return 0
