@@ -43,36 +43,36 @@
 [submodule "nagios"]
     path = nagios
     url = ../nagios.git
-[submodule "nginx"]
-    path = nginx_proxy
-    url = ../nginx.git
 [submodule "nginx_alt"]
     path = nginx_alt
     url = ../nginx_alt
 [submodule "nginx_base"]
     path = nginx_base
     url = ../nginx_base.git
+[submodule "nginx_proxy"]
+    path = nginx_proxy
+    url = ../nginx.git
 [submodule "nodervisor"]
     path = nodervisor
     url = ../nodervisor
-[submodule "openjdk8"]
+[submodule "openjdk"]
     path = openjdk
-    url = ../openjdk8.git
-[submodule "openjre8"]
+    url = ../openjdk.git
+[submodule "openjre"]
     path = openjre
-    url = ../openjre8.git
-[submodule "perl.5-26-2"]
+    url = ../openjre.git
+[submodule "perl"]
     path = perl
-    url = ../perl.5-26-2.git
+    url = ../perl.git
 [submodule "perl-carton"]
     path = perl-carton
     url = ../perl-carton.git
 [submodule "phpmyadmin"]
     path = phpmyadmin
     url = ../phpmyadmin.git
-[submodule "postgres"]
+[submodule "postgresql"]
     path = postgresql
-    url = ../postgres.git
+    url = ../postgresql.git
 [submodule "php5"]
     path = php5
     url = ../php5.git
