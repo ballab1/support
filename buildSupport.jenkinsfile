@@ -28,7 +28,11 @@ node('ubuntu-s4') {
                         def vars = ''
                         if ( Always_Build == 'true' ) { vars += 'ALWAYS_BUILD=1 ' }
                         if ( Always_Push == 'true' ) { vars += 'DOCKER_ALWAYS_PUSH=1 ' }
-                        sh "${vars} ./buildall"
+                        sh "${vars} ./buildall_alpine"
+                        sh "${vars} ./buildall_i386-ubuntu"
+//                        sh "${vars} ./buildall_centos"
+//                        sh "${vars} ./buildall_fedora"
+//                        sh "${vars} ./buildall_ubuntu"
                     }
                 }
                 finally {

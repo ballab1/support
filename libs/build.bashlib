@@ -59,7 +59,7 @@ function build.allContainers()
     echo "    revision:       $origin"
     exec 3>&1  # create special stdout
 
-    CBF_VERSION=${CBF_VERSION:-master}
+    export CBF_VERSION=${CBF_VERSION:-master}
     local -i status
     for dir in "${modules[@]}"; do
         if [ -d "$dir" ]; then
@@ -94,6 +94,8 @@ function build.allContainers()
                      "$duration" \
                      "$elapsed" \
                      "$git_refs"
+
+    return $status
 }
 export -f build.allContainers
 
@@ -126,9 +128,9 @@ function build.calculateFingerprint()
     mapfile -t files < <(find build/container_build_framework* -type f -name '*' 2>/dev/null | true)
     set -o pipefail
     if [ ${#files[*]} -gt 0 ]; then
-    for file in "${files[@]}"; do
-        dependents+=( "$(sha256sum "$file")" )
-    done
+        for file in "${files[@]}"; do
+            dependents+=( "$(sha256sum "$file")" )
+        done
     fi
 
     # container digest of layer that we are building on top of
@@ -173,7 +175,9 @@ export -f build.changeImage
 #----------------------------------------------------------------------------------------------
 function build.dockerCompose()
 {
-    local jsonConfig=$( "${YAML_TO_JSON[@]}" < docker-compose.yml | jq '.services?')
+    local -r compose_yaml="${1:?}"
+
+    local jsonConfig=$( "${YAML_TO_JSON[@]}" < "$compose_yaml" | jq '.services?')
     if [ "${jsonConfig:-}" ]; then
         local -r service="$(jq 'keys[0]?' <<< "$jsonConfig" | tr -d '"')"
         [ -z "${service:-}" ] || jq $(eval echo "'.\"$service\"?'") <<< "$jsonConfig"
@@ -250,7 +254,11 @@ export -f build.logToKafka
 function build.me()
 {
     local -i startTime=$(timer.getTimestamp)
-    local config=$(build.dockerCompose)
+
+    local compose_yaml="docker-compose.${OS::-1}.yml"
+    [ -e "$compose_yaml" ] || compose_yaml=docker-compose.yml
+    local config=$(build.dockerCompose "$compose_yaml")
+
     local taggedImage="$(eval echo $(jq '.image?' <<< $config))"
     taggedImage="${taggedImage%:*}:${BASE_TAG}"
 
@@ -263,14 +271,17 @@ function build.me()
     export CONTAINER_ORIGIN="$(git describe --tags --dirty)"
 
     echo
-    echo -e "building \e[34m$taggedImage\e[0m"
+    echo -n 'building '
+    echo -en '\e[34m'
+    echo -n "$taggedImage"
+    echo -e '\e[0m'
     echo "    refs:           ${CONTAINER_GIT_REFS:-}"
     echo "    commitId:       ${CONTAINER_GIT_COMMIT:-}"
     echo "    repo:           ${CONTAINER_GIT_URL:-}"
     echo "    fingerprint:    ${CONTAINER_FINGERPRINT:-}"
     echo "    revision:       ${CONTAINER_ORIGIN:-}"
 
-    [ "${CONTAINER_FINGERPRINT:-}" ] || trap.die "No base image found for $taggedImage: unable to calulate fingerprint."
+    [ "${CONTAINER_FINGERPRINT:-}" ] || trap.die "No base image found for '$taggedImage'. Unable to calulate fingerprint."
 
 
     # get name of image tagged with fingerprint
@@ -283,8 +294,12 @@ function build.me()
         # this on Jenkins
         :> "$PROGRESS_LOG"
         local logBase="${logDir}/$dir"
-        (build.updateContainer "$taggedImage" "$actualImage" "$CONTAINER_ORIGIN" >"../${logBase}.out" 2>"../${logBase}.err") \
+        (build.updateContainer "$compose_yaml" "$taggedImage" "$actualImage" "$CONTAINER_ORIGIN" >"../${logBase}.out" 2>"../${logBase}.err") \
           && status=$? || status=$?
+        if [ $status -eq 9 ]; then
+            status=0
+            rm "../${logBase}.out"
+        fi
 
         # show location of log files if they have any content
         local log_display_base="${BUILD_URL}artifact/$logBase"
@@ -311,7 +326,8 @@ function build.me()
         fi
 
     else
-        (build.updateContainer "$taggedImage" "$actualImage" "$CONTAINER_ORIGIN") && status=$? || status=$?
+        (build.updateContainer "$compose_yaml" "$taggedImage" "$actualImage" "$CONTAINER_ORIGIN") && status=$? || status=$?
+        [ $status -eq 9 ] && status=0
     fi
     local -i endTime=$(timer.getTimestamp)
     local -i elapsed=$(( endTime - startTime ))
@@ -332,9 +348,10 @@ export -f build.me
 #----------------------------------------------------------------------------------------------
 function build.updateContainer()
 {
-    local -r taggedImage=${1:?}
-    local -r actualImage=${2:?}
-    local -r revision=${3:-}
+    local -r compose_yaml=${1:?}
+    local -r taggedImage=${2:?}
+    local -r actualImage=${3:?}
+    local -r revision=${4:-}
 
     if [ -z "${ALWAYS_BUILD:-}" ]; then
         build.logger "checking for local $taggedImage with the correct fingerprint"
@@ -342,33 +359,27 @@ function build.updateContainer()
         mapfile -t images < <(build.findIdsWithFingerprint "$CONTAINER_FINGERPRINT")
         if [ ${#images[*]} -gt 0 ]; then
             build.logger "${taggedImage} has not changed."
-            if [ -z "${DOCKER_ALWAYS_PUSH:-}" ]; then
-                rm "$PROGRESS_LOG"
-            else
-                registry.push "$taggedImage"
-            fi
-            return 0
+            [ -z "${DOCKER_ALWAYS_PUSH:-}" ]  ||  registry.push "$taggedImage"
+            return 9
         fi
 
         # check if there is an image in the registry with the correct fingerprint
-        build.logger "checking for $actualImage available in registry"
+        build.logger "checking if $actualImage is available in registry"
         if docker pull "$actualImage" 2>/dev/null; then
             # downloaded image from registry
             build.changeImage "$taggedImage" "$actualImage"
             if [ "${DOCKER_ALWAYS_PUSH:-}" ]; then
                 build.logger "pushing ${taggedImage} to registry"
                 registry.push "$taggedImage" "$actualImage"
-            else
-                rm "$PROGRESS_LOG"
             fi
             docker rmi "$actualImage"
-            return 0
+            return 9
         fi
     fi
 
     # rebuild container because no container exists with the correct fingerprint
     build.logger "building $actualImage"
-    docker-compose build 2>&1 || trap.die "Build failure"
+    docker-compose -f "$compose_yaml" build 2>&1 || trap.die "Build failure"
 
 
     build.changeImage "$taggedImage" "$actualImage"

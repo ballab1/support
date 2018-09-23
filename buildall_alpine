@@ -39,5 +39,6 @@ declare -a modules=(base_container
 
 cd "$TOOLS/.."
 [ $# -gt 0 ] && modules=( "$@" )
+export OS=alpine/
 build.allContainers "${modules[@]}"
 
