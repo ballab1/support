@@ -11,6 +11,11 @@ declare -a modules=(base_container
                     openjdk
                     perl )
 
+# package versions
+export JAVA_VERSION=1.8.0_181
+export PERL_VERSION=5.26.2
+
+
 cd "$TOOLS/.."
 export OS=centos/
 [ $# -gt 0 ] && modules=( "$@" )
