@@ -1,0 +1,24 @@
+#!/bin/bash
+
+declare -r TOP="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"   
+source "${TOP}/libs/loadLibraries.sh"
+
+cd "$TOP"
+declare branch="$(git branch | grep '* ' | awk '{print $2}')"
+[ "$branch" = 'master' ] || branch=latest
+cd "$TOP"/versions
+git checkout "$branch"
+git pull
+cd ..
+
+declare -a modules
+for dockerOS in $(sed '/^[[:blank:]]*#/d;s/[[:blank:]]*#.*//' docker.os); do
+    [ ${dockerOS:-} ] || continue
+    [ -e "${TOP}/versions/$dockerOS" ] || continue
+
+    source "${TOP}/versions/$dockerOS" 
+    export OS="$dockerOS"/
+    
+    [ $# -gt 0 ] && modules=( "$@" )
+    build.allContainers "${modules[@]}"
+done

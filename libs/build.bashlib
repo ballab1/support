@@ -54,6 +54,7 @@ function build.allContainers()
 
     echo
     echo "building $git_url"
+    echo "    OS:             (${OS::-1})"
     echo "    refs:           (${git_refs})"
     echo "    commitId:       $git_commit"
     echo "    revision:       $origin"
