@@ -10,7 +10,7 @@ source "${TOOLS}/loadLibraries.sh"
 declare -a modules=(base_container
                     supervisord
                     cesi
-                    nginx_base
+                    nginx-base
                     php5
                     php7
                     openjdk
@@ -21,7 +21,7 @@ declare -a modules=(base_container
                     kafka-zookeeper
                     mysql
                     nagios
-                    nginx_proxy
+                    nginx-proxy
                     phpmyadmin
                     webdav
                     zenphoto
@@ -48,7 +48,7 @@ export NCORE_VERSION=4.4.2
 export NOBJECT_VERSION=0.21.20
 export NCONF_VERSION=1.3.0-0
 export NGRAPH_VERSION=1.5.2
-export NGINX_VERSION=1.15.3
+export NGINX_VERSION=1.15.4
 export JAVA_VERSION=8.171.11-r0
 export PERL_VERSION=5.26.2
 export CPANIMUS_VERSION=1.7044

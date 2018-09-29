@@ -46,11 +46,11 @@
 [submodule "nginx_alt"]
     path = nginx_alt
     url = ../nginx_alt
-[submodule "nginx_base"]
-    path = nginx_base
+[submodule "nginx-base"]
+    path = nginx-base
     url = ../nginx_base.git
-[submodule "nginx_proxy"]
-    path = nginx_proxy
+[submodule "nginx-proxy"]
+    path = nginx-proxy
     url = ../nginx.git
 [submodule "nodervisor"]
     path = nodervisor

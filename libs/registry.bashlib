@@ -259,6 +259,43 @@ function registry.rename()
 export -f registry.rename
 
 #----------------------------------------------------------------------------------------------
+function registry.reportCatalogAsJson()
+{
+    local -a catalog=( "$@" )
+    [ ${#catalog[*]} -eq 0 ] && mapfile -t catalog < <(registry.catalog)
+
+    local -A tags
+    local -i index=0
+    local -r ref='latest'
+    echo -n '['
+    for entry in "${catalog[@]}"; do
+        [ $index -eq 0 ] || echo -n ','
+        (( index++ )) || true
+        eval tags=( $(registry.tags "$entry") )
+        printf '{"id":"%05d","count":"%d","%s":[' $index ${#tags[*]} $entry
+
+        local latest="${tags[$ref]:-}"
+        local -i x=0
+        for tag in "${!tags[@]}"; do
+             [ $x -eq 0 ] || echo -n ','
+             x=1
+             local createTime="$(registry.createTime "$entry" "$tag")"
+             [ "$createTime" != '                      ' ] || createTime='null'
+             local digest="$(registry.digest  "$entry" "$tag")"
+             [ digest ] || digest='null'
+             printf '{"name":"%s","create_time":%s,"digest":"%s"}' \
+                    "$tag" \
+                    "$createTime" \
+                    "$digest"
+
+         done
+         echo ']}'
+    done
+    echo -n ']'
+}
+export -f registry.rename
+
+#----------------------------------------------------------------------------------------------
 function registry.reportCatalog()
 {
     local -a catalog=( "$@" )
