@@ -35,7 +35,7 @@ function build.allContainers()
     export CFG_SLACK_HUBOT_TOKEN=''
     export CFG_USER=''
     export BASE_TAG=${BASE_TAG:-latest}
-    export OS="${OS:-alpine/}"
+    export CONTAINER_OS="${CONTAINER_OS:-alpine/}"
     export DOCKER_REGISTRY=$(registry.SERVER)
 
     local logDir=logs
@@ -54,7 +54,7 @@ function build.allContainers()
 
     echo
     echo "building $git_url"
-    echo "    OS:             (${OS::-1})"
+    echo "    CONTAINER_OS:   ${CONTAINER_OS::-1}"
     echo "    refs:           (${git_refs})"
     echo "    commitId:       $git_commit"
     echo "    revision:       $origin"
@@ -256,7 +256,7 @@ function build.me()
 {
     local -i startTime=$(timer.getTimestamp)
 
-    local compose_yaml="docker-compose.${OS::-1}.yml"
+    local compose_yaml="docker-compose.${CONTAINER_OS::-1}.yml"
     [ -e "$compose_yaml" ] || compose_yaml=docker-compose.yml
     local config=$(build.dockerCompose "$compose_yaml")
 
@@ -370,7 +370,7 @@ function build.updateContainer()
             # downloaded image from registry
             build.changeImage "$taggedImage" "$actualImage"
             if [ "${DOCKER_ALWAYS_PUSH:-}" ]; then
-                build.logger "pushing ${taggedImage} to registry"
+                build.logger "pushing  ${taggedImage} to registry"
                 registry.push "$taggedImage" "$actualImage"
             fi
             docker rmi "$actualImage"

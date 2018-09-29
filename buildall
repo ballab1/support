@@ -12,13 +12,21 @@ git pull
 cd ..
 
 declare -a modules
-for dockerOS in $(sed '/^[[:blank:]]*#/d;s/[[:blank:]]*#.*//' docker.os); do
-    [ ${dockerOS:-} ] || continue
-    [ -e "${TOP}/versions/$dockerOS" ] || continue
+declare -a OSes
+mapfile -t OSes < <(sed '/^[[:blank:]]*#/d;s/[[:blank:]]*#.*//' container.os)
+[ "${CONTAINER_OS:-}" ] && OSes=( $CONTAINER_OS )
 
-    source "${TOP}/versions/$dockerOS" 
-    export OS="$dockerOS"/
+declare cbf_version
+[ "${CBF_VERSION:-}" ] && cbf_version="$CBF_VERSION"
+
+for containerOS in "${OSes[@]}"; do
+    [ ${containerOS:-} ] || continue
+    [ -e "${TOP}/versions/$containerOS" ] || continue
+
+    source "${TOP}/versions/$containerOS" 
+    export CONTAINER_OS="$containerOS"/
     
     [ $# -gt 0 ] && modules=( "$@" )
+    [ "${cbf_version:-}" ] && CBF_VERSION="$cbf_version"
     build.allContainers "${modules[@]}"
 done

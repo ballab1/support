@@ -15,8 +15,9 @@ node('ubuntu-s3') {
     stage('Report') {
             ws {
                 ansiColor('xterm') {
-                    sh "./registryReport"
+                    sh "./registryReport | tee registryReport.log"
                 }
+                archiveArtifacts allowEmptyArchive: true, artifacts: 'registryReport.log'
             }
         }
     }

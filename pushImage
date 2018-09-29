@@ -1,6 +1,5 @@
 #!/bin/bash
 
-declare -r TOOLS="$( cd "$( dirname "${BASH_SOURCE[0]}" )/libs" && pwd )"   
-source "${TOOLS}/loadLibraries.sh"
-
+declare -r TOP="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"   
+source "${TOP}/libs/loadLibraries.sh" 
 registry.push "$@"
