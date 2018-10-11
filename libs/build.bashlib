@@ -61,7 +61,7 @@ function build.allContainers()
     exec 3>&1  # create special stdout
 
     export CBF_VERSION=${CBF_VERSION:-master}
-    local -i status
+    local -i status=0
     for dir in "${modules[@]}"; do
         if [ -d "$dir" ]; then
             pushd "$dir" >/dev/null
@@ -305,7 +305,7 @@ function build.me()
     # get name of image tagged with fingerprint
     export CONTAINER_TAG="$CONTAINER_FINGERPRINT"
     local actualImage="$(eval echo $(jq '.image?' <<< $config))"
-    local -i status
+    local -i status=0
 
     # rebuild container because no container exists with the correct fingerprint
     if [ "${BUILD_URL:-}" ]; then

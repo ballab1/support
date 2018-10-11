@@ -3,6 +3,15 @@
 declare -r TOP="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"   
 source "${TOP}/libs/loadLibraries.sh"
 
+function bldModules() {
+    local asked="$(printf '%s\n' "$@")"
+    for m in "${modules[@]}"; do
+        if [ -z "${asked:-}" ] || [ $(grep "$m" <<< "$asked") ]; then
+            printf '%s\n' "$m"
+        fi
+    done
+}
+
 cd "$TOP"
 declare branch="$(git branch | grep '* ' | awk '{print $2}')"
 [ "$branch" = 'master' ] || branch=latest
@@ -11,7 +20,7 @@ git checkout "$branch"
 git pull
 cd ..
 
-declare -a modules
+
 declare -a OSes
 mapfile -t OSes < <(sed '/^[[:blank:]]*#/d;s/[[:blank:]]*#.*//' container.os)
 [ "${CONTAINER_OS:-}" ] && OSes=( $CONTAINER_OS )
@@ -26,7 +35,6 @@ for containerOS in "${OSes[@]}"; do
     source "${TOP}/versions/$containerOS" 
     export CONTAINER_OS="$containerOS"/
     
-    [ $# -gt 0 ] && modules=( "$@" )
     [ "${cbf_version:-}" ] && CBF_VERSION="$cbf_version"
-    build.allContainers "${modules[@]}"
+    build.allContainers $(bldModules "$@")
 done

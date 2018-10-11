@@ -1,9 +1,9 @@
 TODO
 ```
 get stuff working:
+   base_container does not recognize changes in CBF
    SMB write access
    completion of CD install
-   ubuntu-s1 production and build
    reverse proxy for cesi
    configure Jenkins with official builds & deploys
    nagiosgraph issues
@@ -124,6 +124,7 @@ Done
 Kafka broker/zookeeper issues
 Grafana update
 mysql update
+ubuntu-s1 production and build
 
 docker-registry
 - setup private docker registry
