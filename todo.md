@@ -25,13 +25,18 @@ get stuff working:
     complete unit tests
 
 CBF:
-    query github for CBF reference when it is downloaded
-    	- make something up if it is included
-    	- add reference to directories
-             curl -k -u <...>:<...> -X GET https://api.github.com/repos/ballab1/support/branches
-    	- add reference to labels
-             curl -k -u <...>:<...> -X GET https://api.github.com/repos/ballab1/support/tags
-    	- if not downloaded, use parent to add to labels
+    delete cache files
+    fingerprint calculation should not be dependent on "$CONTAINER_TAG"
+    use CBF_VERSION better
+        - should never unset
+        - should check if specified version same as installed version (no point in wget)
+        - query github for CBF reference when it is downloaded
+        	- make something up if it is included
+        	- add reference to directories
+                  curl -k -u <...>:<...> -X GET https://api.github.com/repos/ballab1/support/branches
+        	- add reference to labels
+                  curl -k -u <...>:<...> -X GET https://api.github.com/repos/ballab1/support/tags
+        	- if not downloaded, use parent to add to labels
     Track created users for runtime changes
 
 builds
