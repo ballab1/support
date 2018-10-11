@@ -12,20 +12,32 @@ function die() {
     exit 1
 }
 
-declare CBF_DIR=$(mktemp -d)
-function rmTmpDir() {
-    [ ! -d "$CBF_DIR" ] || rm -rf "$CBF_DIR"
+function myExitHandler() {
+    rmTmpDir() {
+        local -i status=$?
+        [ ! -d "$CBF_DIR" ] || rm -rf "$CBF_DIR"
+        exit $status
+    }
+    trap -p EXIT | awk '{print $3}' | tr -d "'"
+    trap rmTmpDir EXIT
 }
-trap rmTmpDir EXIT
 
 : ${CBF_VERSION:=master}
-declare cbf_dir=${CONTAINER_DIR:-"${CBF_DIR}/container_build_framework"}
+declare cbf_dir="${CONTAINER_DIR:-}"
 
 # check if we need to download CBF
-if [ -d "$cbf_dir" ]; then
+if [ "${cbf_dir:-}" ] && [ -d "$cbf_dir" ]; then
     echo "Using local build version of CBF"
 
+elif [ "${TOP:-}" ] && [ -d "${TOP}/container_build_framework" ] ; then
+    echo "Using CBF submodule"
+    cbf_dir="${TOP}/container_build_framework"
+
 elif [ "${CBF_VERSION:-}" ]; then
+    trap myExitHandler EXIT
+    declare CBF_DIR=$(mktemp -d)
+    cbf_dir="${CBF_DIR}/container_build_framework"
+
     # since no CBF directory located, attempt to download CBF based on specified verion
     declare CBF_TGZ="${CBF_DIR}/cbf.tar.gz"
     declare CBF_URL="https://github.com/ballab1/container_build_framework/archive/${CBF_VERSION}.tar.gz"
@@ -53,7 +65,7 @@ fi
 echo "loading framework from ${cbf_dir}"
 
 # load our CBF libraries
-[ ! -e "${CBF_DIR}/bashlibs.loaded" ] || rm "${CBF_DIR}/bashlibs.loaded" ||  die "Failed to remove ${CBF_TGZ}/bashlibs.loaded"
+[ ! -e "${cbf_dir}/bashlibs.loaded" ] || rm "${cbf_dir}/bashlibs.loaded" ||  die "Failed to remove ${CBF_TGZ}/bashlibs.loaded"
 
 export CBF_LOCATION="$cbf_dir"                   # set CBF_LOCATION
 export CRF_LOCATION="$CBF_LOCATION/cbf"          # set CRF_LOCATION

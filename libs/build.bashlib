@@ -65,7 +65,7 @@ function build.allContainers()
     for dir in "${modules[@]}"; do
         if [ -d "$dir" ]; then
             pushd "$dir" >/dev/null
-            [ "$dir" = base_container ] || unset CBF_VERSION
+            build.checkCBF "$dir"
             build.me && status=$? || status=$?
             popd >/dev/null
         else
@@ -157,6 +157,23 @@ function build.calculateFingerprint()
     (sha256sum | cut -d' ' -f1) <<< "${dependents[*]}"
 }
 export -f build.calculateFingerprint
+
+#----------------------------------------------------------------------------------------------
+function build.checkCBF()
+{
+    local dir=${1:?}
+    if [ "$dir" = base_container ]; then
+
+        if [ -z "${CBF_VERSION:-}" ]; then
+            [ -d "${TOP}/container_build_version" ] || die 'no version specified for CBF'
+            # use existing CBF
+            export CBF_VERSION=$(cd "${TOP}/container_build_version"; git describe --tags --dirty)
+        fi
+    else
+        unset CBF_VERSION
+    fi
+}
+export -f build.checkCBF
 
 #----------------------------------------------------------------------------------------------
 function build.changeImage()
@@ -370,7 +387,7 @@ function build.updateContainer()
             # downloaded image from registry
             build.changeImage "$taggedImage" "$actualImage"
             if [ "${DOCKER_ALWAYS_PUSH:-}" ]; then
-                build.logger "pushing  ${taggedImage} to registry"
+                build.logger "pushing ${taggedImage} to registry"
                 registry.push "$taggedImage" "$actualImage"
             fi
             docker rmi "$actualImage"

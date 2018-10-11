@@ -6,6 +6,7 @@
 build/container_build_framework*
 **/*.bak
 *.log
+*.err
 *.json
 bld.*
 log/*
