@@ -63,14 +63,14 @@ function build.allContainers()
     export CBF_VERSION=${CBF_VERSION:-master}
     local -i status=0
     for dir in "${modules[@]}"; do
-        if [ -d "$dir" ]; then
-            pushd "$dir" >/dev/null
-            build.checkCBF "$dir"
-            build.me && status=$? || status=$?
-            popd >/dev/null
-        else
+        if [ ! -d "$dir" ]; then
             echo "invalid project directory: $dir"
         fi
+
+        pushd "$dir" >/dev/null
+        build.checkCBF "$dir"
+        build.me && status=$? || status=$?
+        popd >/dev/null
         [ $status -eq 0 ] || break
     done
     exec 3>&-   # close special stdout
@@ -337,13 +337,13 @@ function build.me()
           echo
           echo  'STDOUT:'
           echo
-          cat ../${logBase}.out
+          tail -30 ../${logBase}.out
           echo
           echo '----------------------------------------------------------------------------------------------'
           echo
           echo  'STDERR:'
           echo
-          cat ../${logBase}.err
+          tail -30 ../${logBase}.err
           echo
           echo '----------------------------------------------------------------------------------------------'
         fi
