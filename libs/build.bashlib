@@ -142,6 +142,11 @@ function build.calculateFingerprint()
     fi
     dependents+=( $(docker inspect "$base" | jq '.[].Id' ) )
 
+#    if [ ! -d build/container_build_framework ]; then
+#        local cbf_version=$(eval echo $( jq '.build.args.CBF_VERSION' <<< "$config" ))
+#        [ -z "${cbf_version:-}" ] || dependents+=( $(build.resolve "$cbf_version") )
+#    fi
+
     # anything dirty in workspace
     for line in $(git status --porcelain); do
         local file=$(awk '{print $2}' <<< "$line")
