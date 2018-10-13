@@ -304,7 +304,7 @@ function build.me()
     echo "    fingerprint:    ${CONTAINER_FINGERPRINT:-}"
     echo "    revision:       ${CONTAINER_ORIGIN:-}"
 
-    [ "${CONTAINER_FINGERPRINT:-}" ] || trap.die "No base image found for '$taggedImage'. Unable to calulate fingerprint."
+    [ "${CONTAINER_FINGERPRINT:-}" ] || trap.die "No base image found for '$taggedImage'. Unable to calculate fingerprint."
 
 
     # get name of image tagged with fingerprint
