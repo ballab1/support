@@ -60,7 +60,7 @@ function build.allContainers()
     echo "    revision:       $origin"
     exec 3>&1  # create special stdout
 
-    export CBF_VERSION=${CBF_VERSION:-master}
+
     local -i status=0
     for dir in "${modules[@]}"; do
         if [ ! -d "$dir" ]; then
@@ -68,7 +68,6 @@ function build.allContainers()
         fi
 
         pushd "$dir" >/dev/null
-        build.checkCBF "$dir"
         build.me && status=$? || status=$?
         popd >/dev/null
         [ $status -eq 0 ] || break
@@ -101,38 +100,30 @@ function build.allContainers()
 export -f build.allContainers
 
 #----------------------------------------------------------------------------------------------
-function build.calculateFingerprint()
+function build.dependencyInfo()
 {
-    local -r config=${1:?}
-
     # get the following
     #  - git tree hash
-    #  - resolved 'docker build.args' config from docker-compose.yml
+    #  - resolved 'docker build.args' config (without reference to FROM_BASE) from docker-compose.yml
     #  - container digest of layer that we are building on top of
     #  - anything dirty in workspace
+    #  - sha from CBF
+
+    # SIDE EFFECTS:
+    #  - ensure any FROM_BASE is local
+    #  - sets CBF_VERSION
+
+    local -r config=${1:?}
 
 
     # git tree hash
-    local -a dependents
-    mapfile -t dependents < <(git ls-tree HEAD -- . | awk '{print $3}')
+    git ls-tree HEAD -- . | awk '{print $3}'
 
-    # resolve 'docker build.args' config from docker-compose.yml
+    # resolve 'docker build.args' config (without reference to FROM_BASE) from docker-compose.yml
     set +u
-    dependents+=( "$(eval echo $(jq '.build.args?' <<< "$config"))"
-                  "${CBF_VERSION:-}"
-                )
+    eval echo $(jq '.build.args | del(.FROM_BASE)' <<< "$config")
     set -u
 
-    # add any local 'build/container_build_framework' folder
-    local -a files
-    set +o pipefail
-    mapfile -t files < <(find build/container_build_framework* -type f -name '*' 2>/dev/null | true)
-    set -o pipefail
-    if [ ${#files[*]} -gt 0 ]; then
-        for file in "${files[@]}"; do
-            dependents+=( "$(sha256sum "$file")" )
-        done
-    fi
 
     # container digest of layer that we are building on top of
     local base=$(eval echo $( jq '.build.args.FROM_BASE' <<< "$config" ))
@@ -140,45 +131,44 @@ function build.calculateFingerprint()
         echo pulling parent image: "$base" >&2
         [ "$(docker image ls "$base" | awk 'NR != 1')" ] || docker pull "$base" >&2 || return 0
     fi
-    dependents+=( $(docker inspect "$base" | jq '.[].Id' ) )
+    docker inspect "$base" | jq '.[].Id'          # digest sha from parent
 
-#    if [ ! -d build/container_build_framework ]; then
-#        local cbf_version=$(eval echo $( jq '.build.args.CBF_VERSION' <<< "$config" ))
-#        [ -z "${cbf_version:-}" ] || dependents+=( $(build.resolve "$cbf_version") )
-#    fi
 
     # anything dirty in workspace
-    for line in $(git status --porcelain); do
+    while read -r line; do
         local file=$(awk '{print $2}' <<< "$line")
         case $(awk '{print $1}' <<< "$line") in
             A|M|MM)
-                dependents+=( "$(sha256sum "$file")" );;
+                sha256sum "$file";;
             *)
-                dependents+=( "$line" );;
+                echo "$line";;
         esac
-    done
+    done < <(git status --porcelain)
 
-    # generate fingerprint from all our dependents
-    (sha256sum | cut -d' ' -f1) <<< "${dependents[*]}"
-}
-export -f build.calculateFingerprint
 
-#----------------------------------------------------------------------------------------------
-function build.checkCBF()
-{
-    local dir=${1:?}
-    if [ "$dir" = base_container ]; then
+    # add our cbf version
+    local localDir="$(ls -1A build/ | grep 'container_build_framework')"
+    if [ ${localDir:-} ]; then
+        # generate fingerprint from all our dependencies
+        echo -n 'local-'
+        sha256sum <<< "$(build.dirChecksum "$localDir")" | cut -d' ' -f1
 
-        if [ -z "${CBF_VERSION:-}" ]; then
-            [ -d "${TOP}/container_build_version" ] || die 'no version specified for CBF'
-            # use existing CBF
-            export CBF_VERSION=$(cd "${TOP}/container_build_version"; git describe --tags --dirty)
+    elif [ $(basename "$(pwd)") = 'base_container' ]; then
+        if [ "${CBF_VERSION:-}" ]; then
+            :
+        elif [ -d "../container_build_version" ]; then
+            export CBF_VERSION=$(cd ../container_build_version; git describe --tags --dirty)
+        else
+            die 'no version specified for CBF'
         fi
+        echo $CBF_VERSION
+
     else
-        unset CBF_VERSION
+        # use parent's cbf.version
+        docker inspect "$base" | jq '.[].Config.Labels."container.cbf.version"?' | tr -d '"'
     fi
 }
-export -f build.checkCBF
+export -f build.cbfVersionInfo
 
 #----------------------------------------------------------------------------------------------
 function build.changeImage()
@@ -194,6 +184,18 @@ function build.changeImage()
         docker tag "$actualImage" "$taggedImage"
 }
 export -f build.changeImage
+
+#----------------------------------------------------------------------------------------------
+function build.dirChecksum()
+{
+    local -r dir=${1:?}
+
+    # add any local 'build/container_build_framework' folder
+    while read -r file; do
+        sha256sum "$file"
+    done < <(find "$dir" -type f -name '*' 2>/dev/null ||:)
+}
+export -f build.dirChecksum
 
 #----------------------------------------------------------------------------------------------
 function build.dockerCompose()
@@ -287,11 +289,12 @@ function build.me()
 
     # setup environment for 'docker-compose build'
     export CONTAINER_BUILD_TIME=$(date +%Y%m%d-%H%M%S.%N -u)
-    export CONTAINER_FINGERPRINT="$(build.calculateFingerprint "$config")"
     export CONTAINER_GIT_REFS="($(git log -n1 --oneline --decorate | sed 's/[^\(]*(\([^\)]*\)).*/\1/'))"
     export CONTAINER_GIT_COMMIT="$(git rev-parse HEAD)"
     export CONTAINER_GIT_URL="$(git remote get-url origin)"
     export CONTAINER_ORIGIN="$(git describe --tags --dirty)"
+    # generate fingerprint from all our dependencies
+    export CONTAINER_FINGERPRINT="$(sha256sum | cut -d' ' -f1) <<< "$(build.dependencyInfo "$config")"
 
     echo
     echo -n 'building '
