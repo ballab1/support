@@ -37,6 +37,7 @@ function build.allContainers()
     export BASE_TAG=${BASE_TAG:-latest}
     export CONTAINER_OS="${CONTAINER_OS:-alpine/}"
     export DOCKER_REGISTRY=$(registry.SERVER)
+    export CBF_VERSION
 
     local logDir=logs
     [ -d "$logDir" ] || mkdir -p "$logDir"
@@ -168,7 +169,7 @@ function build.dependencyInfo()
         docker inspect "$base" | jq '.[].Config.Labels."container.cbf.version"?' | tr -d '"'
     fi
 }
-export -f build.cbfVersionInfo
+export -f build.dependencyInfo
 
 #----------------------------------------------------------------------------------------------
 function build.changeImage()
@@ -294,7 +295,7 @@ function build.me()
     export CONTAINER_GIT_URL="$(git remote get-url origin)"
     export CONTAINER_ORIGIN="$(git describe --tags --dirty)"
     # generate fingerprint from all our dependencies
-    export CONTAINER_FINGERPRINT="$(sha256sum | cut -d' ' -f1) <<< "$(build.dependencyInfo "$config")"
+    export CONTAINER_FINGERPRINT="$( sha256sum <<< $(build.dependencyInfo "$config") | cut -d' ' -f1 )"
 
     echo
     echo -n 'building '
