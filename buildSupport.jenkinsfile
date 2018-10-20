@@ -1,24 +1,36 @@
 node('ubuntu-s4') {
     timestamps {
+//    stage ('Bootstrap') {
+//        sh "echo GIT_BRANCH_LOCAL=\\\"$GIT_BRANCH\\\" | sed -e 's|origin/||g' | tee version.properties"
+//        GIT_BRANCH_LOCAL = sh (
+//	        script: "echo $Branch | sed -e 's|origin/||g'",
+//	        returnStdout: true
+//	    ).trim()
+//        echo "Git branch: ${GIT_BRANCH_LOCAL}"
+//    }
     stage('Prepare Workspace') {
         ws {
-            checkout([$class: 'GitSCM', 
-                       branches: [[name: "*${BRANCH}"]], 
+//            load('version.properties')
+            checkout([$class: 'GitSCM',
+//                       branches: [[name: '**']],
+                       branches: [[name: "*${BRANCH}"]],
                        doGenerateSubmoduleConfigurations: false, 
                        extensions: [[$class: 'CleanBeforeCheckout'],
                                     [$class: 'GitLFSPull'],
                                     [$class: 'SubmoduleOption', 
                                       disableSubmodules: false, 
+//                                      localBranch: "${GIT_BRANCH_LOCAL}",
                                       parentCredentials: false, 
                                       recursiveSubmodules: true, 
-                                      reference: '', 
+                                      reference: '',
                                       trackingSubmodules: true],
                                     [$class: 'WipeWorkspace']],
                        submoduleCfg: [],
                        userRemoteConfigs: [[credentialsId: '935a7b57-da74-45f7-9119-5a0529afb8ae', url: 'https://github.com/ballab1/support']]
                        ])
             sh "git submodule foreach git checkout ${BRANCH}"
-            sh "git submodule foreach git pull"
+//            sh "git submodule foreach git checkout \${GIT_LOCAL_BRANCH}"
+//            sh "git submodule foreach git pull"
         }
     }    
     stage('Build') {

@@ -1,7 +1,6 @@
 TODO
 ```
 get stuff working:
-   base_container does not recognize changes in CBF
    SMB write access
    completion of CD install
    reverse proxy for cesi
@@ -26,7 +25,6 @@ get stuff working:
 
 CBF:
     delete cache files
-    fingerprint calculation should not be dependent on "$CONTAINER_TAG"
     use CBF_VERSION better
         - should never unset
         - should check if specified version same as installed version (no point in wget)
@@ -59,9 +57,7 @@ enhancements:
     setup elasticsearch
     container kafka logging with https://hub.docker.com/r/mickyg/kafka-logdriver/
     security
-        - use git crypt
-            remove passwords from container environment variables
-                zen, nagios, phpadmin, grafana, webdav, hubot, jenkins, mysql
+        use git crypt
         permit removal of any environment variable prior to running service
         remove bashlib functions prior to running service
     containers
@@ -133,6 +129,8 @@ security
 - mapping layer for ENV variables.  use docker-compose.yml
 - base set going into docker-compose.yml : individual set for each container
 - need layered containers
+  remove passwords from container environment variables
+    zen, nagios, phpadmin, grafana, webdav, hubot, jenkins, mysql
 
 CI/CD
     add ENV for HOST_IP
@@ -142,6 +140,7 @@ phpadmin:
     resolve login issue where page is left blank
 Phpmyadmin configuration
 Jenkins:   Permission denied: /var/run/docker.sock
+           permission denied on /usr/local/crf/CRF.properties are runtime
 consolidate nginx_alt into nginx_base
 Move bashlib to action_folder
 Consolidate build & runtime folder structure
@@ -190,4 +189,6 @@ LABELS in images
 
 CBF
     parse Dockerfile for 'sudo' requirement  (USER + VOLUME): warn on 'USER' rather than 'USER_UID'
+    base_container does not recognize changes in CBF
+    fingerprint calculation should not be dependent on "$CONTAINER_TAG"
 ```
