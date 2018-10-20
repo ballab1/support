@@ -35,6 +35,7 @@ function build.allContainers()
     export CFG_SLACK_HUBOT_TOKEN=''
     export CFG_USER=''
     export BASE_TAG=${BASE_TAG:-latest}
+    export DEV_TEAM="${DEV_TEAM:-devops/}"
     export CONTAINER_OS="${CONTAINER_OS:-alpine/}"
     export DOCKER_REGISTRY=$(registry.SERVER)
     export CBF_VERSION
@@ -54,7 +55,10 @@ function build.allContainers()
     local git_refs="$(git log -n1 --oneline --decorate | sed 's/[^\(]*(\([^\)]*\)).*/\1/')"
 
     echo
-    echo "building $git_url"
+    echo -n 'building '
+    echo -en '\e[94m'
+    echo -n "$git_url"
+    echo -e '\e[0m'
     echo "    CONTAINER_OS:   ${CONTAINER_OS::-1}"
     echo "    refs:           (${git_refs})"
     echo "    commitId:       $git_commit"
@@ -299,7 +303,7 @@ function build.me()
 
     echo
     echo -n 'building '
-    echo -en '\e[34m'
+    echo -en '\e[94m'
     echo -n "$taggedImage"
     echo -e '\e[0m'
     echo "    refs:           ${CONTAINER_GIT_REFS:-}"

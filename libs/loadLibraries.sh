@@ -22,8 +22,9 @@ function myExitHandler() {
     trap rmTmpDir EXIT
 }
 
-: ${CBF_VERSION:=master}
 declare cbf_dir="${CONTAINER_DIR:-}"
+: ${__cbfVersion:=master}
+[ -z "${CBF_VERSION:-}" ] || __cbfVersion=$CBF_VERSION
 
 # check if we need to download CBF
 if [ "${cbf_dir:-}" ] && [ -d "$cbf_dir" ]; then
@@ -33,15 +34,15 @@ elif [ "${TOP:-}" ] && [ -d "${TOP}/container_build_framework" ] ; then
     echo "Using CBF submodule"
     cbf_dir="${TOP}/container_build_framework"
 
-elif [ "${CBF_VERSION:-}" ]; then
+elif [ "${__cbfVersion:-}" ]; then
     trap myExitHandler EXIT
     declare CBF_DIR=$(mktemp -d)
     cbf_dir="${CBF_DIR}/container_build_framework"
 
     # since no CBF directory located, attempt to download CBF based on specified verion
     declare CBF_TGZ="${CBF_DIR}/cbf.tar.gz"
-    declare CBF_URL="https://github.com/ballab1/container_build_framework/archive/${CBF_VERSION}.tar.gz"
-    echo "Downloading CBF:$CBF_VERSION from $CBF_URL"
+    declare CBF_URL="https://github.com/ballab1/container_build_framework/archive/${__cbfVersion}.tar.gz"
+    echo "Downloading CBF:$__cbfVersion from $CBF_URL"
 
     wget --no-check-certificate --quiet --output-document="$CBF_TGZ" "$CBF_URL" || die "Failed to download $CBF_URL"
     if type -f wget &> /dev/null ; then
@@ -87,7 +88,7 @@ if [ ${#__libs[*]} -gt 0 ]; then
     echo -e '\e[0m'
     unset __lib
 fi
-source "${__libdir}/init.cache"
+[ -e "${__libdir}/init.cache" ] && source "${__libdir}/init.cache"
 unset __libs
 unset __libdir
-
+unset __cbfVersion
