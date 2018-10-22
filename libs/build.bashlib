@@ -22,7 +22,7 @@ function build.all()
     local -a OSes
     mapfile -t OSes < <(sed '/^[[:blank:]]*#/d;s/[[:blank:]]*#.*//' container.os)
     [ "${CONTAINER_OS:-}" ] && OSes=( $CONTAINER_OS )
-    local -r cbf_version="${CBF_VERSION:-}"
+    local cbf_version="${CBF_VERSION:-}"
 
     for containerOS in "${OSes[@]}"; do
         [ ${containerOS:-} ] || continue
@@ -209,7 +209,7 @@ function build.dependencyInfo()
         else
             die 'no version specified for CBF'
         fi
-        echo $CBF_VERSION
+        echo "$CBF_VERSION"
 
     else
         # use parent's cbf.version
@@ -283,6 +283,7 @@ function build.logToKafka()
     local -r duration=${6:-}
     local -r elapsed=${7:-}
     local -r git_refs=${8:-}
+    local -r status=${9:-}
 
     local -a refs=( $git_refs )
     # create our data array that gets logged
@@ -294,6 +295,7 @@ function build.logToKafka()
                           "$(json.encodeField "duration" "$duration")"
                           "$(json.encodeField "elapsed" "$elapsed")"
                           "$(json.encodeArray "refs" $(json.arrayValues "${refs[@]}"))"
+                          "$(json.encodeField "status" "$status")"
                         )
     if [ "${PROGRESS_LOG:-}" ] && [ -s "$PROGRESS_LOG" ]; then
         local -a progress_log=( $(< "$PROGRESS_LOG") )
@@ -302,8 +304,8 @@ function build.logToKafka()
 
     # now log our data to kafka
     "${KAFKAPRODUCER}" --server "$KAFKA_BOOTSTRAP_SERVERS"                        \
-                          --topic 'container_build_data'                          \
-                          --value "$( json.encodeHash '--' "${build_data[@]}" )"
+                       --topic 'container_build_data'                          \
+                       --value "$( json.encodeHash '--' "${build_data[@]}" )"
     return 0
 }
 export -f build.logToKafka
@@ -355,17 +357,14 @@ function build.module()
         local logBase="${logDir}/$dir"
         (build.updateContainer "$compose_yaml" "$taggedImage" "$actualImage" "$CONTAINER_ORIGIN" >"../${logBase}.out" 2>"../${logBase}.err") \
           && status=$? || status=$?
-        if [ $status -eq 9 ]; then
-            status=0
-            rm "../${logBase}.out"
-        fi
+        [ $status -eq 9 ] && rm "../${logBase}.out"
 
         # show location of log files if they have any content
         local log_display_base="${BUILD_URL}artifact/$logBase"
         [ -s "../${logBase}.out" ] && echo "    STDOUT log:  ${log_display_base}.out/*view*/"
         [ -s "../${logBase}.err" ] && echo "    STDERR log:  ${log_display_base}.err/*view*/"
 
-        if [ $status -ne 0 ]; then
+        if [ $status -ne 0 ] && [ $status -ne 9 ]; then
           term.log "\n"
           term.log "***Error occurred while generating $taggedImage" 'error'
           echo
@@ -386,7 +385,6 @@ function build.module()
 
     else
         (build.updateContainer "$compose_yaml" "$taggedImage" "$actualImage" "$CONTAINER_ORIGIN") && status=$? || status=$?
-        [ $status -eq 9 ] && status=0
     fi
     local -i endTime=$(timer.getTimestamp)
     local -i elapsed=$(( endTime - startTime ))
@@ -399,10 +397,34 @@ function build.module()
                      "$CONTAINER_ORIGIN" \
                      "$duration" \
                      "$elapsed" \
-                     "$CONTAINER_GIT_REFS"
+                     "$CONTAINER_GIT_REFS" \
+                     "$status"
+    [ $status -eq 9 ] && status=0
     return $status
 }
 export -f build.module
+
+#----------------------------------------------------------------------------------------------
+build.resolveCbfReference()
+{
+    local cbf_version=${1:?}
+
+    local branch="${cbf_version:-}"
+    case "${branch:-}" in
+        master|integration)
+            ;;
+        latest)
+            branch='dev'
+            ;;
+        *)
+            echo '$branch'
+            return 0
+            ;;
+    esac
+
+    echo -n 'v0.0-00-g'
+    wget -qO- "https://api.github.com/repos/ballab1/container_build_framework/git/refs/heads/${branch}" | jq '.object.sha' | awk '{substr($1,2,8)}'
+}
 
 #----------------------------------------------------------------------------------------------
 function build.updateContainer()
