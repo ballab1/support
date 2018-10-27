@@ -2,4 +2,5 @@
 
 declare -r TOP="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"   
 source "${TOP}/libs/loadLibraries.sh" 
+
 registry.push "$@"

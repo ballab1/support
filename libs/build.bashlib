@@ -5,22 +5,58 @@ declare KAFKAPRODUCER="$(dirname $(readlink -f ${BASH_SOURCE[0]}))/kafkaProducer
 declare KAFKA_BOOTSTRAP_SERVERS="10.1.3.6:9092,10.1.3.10:9092,10.1.3.11:9092"
 declare PROGRESS_LOG
 
+
 #----------------------------------------------------------------------------------------------
-function build.allContainers()
+function build.all()
 {
-    local -a modules=( "$@" )
+    local -r top=${1:?}
+    shift
+    local -ra userInput=( "$@" )
 
-    # Use the Unofficial Bash Strict Mode
-    set -o errexit
-    set -o nounset
-    set -o pipefail
-    IFS=$'\n\t'
+    cd "$top"
+    local branch="$(git branch | grep '* ' | awk '{print $2}')"
+    [ "$branch" = 'master' ] || branch=latest
+    build.updateVersions "$branch"
 
-    set +o verbose
-    set +o xtrace
+
+    local -a OSes
+    mapfile -t OSes < <(sed '/^[[:blank:]]*#/d;s/[[:blank:]]*#.*//' container.os)
+    [ "${CONTAINER_OS:-}" ] && OSes=( $CONTAINER_OS )
+    local cbf_version="${CBF_VERSION:-}"
+
+    for containerOS in "${OSes[@]}"; do
+        [ ${containerOS:-} ] || continue
+        [ -e "${top}/versions/$containerOS" ] || continue
+        [ "${cbf_version:-}" ] && CBF_VERSION="$cbf_version"
+
+        build.containersForOS "$containerOS" "${userInput[@]:-}"
+    done
+}
+
+#----------------------------------------------------------------------------------------------
+function build.changeImage()
+{
+    local taggedImage=${1:?}
+    local actualImage=${2:?}
+
+    [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}'  --filter "reference=$taggedImage")" ] || \
+        [ "$(docker ps --format '{{.Image}}' | grep "$taggedImage")" ] || \
+        docker rmi "$taggedImage"
+
+    [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}' --filter "reference=$actualImage")" ] || \
+        docker tag "$actualImage" "$taggedImage"
+}
+export -f build.changeImage
+
+#----------------------------------------------------------------------------------------------
+function build.containersForOS()
+{
+    local -r containerOS=${1:?}
+    shift
+    local -ar requestModules=( "$@" )
+
 
     local start=$(timer.getTimestamp)
-    [ -f ~/bin/trap.bashlib ] && source ~/bin/trap.bashlib
 
     export CFG_GITHUB_EMAIL=''
     export CFG_GITHUB_HUBOT_TOKEN=''
@@ -35,9 +71,11 @@ function build.allContainers()
     export CFG_SLACK_HUBOT_TOKEN=''
     export CFG_USER=''
     export BASE_TAG=${BASE_TAG:-latest}
+    export DEV_TEAM="${DEV_TEAM:-devops/}"
     export CONTAINER_OS="${CONTAINER_OS:-alpine/}"
     export DOCKER_REGISTRY=$(registry.SERVER)
     export CBF_VERSION
+    export CONTAINER_OS="$containerOS"/
 
     local logDir=logs
     [ -d "$logDir" ] || mkdir -p "$logDir"
@@ -54,26 +92,34 @@ function build.allContainers()
     local git_refs="$(git log -n1 --oneline --decorate | sed 's/[^\(]*(\([^\)]*\)).*/\1/')"
 
     echo
-    echo "building $git_url"
-    echo "    CONTAINER_OS:   ${CONTAINER_OS::-1}"
+    echo -n 'building '
+    echo -en '\e[94m'
+    echo -n "$git_url"
+    echo -e '\e[0m'
+    echo "    container OS:   $containerOS"
     echo "    refs:           (${git_refs})"
     echo "    commitId:       $git_commit"
     echo "    revision:       $origin"
-    exec 3>&1  # create special stdout
 
 
     local -i status=0
-    for dir in "${modules[@]}"; do
+    source "versions/$containerOS"    # get versions and list of modules
+    exec 3>&1  # create special stdout
+
+    while read -r dir; do
         if [ ! -d "$dir" ]; then
             echo "invalid project directory: $dir"
+            continue
         fi
 
         pushd "$dir" >/dev/null
-        build.me && status=$? || status=$?
+        build.module && status=$? || status=$?
         popd >/dev/null
         [ $status -eq 0 ] || break
-    done
+    done< <( build.verifyModules "$(printf '%s\n' "${modules[@]}")" "$(printf '%s\n' "${requestModules[@]}")" )
+
     exec 3>&-   # close special stdout
+
     # delete empty logs
     find "$logDir" -type f -size 0 -delete
 
@@ -98,7 +144,7 @@ function build.allContainers()
 
     return $status
 }
-export -f build.allContainers
+export -f build.containersForOS
 
 #----------------------------------------------------------------------------------------------
 function build.dependencyInfo()
@@ -148,7 +194,8 @@ function build.dependencyInfo()
 
 
     # add our cbf version
-    local localDir="$(ls -1A build/ | grep 'container_build_framework')"
+    local localDir
+    [ -d build ] && localDir="$(ls -1A build/ | grep 'container_build_framework')"
     if [ ${localDir:-} ]; then
         # generate fingerprint from all our dependencies
         echo -n 'local-'
@@ -162,7 +209,7 @@ function build.dependencyInfo()
         else
             die 'no version specified for CBF'
         fi
-        echo $CBF_VERSION
+        echo "$CBF_VERSION"
 
     else
         # use parent's cbf.version
@@ -170,21 +217,6 @@ function build.dependencyInfo()
     fi
 }
 export -f build.dependencyInfo
-
-#----------------------------------------------------------------------------------------------
-function build.changeImage()
-{
-    local taggedImage=${1:?}
-    local actualImage=${2:?}
-
-    [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}'  --filter "reference=$taggedImage")" ] || \
-        [ "$(docker ps --format '{{.Image}}' | grep "$taggedImage")" ] || \
-        docker rmi "$taggedImage"
-
-    [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}' --filter "reference=$actualImage")" ] || \
-        docker tag "$actualImage" "$taggedImage"
-}
-export -f build.changeImage
 
 #----------------------------------------------------------------------------------------------
 function build.dirChecksum()
@@ -251,6 +283,7 @@ function build.logToKafka()
     local -r duration=${6:-}
     local -r elapsed=${7:-}
     local -r git_refs=${8:-}
+    local -r status=${9:-}
 
     local -a refs=( $git_refs )
     # create our data array that gets logged
@@ -262,6 +295,7 @@ function build.logToKafka()
                           "$(json.encodeField "duration" "$duration")"
                           "$(json.encodeField "elapsed" "$elapsed")"
                           "$(json.encodeArray "refs" $(json.arrayValues "${refs[@]}"))"
+                          "$(json.encodeField "status" "$status")"
                         )
     if [ "${PROGRESS_LOG:-}" ] && [ -s "$PROGRESS_LOG" ]; then
         local -a progress_log=( $(< "$PROGRESS_LOG") )
@@ -270,14 +304,14 @@ function build.logToKafka()
 
     # now log our data to kafka
     "${KAFKAPRODUCER}" --server "$KAFKA_BOOTSTRAP_SERVERS"                        \
-                          --topic 'container_build_data'                          \
-                          --value "$( json.encodeHash '--' "${build_data[@]}" )"
+                       --topic 'container_build_data'                          \
+                       --value "$( json.encodeHash '--' "${build_data[@]}" )"
     return 0
 }
 export -f build.logToKafka
 
 #----------------------------------------------------------------------------------------------
-function build.me()
+function build.module()
 {
     local -i startTime=$(timer.getTimestamp)
 
@@ -299,7 +333,7 @@ function build.me()
 
     echo
     echo -n 'building '
-    echo -en '\e[34m'
+    echo -en '\e[94m'
     echo -n "$taggedImage"
     echo -e '\e[0m'
     echo "    refs:           ${CONTAINER_GIT_REFS:-}"
@@ -323,17 +357,14 @@ function build.me()
         local logBase="${logDir}/$dir"
         (build.updateContainer "$compose_yaml" "$taggedImage" "$actualImage" "$CONTAINER_ORIGIN" >"../${logBase}.out" 2>"../${logBase}.err") \
           && status=$? || status=$?
-        if [ $status -eq 9 ]; then
-            status=0
-            rm "../${logBase}.out"
-        fi
+        [ $status -eq 9 ] && rm "../${logBase}.out"
 
         # show location of log files if they have any content
         local log_display_base="${BUILD_URL}artifact/$logBase"
         [ -s "../${logBase}.out" ] && echo "    STDOUT log:  ${log_display_base}.out/*view*/"
         [ -s "../${logBase}.err" ] && echo "    STDERR log:  ${log_display_base}.err/*view*/"
 
-        if [ $status -ne 0 ]; then
+        if [ $status -ne 0 ] && [ $status -ne 9 ]; then
           term.log "\n"
           term.log "***Error occurred while generating $taggedImage" 'error'
           echo
@@ -354,7 +385,6 @@ function build.me()
 
     else
         (build.updateContainer "$compose_yaml" "$taggedImage" "$actualImage" "$CONTAINER_ORIGIN") && status=$? || status=$?
-        [ $status -eq 9 ] && status=0
     fi
     local -i endTime=$(timer.getTimestamp)
     local -i elapsed=$(( endTime - startTime ))
@@ -367,10 +397,34 @@ function build.me()
                      "$CONTAINER_ORIGIN" \
                      "$duration" \
                      "$elapsed" \
-                     "$CONTAINER_GIT_REFS"
+                     "$CONTAINER_GIT_REFS" \
+                     "$status"
+    [ $status -eq 9 ] && status=0
     return $status
 }
-export -f build.me
+export -f build.module
+
+#----------------------------------------------------------------------------------------------
+build.resolveCbfReference()
+{
+    local cbf_version=${1:?}
+
+    local branch="${cbf_version:-}"
+    case "${branch:-}" in
+        master|integration)
+            ;;
+        latest)
+            branch='dev'
+            ;;
+        *)
+            echo '$branch'
+            return 0
+            ;;
+    esac
+
+    echo -n 'v0.0-00-g'
+    wget -qO- "https://api.github.com/repos/ballab1/container_build_framework/git/refs/heads/${branch}" | jq '.object.sha' | awk '{substr($1,2,8)}'
+}
 
 #----------------------------------------------------------------------------------------------
 function build.updateContainer()
@@ -422,6 +476,34 @@ function build.updateContainer()
 export -f build.updateContainer
 
 #----------------------------------------------------------------------------------------------
+function build.updateVersions()
+{
+    local -r branch=${1:?}
+
+    # ensure version info is up-to-date
+    ( cd versions; git checkout "$branch"; git pull )
+}
+
+#----------------------------------------------------------------------------------------------
+function build.verifyModules()
+{
+    local -r definedModules=${1:?}
+    local -a requestedModules=$2
+
+    for defMod in $definedModules; do
+        if [ -z $requestedModules ]; then
+            echo "$defMod"
+            continue
+        fi
+
+        for reqMod in $requestedModules; do
+            [ "$reqMod" = "$defMod" ] || continue
+            echo "$defMod"
+        done
+    done
+}
+
+#----------------------------------------------------------------------------------------------
 function build.yamlToJson()
 {
     local -r yamlFile=${1:?}
@@ -436,3 +518,4 @@ function build.yamlToJson()
     fi
 }
 export -f build.yamlToJson
+
