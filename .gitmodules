@@ -92,5 +92,5 @@
     path = zenphoto
     url = ../zenphoto.git
 [submodule "versions"]
-	path = versions
-	url = ../versions
+    path = versions
+    url = ../versions

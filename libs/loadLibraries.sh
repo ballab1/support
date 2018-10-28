@@ -5,13 +5,21 @@ set -o errexit
 set -o nounset
 set -o pipefail
 IFS=$'\n\t'
+declare -r CBF_URL="https://github.com/ballab1/container_build_framework/archive"
+declare CBF_DIR_TEMP
+declare CHAIN_EXIT_HANDLER
 
+
+function __init.die() {
+    echo "$1" >&2
+    exit 1
+}
 
 function __init.loader() {
     __init.loadCBF
 
     # only load libraries from bashlib (not below). Sort to be deterministic
-    local __libdir="$(readlink -f "$(dirname ${BASH_SOURCE[0]})")"
+    local __libdir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
     local -a __libs
     mapfile -t __libs < <(find "$__libdir" -maxdepth 1 -mindepth 1 -name '*.bashlib' | sort)
     if [ ${#__libs[*]} -gt 0 ]; then
@@ -24,9 +32,6 @@ function __init.loader() {
         unset __lib
     fi
     [ -e "${__libdir}/init.cache" ] && source "${__libdir}/init.cache"
-    unset __libs
-    unset __libdir
-    unset __cbfVersion
 }
 
 function __init.loadCBF() {
@@ -43,53 +48,56 @@ function __init.loadCBF() {
         cbf_dir="${TOP}/container_build_framework"
 
     elif [ "${__cbfVersion:-}" ]; then
-        trap __init.myExitHandler EXIT
-        local CBF_DIR=$(mktemp -d)
-        cbf_dir="${CBF_DIR}/container_build_framework"
+        __init.myExitHandler
+        local CBF_DIR_TEMP=$(mktemp -d)
+        cbf_dir="${CBF_DIR_TEMP}/container_build_framework"
 
         # since no CBF directory located, attempt to download CBF based on specified verion
-        local CBF_TGZ="${CBF_DIR}/cbf.tar.gz"
-        local CBF_URL="https://github.com/ballab1/container_build_framework/archive/${__cbfVersion}.tar.gz"
-        echo "Downloading CBF:$__cbfVersion from $CBF_URL"
+        local cbf_tgz="${CBF_DIR_TEMP}/cbf.tar.gz"
+        local cbf_url="${CBF_URL}/${__cbfVersion}.tar.gz"
+        echo "Downloading CBF:$__cbfVersion from $cbf_url"
 
-        wget --no-check-certificate --quiet --output-document="$CBF_TGZ" "$CBF_URL" || die "Failed to download $CBF_URL"
+        wget --no-check-certificate --quiet --output-document="$cbf_tgz" "$cbf_url" || __init.die "Failed to download $cbf_url"
         if type -f wget &> /dev/null ; then
-            wget --no-check-certificate --quiet --output-document="$CBF_TGZ" "$CBF_URL" || die "Failed to download $CBF_URL"
+            wget --no-check-certificate --quiet --output-document="$cbf_tgz" "$cbf_url" || __init.die "Failed to download $cbf_url"
         elif type -f curl &> /dev/null ; then
-            curl --insecure --silent --output "$CBF_TGZ" "$CBF_URL" || die "Failed to download $CBF_URL"
+            curl --insecure --silent --output "$cbf_tgz" "$cbf_url" || __init.die "Failed to download $cbf_url"
         else
-            die "Neither wget or curl is installed to download cbf from $CBF_URL"
+            __init.die "Neither wget or curl is installed to download cbf from $cbf_url"
         fi
 
         echo 'Unpacking downloaded copy of CBF'
-        tar -xzf "$CBF_TGZ" -C "$CBF_DIR" || die "Failed to unpack $CBF_TGZ"
-        cbf_dir="$( ls -d "${CBF_DIR}/container_build_framework"* 2>/dev/null )"
+        tar -xzf "$cbf_tgz" -C "$CBF_DIR_TEMP" || __init.die "Failed to unpack $cbf_tgz"
+        cbf_dir="$( ls -d "${CBF_DIR_TEMP}/container_build_framework"* 2>/dev/null )"
     fi
+    unset __cbfVersion
 
 
     # verify CBF directory exists
-    [ "$cbf_dir" ] && [ -d "$cbf_dir" ] ||  die 'No framework directory located'
+    [ "$cbf_dir" ] && [ -d "$cbf_dir" ] ||  __init.die 'No framework directory located'
 
 
     echo "loading framework from ${cbf_dir}"
 
     # load our CBF libraries
-    [ ! -e "${cbf_dir}/bashlibs.loaded" ] || rm "${cbf_dir}/bashlibs.loaded" ||  die "Failed to remove ${CBF_TGZ}/bashlibs.loaded"
+    [ ! -e "${cbf_dir}/bashlibs.loaded" ] || rm "${cbf_dir}/bashlibs.loaded" ||  __init.die "Failed to remove ${cbf_dir}/bashlibs.loaded"
 
     export CBF_LOCATION="$cbf_dir"                   # set CBF_LOCATION
     export CRF_LOCATION="$CBF_LOCATION/cbf"          # set CRF_LOCATION
-    export CONTAINER_NAME=xxx
+    export CONTAINER_NAME=xxx                        # dummy name while initialization in progress
     # shellcheck source=../container_build_framework/cbf/bin/init.libraries
-    source "$( cd "${cbf_dir}/cbf/bin" && pwd )/init.libraries"
+    source "$( readlink -f "${cbf_dir}/cbf/bin" )/init.libraries"
 }
 
 function __init.myExitHandler() {
     rmTmpDir() {
         local -i status=$?
-        [ ! -d "$CBF_DIR" ] || rm -rf "$CBF_DIR"
+        [ ! -d "$CBF_DIR_TEMP" ] || rm -rf "$CBF_DIR_TEMP"
+        [ -z "${CHAIN_EXIT_HANDLER:-}" || "$CHAIN_EXIT_HANDLER"
+        echo 'all done'
         exit $status
     }
-    trap -p EXIT | awk '{print $3}' | tr -d "'"
+    CHAIN_EXIT_HANDLER=$(trap -p EXIT | awk '{print $3}' | tr -d "'")
     trap __init.rmTmpDir EXIT
 }
 
