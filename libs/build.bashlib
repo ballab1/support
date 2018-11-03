@@ -20,7 +20,7 @@ function build.all()
     local -a OSes
     mapfile -t OSes < <(sed '/^[[:blank:]]*#/d;s/[[:blank:]]*#.*//' container.os)
     [ "${CONTAINER_OS:-}" ] && OSes=( $CONTAINER_OS )
-    local cbf_version="${CBF_VERSION:-}"
+    local cbf_version="${CBF_VERSION:-master}"
 
     for containerOS in "${OSes[@]}"; do
         [ ${containerOS:-} ] || continue
@@ -49,9 +49,10 @@ export -f build.changeImage
 #----------------------------------------------------------------------------------------------
 function build.containersForOS()
 {
-    local -r containerOS=${1:?}
+    local -r containerOS=${1:-}
     shift
     local -ar requestModules=( "$@" )
+    [ "${containerOS:-}" ] || containerOS="${CONTAINER_OS:-alpine}"
 
 
     local start=$(timer.getTimestamp)
@@ -68,12 +69,11 @@ function build.containersForOS()
     export CFG_PASS=''
     export CFG_SLACK_HUBOT_TOKEN=''
     export CFG_USER=''
-    export BASE_TAG=${BASE_TAG:-latest}
     export DEV_TEAM="${DEV_TEAM:-devops/}"
     export CONTAINER_OS="${CONTAINER_OS:-alpine/}"
     export DOCKER_REGISTRY=$(registry.SERVER)
     export CBF_VERSION
-    export CONTAINER_OS="$containerOS"/
+    export CONTAINER_OS="$containerOS"
 
     local logDir=logs
     [ -d "$logDir" ] || mkdir -p "$logDir"
@@ -248,7 +248,7 @@ function build.findIdsWithFingerprint()
 
     curl --silent \
          --unix-socket /var/run/docker.sock http://localhost/images/json \
-         | jq ".[]|select(.Labels.\"container.fingerprint\" == \"$fingerprint\").Id" \
+         | jq ".[]|select(.Labels.\"container.fingerprint\" == \"$fingerprint\").RepoTags[]" \
          | tr -d '"'
 }
 export -f build.findIdsWithFingerprint
@@ -314,12 +314,10 @@ function build.module()
 {
     local -i startTime=$(timer.getTimestamp)
 
-    local compose_yaml="docker-compose.${CONTAINER_OS::-1}.yml"
-    [ -e "$compose_yaml" ] || compose_yaml=docker-compose.yml
+    local compose_yaml="docker-compose.yml"
+    [ -e "$compose_yaml" ] || return 0
     local config=$(build.dockerCompose "$compose_yaml")
 
-    local taggedImage="$(eval echo $(jq '.image?' <<< $config))"
-    taggedImage="${taggedImage%:*}:${BASE_TAG}"
 
     # setup environment for 'docker-compose build'
     export CONTAINER_BUILD_TIME=$(date +%Y%m%d-%H%M%S.%N -u)
@@ -327,8 +325,14 @@ function build.module()
     export CONTAINER_GIT_COMMIT="$(git rev-parse HEAD)"
     export CONTAINER_GIT_URL="$(git remote get-url origin)"
     export CONTAINER_ORIGIN="$(git describe --tags --dirty)"
+
     # generate fingerprint from all our dependencies
+    local branch=$(git branch | grep '*' |  awk '{ gsub("[\\/@]","_",$2); print $2 }')
+    export BASE_TAG="${BASE_TAG:-${branch}-latest}"
     export CONTAINER_FINGERPRINT="$( sha256sum <<< $(build.dependencyInfo "$config") | cut -d' ' -f1 )"
+
+    local taggedImage="$(eval echo $(jq '.image?' <<< $config))"
+    taggedImage="${taggedImage%:*}:${BASE_TAG}"
 
     echo
     echo -n 'building '
@@ -404,7 +408,20 @@ function build.module()
 export -f build.module
 
 #----------------------------------------------------------------------------------------------
-build.resolveCbfReference()
+function build.pushImage()
+{
+    local -r tagged="${1:?}"
+    local -r actual="${2:-}"
+
+    local -r prefix='#\s+max\s+registry\s+entries:'
+    local max_images=$(grep -E "$prefix" "$compose_yaml" | sed -r "s|${prefix}\s+(\d+)|\1|")
+    : ${max_images:=0}
+    registry.pushImage "$max_images" "$tagged" "$actual"
+}
+export -f build.pushImage
+
+#----------------------------------------------------------------------------------------------
+function build.resolveCbfReference()
 {
     local cbf_version=${1:?}
 
@@ -439,7 +456,15 @@ function build.updateContainer()
         mapfile -t images < <(build.findIdsWithFingerprint "$CONTAINER_FINGERPRINT")
         if [ ${#images[*]} -gt 0 ]; then
             build.logger "${taggedImage} has not changed."
-            [ -z "${DOCKER_ALWAYS_PUSH:-}" ]  ||  registry.push "$taggedImage"
+            local -i doPush=0
+            if [ $(printf '%s\n' "${images[@]}" | grep "$taggedImage" | wc -l) -eq 0 ]; then
+                # found image by a different 'name:tag'
+                docker tag "${images[0]}" "$taggedImage"
+                doPush=1
+            elif [ "${DOCKER_ALWAYS_PUSH:-}" ]; then
+                doPush=1
+            fi
+            [ $doPush -eq 0 ] || build.pushImage "$taggedImage"
             return 9
         fi
 
@@ -450,7 +475,7 @@ function build.updateContainer()
             build.changeImage "$taggedImage" "$actualImage"
             if [ "${DOCKER_ALWAYS_PUSH:-}" ]; then
                 build.logger "pushing ${taggedImage} to registry"
-                registry.push "$taggedImage" "$actualImage"
+                build.pushImage "$taggedImage" "$actualImage"
             fi
             docker rmi "$actualImage"
             return 9
@@ -467,7 +492,7 @@ function build.updateContainer()
 
     if registry.canPush "$revision"; then
         build.logger "pushing ${taggedImage} to registry"
-        registry.push "$taggedImage" "$actualImage"
+        build.pushImage "$taggedImage" "$actualImage"
     fi
     docker rmi "$actualImage"
     return 0

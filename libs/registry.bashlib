@@ -4,55 +4,7 @@
 #"redis not configured"
 #"using inmemory blob descriptor cache"
 
-#----------------------------------------------------------------------------------------------
-function registry.DELETE()
-{
-    registry.io --request DELETE "$@"
-}
-
-#----------------------------------------------------------------------------------------------
-function registry.GET()
-{
-    registry.io --request GET "$@"
-}
-
-#----------------------------------------------------------------------------------------------
-function registry.POST()
-{
-    registry.io --request POST "$@"
-}
-
-#----------------------------------------------------------------------------------------------
-function registry.PUT()
-{
-    registry.io --request PUST "$@"
-}
-
-#----------------------------------------------------------------------------------------------
-function registry.SERVER()
-{
-    echo "${_REGISTRY_SERVER:=$(lib.getProperty "${FUNCNAME[0]##*.}" "$( registry.propertiesFile )")}"
-}
-
-#----------------------------------------------------------------------------------------------
-function registry.URL()
-{
-    echo "${_REGISTRY_URL:=$(lib.getProperty "${FUNCNAME[0]##*.}" "$( registry.propertiesFile )")}"
-}
-
-#----------------------------------------------------------------------------------------------
-function registry.USER()
-{
-    echo "${_REGISTRY_USER:=$(lib.getProperty "${FUNCNAME[0]##*.}" "$( registry.propertiesFile )")}"
-}
-
-#----------------------------------------------------------------------------------------------
-function registry.propFile()
-{
-    echo "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/properties/$(basename "${BASH_SOURCE[0]%.*}").properties"
-}
-
-export REGISTRY_PROPERTIES_FILE="${REGISTRY_PROPERTIES_FILE:=$(registry.propFile)}"
+export http_code
 
 #----------------------------------------------------------------------------------------------
 function registry.canPush()
@@ -101,18 +53,58 @@ function registry.createTime()
 export -f registry.createTime
 
 #----------------------------------------------------------------------------------------------
+function registry.DELETE()
+{
+    registry.io --request DELETE "$@"
+}
+export -f registry.DELETE
+
+#----------------------------------------------------------------------------------------------
+function registry.GET()
+{
+    registry.io --request GET "$@"
+}
+export -f registry.GET
+
+#----------------------------------------------------------------------------------------------
 function registry.deleteImage()
 {
-    local -r id=${1:?}
+    local -r name=${1:?}
+    local -r digest=${2:?}
 
-    local -r name="${id%:*}"
-    local -r tag="${id##*:}"
-    [ "${name:-}" ] && [ "${tag:-}" ] || trap.die "Invalid $id specified"
-
-    local -r digest="$(registry.digest "$name" "$tag")"
-    [ -z "${digest}" ] || registry.DELETE --show-error --write-out '\n%{http_code}\n' --verbose "$(registry.URL)/${name}/manifests/${digest}"
+    [ "$digest" ] || trap.die 'invalid digest passed to registry.delete'
+    registry.DELETE --silent --show-error --write-out '%{http_code}\n' "$(registry.URL)/${name}/manifests/$digest"
+    echo "http_code: $http_code"
 }
 export -f registry.deleteImage
+
+#----------------------------------------------------------------------------------------------
+function registry.deleteImages()
+{
+    local -ra ids=( "$@" )
+
+    [ "${#ids[*]}" -gt 0 ] || return 0
+
+    local id name tag digest
+    local -A tags
+    for id in "${ids[@]}"; do
+        if [[ "$id" = *:* ]]; then
+            name="${id%:*}"
+            tag="${id##*:}"
+            [ "${name:-}" ] && [ "${tag:-}" ] || trap.die "Invalid $id specified"
+            digest="$(registry.digest "$name" "$tag")"
+            [ -z "$digest" ] || registry.deleteImage "$name" "$digest"
+
+        else
+            eval tags=( $(registry.tags "$id") )
+            for digest in $(printf '%s\n' "${tags[@]}" | sort -u); do
+                echo -n "deleting ${id} - $digest  "
+                registry.deleteImage "$id" "$digest"
+            done
+        fi
+    done
+}
+export -f registry.deleteImages
 
 #----------------------------------------------------------------------------------------------
 function registry.digest()
@@ -123,43 +115,99 @@ function registry.digest()
     local -r digest="$(registry.GET --header "Accept: application/vnd.docker.distribution.manifest.v2+json" \
                                     --silent \
                                     --head \
-                                    "$(registry.URL)/${name}/manifests/${tag}" )"
+                                    "$(registry.URL)/${name}/manifests/$(tr -d '"' <<< "$tag")" )"
 
-    [ -z "$digest" ] || ( awk '{gsub(/\r/,"");if ($1 == "Docker-Content-Digest:") {print $2}}') <<< "$digest"
+    [ -z "$digest" ] || ( awk '{gsub(/\r/,"");if ($1 == "Docker-Content-Digest:") {print $2}}' ) <<< "$digest"
 }
 export -f registry.digest
 
 #----------------------------------------------------------------------------------------------
+function registry.digests()
+{
+    local -r name=${1:?}
+
+    local -r manifest=$(registry.GET --silent "$(registry.URL)/${name}/tags/list")
+    [ "${manifest:-}" ] || return 0
+
+    local -a tags
+    mapfile -t tags < <(jq '.tags[]?' <<< "$manifest" | tr -d '"')
+    [ "${#tags[*]}" -gt 0 ] || return 0
+
+
+    local tag digest
+    local -A digests=()
+    for tag in "${tags[@]}"; do
+        digest=$(registry.digest "$name" "$tag")
+        digests["$digest"]="$(echo -en "${tag}\n${digests[$digest]:-}")"
+    done
+
+    local -A times=()
+    for digest in "${!digests[@]}"; do
+        tags=( ${digests[$digest]} )
+        createTime="$(registry.createTime "$name" "${tags[0]}" | tr -d '"')"
+        [ "$createTime" != '                      ' ] || createTime='null'
+        [ "${times[$createTime]:-}" ] || times[$createTime]="$digest"
+    done
+
+    echo -n '['
+    local -i x=0
+    for createTime in $(printf '%s\n' "${!times[@]}" | sort); do
+        (( x++ )) && echo -n ','
+        digest=${times[$createTime]}
+
+        echo -n '{'
+        echo -n '"digest":"'"$digest"'",'
+        echo -n '"createTime":"'"$createTime"'",'
+        echo -n '"tags":['
+        tags=( ${digests[$digest]} )
+        tag="${tags[0]}"
+        for ((i=1; i < ${#tags[*]}; i++)); do
+             if [ "${#tag}" -gt "${#tags[i]}" ]; then
+                 echo -n '"'"${tag}"'",'
+                 tag="${tags[i]}"
+             else
+                 echo -n '"'"${tags[i]}"'",'
+             fi
+        done
+        echo -n '"'"${tag}"'"]}'
+    done
+    echo -n ']'
+}
+export -f registry.digests
+
+#----------------------------------------------------------------------------------------------
 function registry.io()
 {
+#    local -r response=$(curl --insecure --user "$(registry.credentials "$(registry.USER)"  "$@")
     local -r response=$(curl --insecure "$@")
-#         --user "$(registry.credentials "$(registry.USER)")" \
-#    local status=$?
-#    if [ $status -eq 0 ]; then
+
+    # strip http_code
+    if grep '--write-out' <<<"$*" &>/dev/null ;then
+        http_code="${response##*\}}"
+        response="${response%\}*}"'}'
+    fi
+
     if [[ "$response" != '{"errors":['* ]]; then
         echo "$response"
         return 0
     fi
 
     # an error occurred
-    local -r errors="$(jq '.errors[]' <<< "$response")"
+    local -r errors="$(echo "$response" | jq '.errors[]?')"
 
-    local curl_cmd=( 'curl' '--insecure' "${@}" )
-    local -a vals=()
-    for val in "${curl_cmd[@]}"; do
-        vals+=( "$(echo $val | sed -Ee 's/[\r\n]//g' -Ee 's/^\s+(\w)/\1/' -Ee 's/(\w)\s+$/\1/')" )
-    done
-
+    local curl_cmd=( 'curl' '--insecure' "$@" )
     echo
     term.log "***ERROR: failure to complete registry request
-    command:       $(printf '%s ' "${vals[@]}")
-    error code:    $(jq '.code' <<< "$errors")
-    error message: $(jq '.message' <<< "$errors")
-    error details: $(jq '.detail' <<< "$errors")
+    command:       $(printf '%s ' "${curl_cmd[@]}")
+    error code:    $(jq '.code?' <<< "$errors")
+    error message: $(jq '.message?' <<< "$errors")
+    error details: $(jq '.detail?' <<< "$errors")
+    http_code:     ${http_code}
     " 'warn' >&2
 
     return 1
 }
+export -f registry.io
 
 #----------------------------------------------------------------------------------------------
 function registry.layer()
@@ -180,6 +228,46 @@ function registry.manifest()
     registry.GET --silent "$(registry.URL)/${name}/manifests/${reference}"
 }
 export -f registry.manifest
+
+#----------------------------------------------------------------------------------------------
+function registry.POST()
+{
+    registry.io --request POST "$@"
+}
+export -f registry.POST
+
+#----------------------------------------------------------------------------------------------
+function registry.printTags()
+{
+    local digests=${1:?}
+    local space=${2:-}
+
+    local json createTime digest
+    local -a tags
+
+    for ((i=0; i < $(jq '.|length' <<< "$digests"); i++)); do
+        json=$(jq ".[$i]" <<< "$digests")
+        digest=$(jq '.digest' <<< "$json" | tr -d '"')
+        createTime=$(jq '.createTime' <<< "$json" | tr -d '"')
+        mapfile -t tags < <(jq '.tags[]' <<< "$json" | tr -d '"')
+
+        echo -e '\e[97m'${space:-}${digest}'\e[0m'
+        echo "${space:-}"'    created at : '"${createTime:-}"
+        echo "${space:-}"'    tags       : '"${tags[0]:-}"
+        if [ "${#tags[*]}" -gt 1 ]; then
+            printf "${space:-}"'                 %s\n' "${tags[@]:1}"
+        fi
+    done
+}
+export -f registry.printTags
+
+#----------------------------------------------------------------------------------------------
+function registry.propFile()
+{
+    echo "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/properties/$(basename "${BASH_SOURCE[0]%.*}").properties"
+}
+
+export REGISTRY_PROPERTIES_FILE="${REGISTRY_PROPERTIES_FILE:=$(registry.propFile)}"
 
 #----------------------------------------------------------------------------------------------
 function registry.propertiesFile()
@@ -229,6 +317,32 @@ function registry.push()
 export -f registry.push
 
 #----------------------------------------------------------------------------------------------
+function registry.pushImage()
+{
+    local -i maxImages=${1:?}
+    local image1=${2:?}
+    local image2=${3:-}
+
+    local entry="${image1%:*}"
+    local digests="$(registry.digests "$entry")"
+
+    local -ir imageCount=$(jq '.|length' <<< "$digests")
+    if [ $imageCount -ge $maxImages ]; then
+        :
+    fi
+
+    registry.push "$image1" "image2"
+}
+export -f registry.pushImage
+
+#----------------------------------------------------------------------------------------------
+function registry.PUT()
+{
+    registry.io --request PUST "$@"
+}
+export -f registry.PUT
+
+#----------------------------------------------------------------------------------------------
 function registry.rename()
 {
     local src=${1:?}
@@ -264,36 +378,19 @@ function registry.reportCatalogAsJson()
     local -a catalog=( "$@" )
     [ ${#catalog[*]} -eq 0 ] && mapfile -t catalog < <(registry.catalog)
 
-    local -A tags
-    local -i index=0
-    local -r ref='latest'
+    local -i index=-1
+
     echo -n '['
     for entry in "${catalog[@]}"; do
-        [ $index -eq 0 ] || echo -n ','
-        (( index++ )) || true
-        eval tags=( $(registry.tags "$entry") )
-        printf '{"id":"%05d","count":"%d","%s":[' $index ${#tags[*]} $entry
+        (( index++ )) || echo -n ','
 
-        local latest="${tags[$ref]:-}"
-        local -i x=0
-        for tag in "${!tags[@]}"; do
-             [ $x -eq 0 ] || echo -n ','
-             x=1
-             local createTime="$(registry.createTime "$entry" "$tag")"
-             [ "$createTime" != '                      ' ] || createTime='null'
-             local digest="$(registry.digest  "$entry" "$tag")"
-             [ digest ] || digest='null'
-             printf '{"name":"%s","create_time":%s,"digest":"%s"}' \
-                    "$tag" \
-                    "$createTime" \
-                    "$digest"
-
-         done
-         echo ']}'
+        local digests="$(registry.digests "$entry")"
+        printf '{"id":"%05d","count":"%d","name":"%s","digests":' "$index" "$(jq '.|length' <<< "$digests")" "$entry"
+        [ -z "$digests" ] || echo -n "${digests}}"
     done
     echo -n ']'
 }
-export -f registry.rename
+export -f registry.reportCatalogAsJson
 
 #----------------------------------------------------------------------------------------------
 function registry.reportCatalog()
@@ -301,24 +398,25 @@ function registry.reportCatalog()
     local -a catalog=( "$@" )
     [ ${#catalog[*]} -eq 0 ] && mapfile -t catalog < <(registry.catalog)
 
-    local -A tags
     local -i index=0
-    local -r ref='latest'
     for entry in "${catalog[@]}"; do
         (( index++ )) || true
-        eval tags=( $(registry.tags "$entry") )
-        printf '%05d,%d,%s:\n' $index ${#tags[*]} $entry
 
-        local latest="${tags[$ref]:-}"
-        (for tag in "${!tags[@]}"; do
-             [ "${latest:-}" ] && [ "$tag" = "$ref" ] && [ ${#tags[@]} -gt 1 ] && continue
-             printf '       %s %s' "$(registry.createTime "$entry" "$tag")" "$tag"
-             [ "${latest:-}" ] && [ "$latest" = "${tags[$tag]}" ] && [ ${#tags[@]} -gt 1 ] && echo -n " $ref"
-             echo
-         done) | sort
+        local digests="$(registry.digests "$entry")"
+        echo -en '\e[92m'
+        printf '%05d,%d,%s:\n' "$index" "$(jq '.|length' <<< "$digests")" "$entry"
+        echo -en '\e[0m'
+        [ -z "$digests" ] || registry.printTags "$digests" '    '
     done
 }
 export -f registry.reportCatalog
+
+#----------------------------------------------------------------------------------------------
+function registry.SERVER()
+{
+    echo "${_REGISTRY_SERVER:=$(lib.getProperty "${FUNCNAME[0]##*.}" "$( registry.propertiesFile )")}"
+}
+export -f registry.SERVER
 
 #----------------------------------------------------------------------------------------------
 function registry.tags()
@@ -334,3 +432,17 @@ function registry.tags()
     done
 }
 export -f registry.tags
+
+#----------------------------------------------------------------------------------------------
+function registry.URL()
+{
+    echo "${_REGISTRY_URL:=$(lib.getProperty "${FUNCNAME[0]##*.}" "$( registry.propertiesFile )")}"
+}
+export -f registry.URL
+
+#----------------------------------------------------------------------------------------------
+function registry.USER()
+{
+    echo "${_REGISTRY_USER:=$(lib.getProperty "${FUNCNAME[0]##*.}" "$( registry.propertiesFile )")}"
+}
+export -f registry.USER
