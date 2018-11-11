@@ -25,3 +25,4 @@ build/container_build_framework*
 **/CBF.properties
 scanned.paths
 *.loaded
+*.json

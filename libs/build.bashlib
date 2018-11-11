@@ -1,6 +1,7 @@
 #!/bin/bash
 
 export KAFKA_BOOTSTRAP_SERVERS="${KAFKA_BOOTSTRAP_SERVERS:-10.1.3.6:9092,10.1.3.10:9092,10.1.3.11:9092}"
+export MAX_IMAGES_TO_KEEP=10
 export PROGRESS_LOG
 
 
@@ -30,6 +31,7 @@ function build.all()
         build.containersForOS "$containerOS" "${userInput[@]:-}"
     done
 }
+export -f build.all
 
 #----------------------------------------------------------------------------------------------
 function build.changeImage()
@@ -70,7 +72,6 @@ function build.containersForOS()
     export CFG_SLACK_HUBOT_TOKEN=''
     export CFG_USER=''
     export DEV_TEAM="${DEV_TEAM:-devops/}"
-    export CONTAINER_OS="${CONTAINER_OS:-alpine/}"
     export DOCKER_REGISTRY=$(registry.SERVER)
     export CBF_VERSION
     export CONTAINER_OS="$containerOS"
@@ -415,7 +416,7 @@ function build.pushImage()
 
     local -r prefix='#\s+max\s+registry\s+entries:'
     local max_images=$(grep -E "$prefix" "$compose_yaml" | sed -r "s|${prefix}\s+(\d+)|\1|")
-    : ${max_images:=0}
+    : ${max_images:=$MAX_IMAGES_TO_KEEP}
     registry.pushImage "$max_images" "$tagged" "$actual"
 }
 export -f build.pushImage
@@ -441,6 +442,7 @@ function build.resolveCbfReference()
     echo -n 'v0.0-00-g'
     wget -qO- "https://api.github.com/repos/ballab1/container_build_framework/git/refs/heads/${branch}" | jq '.object.sha' | awk '{substr($1,2,8)}'
 }
+export -f build.resolveCbfReference
 
 #----------------------------------------------------------------------------------------------
 function build.updateContainer()
@@ -507,6 +509,7 @@ function build.updateVersions()
     # ensure version info is up-to-date
     ( cd versions; git checkout "$branch"; git pull )
 }
+export -f build.updateVersions
 
 #----------------------------------------------------------------------------------------------
 function build.verifyModules()
@@ -526,6 +529,7 @@ function build.verifyModules()
         done
     done
 }
+export -f build.verifyModules
 
 #----------------------------------------------------------------------------------------------
 function build.yamlToJson()
@@ -545,3 +549,4 @@ function build.yamlToJson()
 }
 export -f build.yamlToJson
 
+#----------------------------------------------------------------------------------------------

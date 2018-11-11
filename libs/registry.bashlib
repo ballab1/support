@@ -73,8 +73,9 @@ function registry.deleteImage()
     local -r digest=${2:?}
 
     [ "$digest" ] || trap.die 'invalid digest passed to registry.delete'
+    echo -n "deleting ${name} - $digest  "
     registry.DELETE --silent --show-error --write-out '%{http_code}\n' "$(registry.URL)/${name}/manifests/$digest"
-    echo "http_code: $http_code"
+#    echo "http_code: ${http_code:-}"
 }
 export -f registry.deleteImage
 
@@ -92,13 +93,17 @@ function registry.deleteImages()
             name="${id%:*}"
             tag="${id##*:}"
             [ "${name:-}" ] && [ "${tag:-}" ] || trap.die "Invalid $id specified"
-            digest="$(registry.digest "$name" "$tag")"
-            [ -z "$digest" ] || registry.deleteImage "$name" "$digest"
+
+            if [ "${tag:0:7}" = 'sha256:' ]; then
+                registry.deleteImage "$name" "$tag"
+            else
+                digest="$(registry.digest "$name" "$tag")"
+                [ -z "$digest" ] || registry.deleteImage "$name" "$digest"
+            fi
 
         else
             eval tags=( $(registry.tags "$id") )
             for digest in $(printf '%s\n' "${tags[@]}" | sort -u); do
-                echo -n "deleting ${id} - $digest  "
                 registry.deleteImage "$id" "$digest"
             done
         fi
@@ -202,7 +207,7 @@ function registry.io()
     error code:    $(jq '.code?' <<< "$errors")
     error message: $(jq '.message?' <<< "$errors")
     error details: $(jq '.detail?' <<< "$errors")
-    http_code:     ${http_code}
+    http_code:     ${http_code:-}
     " 'warn' >&2
 
     return 1
@@ -323,15 +328,21 @@ function registry.pushImage()
     local image1=${2:?}
     local image2=${3:-}
 
-    local entry="${image1%:*}"
-    local digests="$(registry.digests "$entry")"
+    local name="${image1%:*}"
+    name="${name//$(registry.SERVER)}"
+    local digests="$(registry.digests "$name")"
 
     local -ir imageCount=$(jq '.|length' <<< "$digests")
     if [ $imageCount -ge $maxImages ]; then
-        :
+        local -ir delta=$(( maxImages - imageCount + 1 ))
+        local -a oldImages
+        mapfile -t oldImages < <(jq "[.[]|select((.tags|length) == 1)]|sort_by(.createTime|fromdate)|.[0:${delta}]|.[].digest" <<< "$digests" | tr -d '"')
+        for digest in "${oldImages[@]}"; do
+            registry.deleteImage "$name" "$digest"
+        done
     fi
 
-    registry.push "$image1" "image2"
+    registry.push "$image1" "$image2"
 }
 export -f registry.pushImage
 
