@@ -1,5 +1,6 @@
 # Created by .gitignore support plugin (hsz.mobi)
 .idea
+.gradle
 *.iml
 *.tgz
 *.zip
@@ -15,7 +16,9 @@
 *~
 .directory
 .Trash-*
+gradlew*
 samples
+test
 log
 logs
 vols/*
@@ -26,3 +29,5 @@ build/container_build_framework*
 scanned.paths
 *.loaded
 *.json
+
+versions

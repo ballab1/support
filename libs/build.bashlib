@@ -14,8 +14,7 @@ function build.all()
 
     cd "$top"
     local branch="$(git branch | grep '* ' | awk '{print $2}')"
-    [ "$branch" = 'master' ] || branch=latest
-    build.updateVersions "$branch"
+    [ "$branch" != 'dev' ] || versions.data ".versions" 'LATEST'
 
 
     local -a OSes
@@ -25,13 +24,27 @@ function build.all()
 
     for containerOS in "${OSes[@]}"; do
         [ ${containerOS:-} ] || continue
-        [ -e "${top}/versions/$containerOS" ] || continue
+        [ -e "$(versions.DIRECTORY)/$containerOS" ] || continue
         [ "${cbf_version:-}" ] && CBF_VERSION="$cbf_version"
 
-        build.containersForOS "$containerOS" "${userInput[@]:-}"
+        (build.containersForOS "$containerOS" "${userInput[@]:-}")   # run in separate shell to avoid "VERSIONS" conflicting
     done
 }
 export -f build.all
+
+#----------------------------------------------------------------------------------------------
+function build.canPush()
+{
+    local -r revision=${1:?}
+
+    [ "${DOCKER_ALWAYS_PUSH:-}" ] && return 0
+    [[ "$revision" != *dirty ]] || return 1
+
+#    [ "$CONTAINER_GIT_REFS" = 'master' ]
+
+    return 0
+}
+export -f build.canPush
 
 #----------------------------------------------------------------------------------------------
 function build.changeImage()
@@ -87,7 +100,7 @@ function build.containersForOS()
     local fingerprint="n/a"
     local git_commit=$(git rev-parse HEAD)
     local git_url="$(git remote get-url origin)"
-    local origin=$(git describe --tags --dirty)
+    local origin=$(git describe --tags --dirty --always)
     local git_refs="$(git log -n1 --oneline --decorate | sed 's/[^\(]*(\([^\)]*\)).*/\1/')"
 
     echo
@@ -100,11 +113,12 @@ function build.containersForOS()
     echo "    commitId:       $git_commit"
     echo "    revision:       $origin"
 
+    # get versions  (do not redefine any that are alresady in ENV)
+    versions.get "$containerOS" 'export'
 
-    local -i status=0
-    source "versions/$containerOS"    # get versions and list of modules
     exec 3>&1  # create special stdout
 
+    local -i status=0
     while read -r dir; do
         if [ ! -d "$dir" ]; then
             echo "invalid project directory: $dir"
@@ -115,7 +129,7 @@ function build.containersForOS()
         build.module && status=$? || status=$?
         popd >/dev/null
         [ $status -eq 0 ] || break
-    done< <( build.verifyModules "$(printf '%s\n' "${modules[@]}")" "$(printf '%s\n' "${requestModules[@]}")" )
+    done< <( build.verifyModules "$containerOS" "$(printf '%s\n' "${requestModules[@]}")" )
 
     exec 3>&-   # close special stdout
 
@@ -204,7 +218,7 @@ function build.dependencyInfo()
         if [ "${CBF_VERSION:-}" ]; then
             :
         elif [ -d "../container_build_version" ]; then
-            export CBF_VERSION=$(cd ../container_build_version; git describe --tags --dirty)
+            export CBF_VERSION=$(cd ../container_build_version; git describe --tags --dirty --always)
         else
             die 'no version specified for CBF'
         fi
@@ -253,6 +267,42 @@ function build.findIdsWithFingerprint()
          | tr -d '"'
 }
 export -f build.findIdsWithFingerprint
+
+#----------------------------------------------------------------------------------------------
+function build.parentChild()
+{
+    local os=${1:-}
+
+    local -i index=0
+    local -r skip_builds_file='skip.build'
+    echo '['
+    while read -r dc_yaml; do
+        [ -e "$skip_builds_file" ] && [ $(grep -cH "$(dirname "$dc_yaml")" "$skip_builds_file" 2>/dev/null | awk -F ':' '{print $2}') -eq 0 ] || continue
+        local definedOS=$(grep -E '^#\s+containerOS:\s+' "$dc_yaml")
+        [ "${definedOS:-}" ] && [ $(grep -cH "$os" <<< "$definedOS" | awk -F ':' '{print $2}') -eq 0 ] && continue
+
+        (( index++ )) && echo -n ','
+        eval echo $(build.yamlToJson "$dc_yaml" | jq '.services[]|{parent: .build.args.FROM_BASE, image: .image}|tojson')
+
+    done < <(find . -mindepth 2 -maxdepth 2 -name 'docker-compose.yml' | awk '{print substr($0,3)}')
+    echo ']'
+}
+export -f build.parentChild
+
+#----------------------------------------------------------------------------------------------
+function build.jsonParentChild()
+{
+    local os=${1:-}
+
+    build.parentChild "$os" | jq '. as $data |
+        def dependentsOf($f): [ $data[]|select(.parent == $f)|.image ];
+        def parentsOf($f): [ $data[]|select(.image == $f)|.parent ];
+        def composeTree: [ $data[].parent ] | unique | map( {"image":.,"parent": parentsOf(.) } );
+        def dependentTree: [ $data[].image ] | unique | map( {"image":.,"dependents": dependentsOf(.) } );
+        def rootImages: composeTree[]|select(.parent|length == 0)|.image;
+        dependentTree'
+}
+export -f build.jsonParentChild
 
 #----------------------------------------------------------------------------------------------
 function build.logger()
@@ -325,7 +375,7 @@ function build.module()
     export CONTAINER_GIT_REFS="($(git log -n1 --oneline --decorate | sed 's/[^\(]*(\([^\)]*\)).*/\1/'))"
     export CONTAINER_GIT_COMMIT="$(git rev-parse HEAD)"
     export CONTAINER_GIT_URL="$(git remote get-url origin)"
-    export CONTAINER_ORIGIN="$(git describe --tags --dirty)"
+    export CONTAINER_ORIGIN="$(git describe --tags --dirty --always)"
 
     # generate fingerprint from all our dependencies
     local branch=$(git branch | grep '*' |  awk '{ gsub("[\\/@]","_",$2); print $2 }')
@@ -492,7 +542,7 @@ function build.updateContainer()
     build.changeImage "$taggedImage" "$actualImage"
     [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}' --filter "reference=$taggedImage")" ] && docker tag "$actualImage" "$taggedImage"
 
-    if registry.canPush "$revision"; then
+    if build.canPush "$revision"; then
         build.logger "pushing ${taggedImage} to registry"
         build.pushImage "$taggedImage" "$actualImage"
     fi
@@ -502,28 +552,21 @@ function build.updateContainer()
 export -f build.updateContainer
 
 #----------------------------------------------------------------------------------------------
-function build.updateVersions()
-{
-    local -r branch=${1:?}
-
-    # ensure version info is up-to-date
-    ( cd versions; git checkout "$branch"; git pull )
-}
-export -f build.updateVersions
-
-#----------------------------------------------------------------------------------------------
 function build.verifyModules()
 {
-    local -r definedModules=${1:?}
-    local -a requestedModules=$2
+    local -r containerOS=${1:?}
+    shift
+    local -a requestedModules=( "$@" )
+    [ "${requestedModules[*]}" ] || requestedModules=()
 
-    for defMod in $definedModules; do
-        if [ -z $requestedModules ]; then
+    local -a modules=( $(grep -Ev '^\s*#' "$(versions.DIRECTORY)/${containerOS}.modules") )
+    for defMod in "${modules[@]}"; do
+        if [ "${#requestedModules[*]}" -eq 0 ]; then
             echo "$defMod"
             continue
         fi
 
-        for reqMod in $requestedModules; do
+        for reqMod in "${requestedModules[@]}"; do
             [ "$reqMod" = "$defMod" ] || continue
             echo "$defMod"
         done

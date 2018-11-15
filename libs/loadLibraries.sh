@@ -6,8 +6,8 @@ set -o nounset
 set -o pipefail
 IFS=$'\n\t'
 declare -r CBF_URL="https://github.com/ballab1/container_build_framework/archive"
-declare CBF_DIR_TEMP
-declare CHAIN_EXIT_HANDLER
+export CBF_DIR_TEMP
+export CHAIN_EXIT_HANDLER
 
 
 function __init.die() {
@@ -16,7 +16,7 @@ function __init.die() {
 }
 
 function __init.loader() {
-    __init.loadCBF
+#    __init.loadCBF
 
     # only load libraries from bashlib (not below). Sort to be deterministic
     local __libdir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
@@ -90,10 +90,10 @@ function __init.loadCBF() {
 }
 
 function __init.myExitHandler() {
-    rmTmpDir() {
+    __init.rmTmpDir() {
         local -i status=$?
-        [ ! -d "$CBF_DIR_TEMP" ] || rm -rf "$CBF_DIR_TEMP"
-        [ -z "${CHAIN_EXIT_HANDLER:-}" || "$CHAIN_EXIT_HANDLER"
+        [ -z "${CBF_DIR_TEMP:-}" ] || [ ! -d "$CBF_DIR_TEMP" ] || rm -rf "$CBF_DIR_TEMP"
+        [ -z "${CHAIN_EXIT_HANDLER:-}" ] || "$CHAIN_EXIT_HANDLER"
         echo 'all done'
         exit $status
     }
@@ -101,4 +101,8 @@ function __init.myExitHandler() {
     trap __init.rmTmpDir EXIT
 }
 
-__init.loader >&2
+if [ "${DEBUG:-}" ]; then
+    __init.loader >&2
+else
+    __init.loader &> /dev/null
+fi

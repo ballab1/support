@@ -1,10 +1,20 @@
 TODO
 ```
+deploy docker-compose.yml for prod
+build dependencies
+nginx index.html
+nagios:
+	DBI connect('database=nconf;host=mysql','bobb',...) failed: Can't connect to MySQL server on 'mysql' (115) at /usr/local/nagios/share/nconf/bin/lib/NConf/DB.pm line 103.
+	Compilation failed in require at /usr/local/nagios/share/nconf/bin/generate_config.pl line 51.
+	BEGIN failed--compilation aborted at /usr/local/nagios/share/nconf/bin/generate_config.pl line 51.
+	***ERROR at environment:9. '"${NCONF_HOME}/bin/generate_config.pl"' exited with status 115
+	Stack trace:
+	>>>    02: /usr/local/crf/startup/05.nagios:35 nagios.redeployConfig  <<<
+
+
+
 get stuff working:
-   SMB write access
-   completion of CD install
    reverse proxy for cesi
-   configure Jenkins with official builds & deploys
    nagiosgraph issues
 
    Jenkins
@@ -24,7 +34,6 @@ get stuff working:
     complete unit tests
 
 CBF:
-    delete cache files
     use CBF_VERSION better
         - should never unset
         - should check if specified version same as installed version (no point in wget)
@@ -38,15 +47,16 @@ CBF:
     Track created users for runtime changes
 
 builds
-    quality ladder:  dev -> staging -> masater
+    quality ladder:  dev -> staging -> master
         - dev:  where we make changes
         - staging: PRs from dev + CI builds
         - master: production
-        - consolidate setupProduction and restartProd
     docker-registry
         - handle more tags to fingerprint lookup (ex: latest, master, staging)
         - move old named content to new repos
-        - curate content on the fly
+        - permit deleteion of content based on
+        	tag  (as in all tags which match ... in a repo)
+        	do not use 'master' but instead 'yyyymmdd-$(git-describe)' and update docker-compose
         - configure to use redis
              https://github.com/docker-library/redis/blob/e95c0cf4ffd9a52aa48d05b93fe3b42069c05032/5.0-rc/32bit/Dockerfile
     Separate build, package and deploy/run actions
@@ -56,10 +66,6 @@ builds
 enhancements:
     setup elasticsearch
     container kafka logging with https://hub.docker.com/r/mickyg/kafka-logdriver/
-    security
-        use git crypt
-        permit removal of any environment variable prior to running service
-        remove bashlib functions prior to running service
     containers
         base jenkins and webdav on supervisord image
         tie DBMS backups into startup by copying SQL files to "ubuntu-s:\home\bobb\prod\mysql\vols\loader\dumps" 
@@ -121,16 +127,26 @@ Kafka broker/zookeeper issues
 Grafana update
 mysql update
 ubuntu-s1 production and build
+SMB write access
+completion of CD install
+configure Jenkins with official builds & deploys
 
 docker-registry
 - setup private docker registry
 - improve error handling
+- curate content on the fly
 security
 - mapping layer for ENV variables.  use docker-compose.yml
 - base set going into docker-compose.yml : individual set for each container
 - need layered containers
   remove passwords from container environment variables
     zen, nagios, phpadmin, grafana, webdav, hubot, jenkins, mysql
+  use git crypt
+  permit removal of any environment variable prior to running service
+  remove bashlib functions prior to running service
+
+build
+- consolidate setupProduction and restartProd
 
 CI/CD
     add ENV for HOST_IP
@@ -188,6 +204,7 @@ LABELS in images
     - git describe --tags --abbrev=40 --dirty
 
 CBF
+    delete cache files
     parse Dockerfile for 'sudo' requirement  (USER + VOLUME): warn on 'USER' rather than 'USER_UID'
     base_container does not recognize changes in CBF
     fingerprint calculation should not be dependent on "$CONTAINER_TAG"
