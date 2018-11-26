@@ -37,6 +37,7 @@ CBF:
     use CBF_VERSION better
         - should never unset
         - should check if specified version same as installed version (no point in wget)
+        - base_container does not have a dependency on CBF
         - query github for CBF reference when it is downloaded
         	- make something up if it is included
         	- add reference to directories

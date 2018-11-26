@@ -10,7 +10,7 @@ export http_code
 function registry.catalog()
 {
     local -a entries=()
-    registry.GET --silent "$(registry.URL)/_catalog" | jq '.repositories| sort[]? ' | tr -d '"'
+    registry.GET --silent "$(registry.URL)/_catalog" | jq '.repositories| sort[]? ' | tr -d '"' || echo "Failed to get $(registry.URL)/_catalog" >&2
 }
 export -f registry.catalog
 
@@ -82,7 +82,7 @@ export -f registry.curateRepository
 #----------------------------------------------------------------------------------------------
 function registry.DELETE()
 {
-    registry.io --request DELETE "$@"
+    registry.io --request DELETE "$@" || return 1
 }
 export -f registry.DELETE
 
@@ -94,7 +94,7 @@ function registry.deleteImage()
 
     [ "$digest" ] || trap.die 'invalid digest passed to registry.delete'
     echo -n "deleting ${name} - $digest  "
-    registry.DELETE --silent --show-error --write-out '%{http_code}\n' "$(registry.URL)/${name}/manifests/$digest"
+    registry.DELETE --silent --show-error --write-out '%{http_code}\n' "$(registry.URL)/${name}/manifests/$digest" || echo "Failed to delete $name:$digest"
 #    echo "http_code: ${http_code:-}"
 }
 export -f registry.deleteImage
@@ -123,6 +123,7 @@ function registry.deleteImages()
 
         else
             eval tags=( $(registry.tags "$id") )
+            [ "${#tags[*]}" -gt 0 ] || continue
             for digest in $(printf '%s\n' "${tags[@]}" | sort -u); do
                 registry.deleteImage "$id" "$digest"
             done
@@ -140,7 +141,7 @@ function registry.digest()
     local -r digest="$(registry.GET --header "Accept: application/vnd.docker.distribution.manifest.v2+json" \
                                     --silent \
                                     --head \
-                                    "$(registry.URL)/${name}/manifests/$(tr -d '"' <<< "$tag")" )"
+                                    "$(registry.URL)/${name}/manifests/$(tr -d '"' <<< "$tag")" || echo "Failed to get $(registry.URL)//${name}/manifests/$tag" >&2)"
 
     [ -z "$digest" ] || ( awk '{gsub(/\r/,"");if ($1 == "Docker-Content-Digest:") {print $2}}' ) <<< "$digest"
 }
@@ -151,7 +152,7 @@ function registry.digests()
 {
     local -r name=${1:?}
 
-    local -r manifest=$(registry.GET --silent "$(registry.URL)/${name}/tags/list")
+    local -r manifest=$(registry.GET --silent "$(registry.URL)/${name}/tags/list" || echo "Failed to get $(registry.URL)/${name}/tags/list" >&2)
     [ "${manifest:-}" ] || return 0
 
     local -a tags
@@ -204,7 +205,7 @@ export -f registry.digests
 #----------------------------------------------------------------------------------------------
 function registry.GET()
 {
-    registry.io --request GET "$@"
+    registry.io --request GET "$@" || return 1
 }
 export -f registry.GET
 
@@ -249,7 +250,7 @@ function registry.layer()
     local -r name=${1:?}
     local -r digest=${2:?}
 
-    registry.GET --silent "$(registry.URL)/${name}/blobs/${digest}"
+    registry.GET --silent "$(registry.URL)/${name}/blobs/${digest}" || echo "Failed to get $(registry.URL)/${name}/blobs/${digest}" >&2
 }
 export -f registry.layer
 
@@ -259,14 +260,14 @@ function registry.manifest()
     local -r name=${1:?}
     local -r reference=${2:?}
 
-    registry.GET --silent "$(registry.URL)/${name}/manifests/${reference}"
+    registry.GET --silent "$(registry.URL)/${name}/manifests/${reference}" || echo "Failed to get $(registry.URL)/${name}/manifests/${reference}" >&2
 }
 export -f registry.manifest
 
 #----------------------------------------------------------------------------------------------
 function registry.POST()
 {
-    registry.io --request POST "$@"
+    registry.io --request POST "$@" || return 1
 }
 export -f registry.POST
 
@@ -366,9 +367,11 @@ function registry.pushImage()
         local -ir delta=$(( maxImages - imageCount + 1 ))
         local -a oldImages
         mapfile -t oldImages < <(jq "[.[]|select((.tags|length) == 1)]|sort_by(.createTime|fromdate)|.[0:${delta}]|.[].digest" <<< "$digests" | tr -d '"')
-        for digest in "${oldImages[@]}"; do
-            registry.deleteImage "$name" "$digest"
-        done
+        if [ "${#oldImages[*]}" -gt 0 ]; then
+            for digest in "${oldImages[@]}"; do
+                registry.deleteImage "$name" "$digest"
+            done
+        fi
     fi
 
     registry.push "$image1" "$image2"
@@ -378,7 +381,7 @@ export -f registry.pushImage
 #----------------------------------------------------------------------------------------------
 function registry.PUT()
 {
-    registry.io --request PUST "$@"
+    registry.io --request PUST "$@" || return 1
 }
 export -f registry.PUT
 
@@ -502,9 +505,10 @@ function registry.tags()
     local -r name=${1:?}
 
     local -a tags=()
-    local -r manifest=$(registry.GET --silent "$(registry.URL)/${name}/tags/list")
+    local -r manifest=$(registry.GET --silent "$(registry.URL)/${name}/tags/list" || echo "Failed to get $(registry.URL)/${name}/tags/list" >&2)
 
     [ -z "${manifest:-}" ] || mapfile -t tags < <(jq '.tags[]?' <<< "$manifest" | tr -d '"')
+    [ "${#tags[*]}" -eq 0 ] && return 0
     for tag in "${tags[@]}"; do
         printf "['%s']='%s'\n" "$tag" "$(registry.digest "$name" "$tag")"
     done

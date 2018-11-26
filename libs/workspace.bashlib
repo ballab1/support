@@ -38,7 +38,7 @@ function workspace.__initGlobals()
     local -i file_count=0
     if [ -d "$WORKSPACE_DIR" ]; then
         local -a files
-        mapfile -t files < <(sudo find "$WORKSPACE_DIR" -maxdepth 1 -type f | grep -v 'setup.log' ||:)
+        mapfile -t files < <(sudo find "$WORKSPACE_DIR" -maxdepth 1 -type f ! -name '*.log' ||:)
         file_count="${#files[*]}"
     fi
     [ $file_count -gt 0 ] || workspace.showInitializationBanner
@@ -85,7 +85,6 @@ function workspace.clean()
 
     echo "\$ rm -rf $workspace"
     sudo rm -rf "$workspace"
-#    find "$workspace" -mindepth 1 -maxdepth 1 ! -name '.secrets' -exec sudo rm -rf '{}' \;
 }
 export -f workspace.clean
 
@@ -203,7 +202,7 @@ function workspace.main()
     local -r progname="$( basename "${BASH_SOURCE[0]}" )"
     local -r longopts='help,Help,HELP,clean,init'
     local -r shortopts='Hhci'
-    local -r options=$(getopt --longoptions "${longopts}" --options "${shortopts}" --name "$progname" -- ${args[@]}) || workspace.usage $?
+    local -r options=$(getopt --longoptions "${longopts}" --options "${shortopts}" --name "$progname" -- ${args[@]:-}) || workspace.usage $?
     eval set -- "$options"
 
     local doClean doInit

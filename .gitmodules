@@ -1,6 +1,6 @@
-[submodule "alpinefull"]
-    path = alpinefull
-    url = ../alpinefull.git
+[submodule "build_container"]
+    path = build_container
+    url = ../build_container.git
 [submodule "base_container"]
     path = base_container
     url = ../base_container.git
