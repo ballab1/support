@@ -16,6 +16,7 @@ function git.branch()
 
     echo "${branch/* /}"
 }
+export -f git.branch
 
 #----------------------------------------------------------------------------------------------
 function git.branchOrTagName()
@@ -33,48 +34,56 @@ function git.branchOrTagName()
         git branch | grep \* | cut -d ' ' -f4 | tr -d ')'
     fi
 }
+export -f git.branchOrTagName
 
 #----------------------------------------------------------------------------------------------
-function git.commit.author()
+function git.commitAuthor()
 {
     git log -1 --pretty=format:"%an"
 }
+export -f git.commitAuthor
 
 #----------------------------------------------------------------------------------------------
-function git.commit.date()
+function git.commitDate()
 {
     git log -1 --pretty=format:"%cd"
 }
+export -f git.commitDate
 
 #----------------------------------------------------------------------------------------------
-function git.commit.email()
+function git.commitEmail()
 {
     git log -1 --pretty=format:"%ce"
 }
+export -f git.commitEmail
 
 #----------------------------------------------------------------------------------------------
-function git.commit.epoch()
+function git.commitEpoch()
 {
     git log -1 --pretty=format:"%ct"
 }
+export -f git.commitEpoch
 
 #----------------------------------------------------------------------------------------------
-function git.commit.summary()
+function git.commitSummary()
 {
     git log -1 --pretty=format:"%s"
 }
+export -f git.commitSummary
 
 #----------------------------------------------------------------------------------------------
 function git.HEAD()
 {
     git rev-parse HEAD
 }
+export -f git.HEAD
 
 #----------------------------------------------------------------------------------------------
 function git.isDevBuild()
 {
     ! git.isMasterOrIntegrationBuild
 }
+export -f git.isDevBuild
 
 #----------------------------------------------------------------------------------------------
 #
@@ -88,6 +97,7 @@ function git.isMasterOrIntegrationBuild()
            [ "$branch_type" == "integration" ] ||
            [ "$branch_type" == "beta" ]
 }
+export -f git.isMasterOrIntegrationBuild
 
 #----------------------------------------------------------------------------------------------
 #
@@ -98,6 +108,7 @@ function git.isRepositoryFile()
 {
     git ls-files $1 --error-unmatch &> /dev/null
 }
+export -f git.isRepositoryFile
 
 #----------------------------------------------------------------------------------------------
 # Boolean: is a special branch
@@ -112,30 +123,35 @@ function git.isSpecialBranch()
 
     return 1
 }
+export -f git.isSpecialBranch
 
 #----------------------------------------------------------------------------------------------
 function git.origin()
 {
     git describe --tags --dirty --always
 }
+export -f git.origin
 
 #----------------------------------------------------------------------------------------------
 function git.refs()
 {
     git log -n1 --oneline --decorate | sed 's/[^\(]*(\([^\)]*\)).*/\1/'
 }
+export -f git.refs
 
 #----------------------------------------------------------------------------------------------
 function git.remoteUrl()
 {
     git config --get remote.origin.url
 }
+export -f git.remoteUrl
 
 #----------------------------------------------------------------------------------------------
-function git.repo.name()
+function git.repoName()
 {
     basename "$(git rev-parse --show-toplevel)"
 }
+export -f git.repoName
 
 #----------------------------------------------------------------------------------------------
 #
@@ -158,6 +174,7 @@ function git.specialBranchName()
         echo "dev"
     fi
 }
+export -f git.specialBranchName
 
 #----------------------------------------------------------------------------------------------
 function git.toHTTPS()
@@ -170,15 +187,18 @@ function git.toHTTPS()
     [ "${remote:0:8}" = 'https://' ] || remote="https://$remote"
     echo "$remote"
 }
+export -f git.toHTTPS
 
 #----------------------------------------------------------------------------------------------
 function git.url()
 {
     git.toHTTPS "$( git.remoteUrl )"
 }
+export -f git.url
 
 #----------------------------------------------------------------------------------------------
-function git.url.commit()
+function git.urlCommit()
 {
     echo "$(git.url)/commit/$(git.HEAD)"
 }
+export -f git.urlCommit

@@ -11,14 +11,16 @@ function docker.containerVersion()
     local -r line=${1:?}
     local -r json=${2:?}
 
-    local -r image="${line#*image: }"
-    while read -r service; do
-        local service=$(jq ".services.$service" <<< "$json")
+    local -r image="$(sed -E 's|\s+image:\s+(.+)$|\1|' <<< "$line")"
+    while read -r srvc; do
+        local service=$(jq ".services.$srvc" <<< "$json")
         [ $(jq '.image' <<< "$service" | tr -d '"') = "$image" ] || continue
 
         local container=$(jq '.container_name' <<< "$service" | tr -d '"')
         local version=$(docker inspect "$container" | jq '.[].Config.Labels."container.origin"' | tr -d '"')
-        local newimage="$(docker inspect "$container" | jq '.[].Config.Image' | tr -d '"'):$version"
+        [ "$version" != 'null' ] || break
+        local newimage="$(docker inspect "$container" | jq '.[].Config.Image' | tr -d '"')"
+        newimage="${newimage%:*}:$version"
 
         echo -n '{"orgline":"'${line}'","orgimage":"'$(eval echo $image)'",'
         echo -n '"version":"'$version'",'

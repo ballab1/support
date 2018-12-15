@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export KAFKA_BOOTSTRAP_SERVERS="${KAFKA_BOOTSTRAP_SERVERS:-10.1.3.6:9092,10.1.3.10:9092,10.1.3.11:9092}"
+export KAFKA_BOOTSTRAP_SERVERS="${KAFKA_BOOTSTRAP_SERVERS:-ubuntu-s3:9092,ubuntu-s4:9092,ubuntu-s1:9092}"
 export MAX_IMAGES_TO_KEEP=10
 export PROGRESS_LOG
 
@@ -38,7 +38,7 @@ function build.canPush()
 {
     local -r revision=${1:?}
 
-    [ "${DOCKER_ALWAYS_PUSH:-}" ] && return 0
+    [ "${DOCKER_ALWAYS_PUSH:-0}" != 0 ] && return 0
     [[ "$revision" != *dirty ]] || return 1
 
 #    [ "$CONTAINER_GIT_REFS" = 'master' ]
@@ -130,7 +130,7 @@ function build.containersForOS()
         build.module && status=$? || status=$?
         popd >/dev/null
         [ $status -eq 0 ] || break
-    done< <( build.verifyModules "$containerOS" "$(printf '%s\n' "${requestModules[@]}")" )
+    done< <( build.verifyModules "$containerOS" $(printf '%s\n' "${requestModules[@]}") )
 
     exec 3>&-   # close special stdout
 
@@ -206,7 +206,6 @@ function build.dependencyInfo()
         esac
     done < <(git status --porcelain)
 
-
     # add our cbf version
     local localDir
     [ -d build ] && localDir="$(ls -1A build/ | grep 'container_build_framework')"
@@ -216,10 +215,10 @@ function build.dependencyInfo()
         sha256sum <<< "$(build.dirChecksum "$localDir")" | cut -d' ' -f1
 
     elif [ $(basename "$(pwd)") = 'base_container' ]; then
-        if [ "${CBF_VERSION:-}" ]; then
+        if [ -d "../container_build_framework" ]; then
+            export CBF_VERSION=$(cd ../container_build_framework; git describe --tags --dirty --always)
+        elif [ "${CBF_VERSION:-}" ]; then
             :
-        elif [ -d "../container_build_version" ]; then
-            export CBF_VERSION=$(cd ../container_build_version; git describe --tags --dirty --always)
         else
             die 'no version specified for CBF'
         fi
@@ -353,7 +352,8 @@ function build.logToKafka()
     fi
 
     # now log our data to kafka
-    local -r kafka_producer="$(dirname $(readlink -f "${BASH_SOURCE[0]}"))/kafkaProducer.py"
+    local kafka_producer="$(which kafkaProducer.py ||:)"
+    [ "$kafka_producer" ] || kafka_producer="$(dirname $(readlink -f "${BASH_SOURCE[0]}"))/kafkaProducer.py"
     "${kafka_producer}" --server "$KAFKA_BOOTSTRAP_SERVERS"                        \
                         --topic 'container_build_data'                          \
                         --value "$( json.encodeHash '--' "${build_data[@]}" )"
@@ -503,7 +503,7 @@ function build.updateContainer()
     local -r actualImage=${3:?}
     local -r revision=${4:-}
 
-    if [ -z "${ALWAYS_BUILD:-}" ]; then
+    if [ "${ALWAYS_BUILD:-0}" = 0 ]; then
         build.logger "checking for local $taggedImage with the correct fingerprint"
         local -a images
         mapfile -t images < <(build.findIdsWithFingerprint "$CONTAINER_FINGERPRINT")
@@ -514,7 +514,7 @@ function build.updateContainer()
                 # found image by a different 'name:tag'
                 docker tag "${images[0]}" "$taggedImage"
                 doPush=1
-            elif [ "${DOCKER_ALWAYS_PUSH:-}" ]; then
+            elif [ "${DOCKER_ALWAYS_PUSH:-0}" != 0 ]; then
                 doPush=1
             fi
             [ $doPush -eq 0 ] || build.pushImage "$taggedImage"
@@ -526,7 +526,7 @@ function build.updateContainer()
         if docker pull "$actualImage" 2>/dev/null; then
             # downloaded image from registry
             build.changeImage "$taggedImage" "$actualImage"
-            if [ "${DOCKER_ALWAYS_PUSH:-}" ]; then
+            if [ "${DOCKER_ALWAYS_PUSH:-0}" != 0 ]; then
                 build.logger "pushing ${taggedImage} to registry"
                 build.pushImage "$taggedImage" "$actualImage"
             fi
@@ -538,7 +538,6 @@ function build.updateContainer()
     # rebuild container because no container exists with the correct fingerprint
     build.logger "building $actualImage"
     docker-compose -f "$compose_yaml" build 2>&1 || trap.die "Build failure"
-
 
     build.changeImage "$taggedImage" "$actualImage"
     [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}' --filter "reference=$taggedImage")" ] && docker tag "$actualImage" "$taggedImage"
