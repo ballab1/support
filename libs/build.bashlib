@@ -21,12 +21,21 @@ function build.all()
     local -a OSes
     mapfile -t OSes < <(sed '/^[[:blank:]]*#/d;s/[[:blank:]]*#.*//' container.os)
     [ "${CONTAINER_OS:-}" ] && OSes=( $CONTAINER_OS )
-    local cbf_version="${CBF_VERSION:-master}"
 
+    local cbf_version="${CBF_VERSION:-}"
+    if [ -z "${CBF_VERSION:-}" ]; then
+        if [ -d "${top}/container_build_framework" ]; then
+            cbf_version="${CBF_VERSION:-$(artifactory.saveCBF)}"
+        else
+            cbf_version='master'
+        fi
+    fi
+
+    local request_cbf="${CBF_VERSION:-}"
     for containerOS in "${OSes[@]}"; do
         [ ${containerOS:-} ] || continue
         [ -e "$(versions.DIRECTORY)/$containerOS" ] || continue
-        [ "${cbf_version:-}" ] && CBF_VERSION="$cbf_version"
+        [ "${request_cbf:-}" ] || CBF_VERSION="$cbf_version"
 
         (build.containersForOS "$containerOS" "${userInput[@]:-}")   # run in separate shell to avoid "VERSIONS" conflicting
     done
@@ -277,7 +286,7 @@ function build.parentChild()
     local -r skip_builds_file='skip.build'
     echo '['
     while read -r dc_yaml; do
-        [ -e "$skip_builds_file" ] && [ $(grep -cH "$(dirname "$dc_yaml")" "$skip_builds_file" 2>/dev/null | awk -F ':' '{print $2}') -eq 0 ] || continue
+        [ -e "$skip_builds_file" ] && [ $(grep -cH "$(dirname "$dc_yaml")" "$skip_builds_file" 2>/dev/null | cut -d':' -f2) -eq 0 ] || continue
         local definedOS=$(grep -E '^#\s+containerOS:\s+' "$dc_yaml")
         [ "${definedOS:-}" ] && [ $(grep -cH "$os" <<< "$definedOS" | awk -F ':' '{print $2}') -eq 0 ] && continue
 
@@ -352,7 +361,7 @@ function build.logToKafka()
     fi
 
     # now log our data to kafka
-    local kafka_producer="$(which kafkaProducer.py ||:)"
+    local kafka_producer="$(which kafkaProducer.py 2>/dev/null ||:)"
     [ "$kafka_producer" ] || kafka_producer="$(dirname $(readlink -f "${BASH_SOURCE[0]}"))/kafkaProducer.py"
     "${kafka_producer}" --server "$KAFKA_BOOTSTRAP_SERVERS"                        \
                         --topic 'container_build_data'                          \
@@ -557,10 +566,13 @@ function build.verifyModules()
     local -r containerOS=${1:?}
     shift
     local -a requestedModules=( "$@" )
-    [ "${requestedModules[*]}" ] || requestedModules=()
+    [ "${#requestedModules[*]}" -gt 0 ] || requestedModules=()
+    local -r skip_builds_file='skip.build'
 
     local -a modules=( $(grep -Ev '^\s*#' "$(versions.DIRECTORY)/${containerOS}.modules") )
     for defMod in "${modules[@]}"; do
+        [ -e "$skip_builds_file" ] && [ $(grep -cHE "^$defMod" "$skip_builds_file" 2>/dev/null | cut -d':' -f2) -gt 0 ] && continue
+
         if [ "${#requestedModules[*]}" -eq 0 ]; then
             echo "$defMod"
             continue

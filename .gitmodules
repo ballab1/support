@@ -25,9 +25,9 @@
 [submodule "jenkins"]
     path = jenkins
     url = ../jenkins.git
-[submodule "kafka-broker"]
-    path = kafka-broker
-    url = ../kafka-broker.git
+[submodule "kafka"]
+	path = kafka
+    url = ../kafka.git
 [submodule "kafka-manager"]
     path = kafka-manager
     url = ../kafka-manager.git

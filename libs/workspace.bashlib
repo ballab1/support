@@ -123,6 +123,8 @@ export -f workspace.generateSSL
 # setup workspace if it does not exist
 function workspace.initialize()
 {
+    local -r base=${1:?}
+
     # import our setup configuration
     local -r setup_config="${CONFIG_DIR}/setup.cfg"
     if [ -e "$setup_config" ]; then
@@ -133,6 +135,8 @@ function workspace.initialize()
 
     : ${KAFKA_ID:?"KAFKA_ID has not been configured. Please update '$setup_config'"}
     : ${GRAFANA_UID:?"GRAFANA_UID has not been configured. Please update '$setup_config'"}
+    : ${HOST_IP:?"HOST_IP has not been configured. Please update '$setup_config'"}
+    : ${HOST_NAME:?"HOST_NAME has not been configured. Please update '$setup_config'"}
 
 
     # ensure our log dir exists
@@ -191,6 +195,9 @@ function workspace.initialize()
         chmod 755 "${service_tasks[$task]}"
         "${service_tasks[$task]}" ||:
     done
+
+    # update secret references (cannot apply these with other docker-compose.yml updates)
+    [ "$num_secrets" -eq 0 ] || workspace.updateSecretRefs "$dc_yaml"
 }
 export -f workspace.initialize
 
@@ -252,9 +259,9 @@ function workspace.passwordSecret()
         password=$(jq '.services.'${service}'.environment.'${pwdVar}'_FILE' <<< "$json" | tr -d '"' )
         secret=$(basename "$password")
         jqquery=".secrets.\"${secret}\".file"
-        local pwd_file="$(jq "$jqquery" <<< "$json" | tr -d '"' )"
-        [ -e "$pwd_file" ] || trap.die "${BASH_SOURCE[0]} - Password file: '$pwd_file' not found"
-        password=$(< "$pwd_file")
+        local pwd_file="$(eval echo "$(jq "$jqquery" <<< "$json" | tr -d '"' )")"
+        [ -e $pwd_file ] || trap.die "Password file: '$pwd_file' not found. Used by startup of service: $service"
+        password=$(< $pwd_file)
     fi
     echo $password
 }
@@ -266,22 +273,26 @@ function workspace.populateSecrets()
     local -r secrets_dir=${1:-}
 
     echo 'populating secrets'
-    if [ -z "${CFG_USER_SECRETS:-}" ]  &&  [ "${OPEN_SECRETS_REPO:-}" ]; then
+
+    if [ -z "${CFG_USER_SECRETS:-}" ]; then
+        [ "${OPEN_SECRETS_REPO:-}" ] || trap.die  "no definition provided for 'secrets'"
         mkdir -p "$(dirname "$secrets_dir")"
         git clone "$OPEN_SECRETS_REPO" "$secrets_dir"
 
-    elif [ -d "${CFG_USER_SECRETS:-}" ] &&  [ "$(readlink -f "$CFG_USER_SECRETS")" != "$(readlink -f "$secrets_dir")" ]; then
+    elif [ -d "${CFG_USER_SECRETS}" ] &&  [ "$(readlink -f "$CFG_USER_SECRETS")" != "$(readlink -f "$secrets_dir")" ]; then
         mkdir -p "$secrets_dir"
         cp "${CFG_USER_SECRETS}"/* "$secrets_dir"/
 
-    elif git ls-remote "${CFG_USER_SECRETS:-}" &> /dev/null ; then
+    elif git ls-remote "${CFG_USER_SECRETS}" &> /dev/null ; then
         mkdir -p "$(dirname "$secrets_dir")"
         git clone --quiet "$CFG_USER_SECRETS" "$secrets_dir"
+        [ "$(grep -cH 'git-crypt' "${secrets_dir}/.gitattributes" 2>/dev/null | cut -d ':' -f2)" -gt 0 ] \
+        && [ -e "${CRYPT_FILE:-}" ] \
+        && (cd "$secrets_dir"; git crypt unlock "${CRYPT_FILE:-}" )
 
     else
         trap.die  "missing 'secrets' directory in workspace"
     fi
-
 
     # ensure we have self signed certs (incase they are not include in secrets dir
     workspace.generateSSL "$secrets_dir"
@@ -325,12 +336,12 @@ export -f workspace.replaceIpAddresses
 #----------------------------------------------------------------------------------------------
 function workspace.restart()
 {
-    local -r base_dir=${1:-}
+    local -r base=${1:-}
 
 
     # initialize workspace if required 'docker-compose.yml' is missing
     local -r dc_yaml="${WORKSPACE_DIR}/docker-compose.yml"
-    [ -f "$dc_yaml" ] || workspace.initialize
+    [ -f "$dc_yaml" ] || workspace.initialize "$base"
 
 
     # restart our environment
@@ -344,7 +355,7 @@ function workspace.restart()
 
     if [ "${INITIALIZATION:-}" ]; then
         echo -en '\e[97m'
-        echo -n "Initializing complete. Please open the following URL in your browser: http://$(environ.ipAddress)"
+        echo -n "Initializing complete. If this setup includes a web server, please open the following URL in your browser: http://$HOST_IP"
         echo -e '\e[0m'
     fi
     exit 0
@@ -424,12 +435,10 @@ export -f workspace.updateContainerReference
 function workspace.updateDockerComposeYaml()
 {
     local -r dc_yaml=${1:?}
-    local -r id="${2:-$KAFKA_ID}"
-    local -r grafana_uid="${3:-$GRAFANA_UID}"
-
-    local -r host_ip="$(environ.ipAddress)"
-    local -r this_host="$(environ.shortName)"
-
+    local -r id=${2:-$KAFKA_ID}
+    local -r host_ip=${3:-$HOST_IP}
+    local -r this_host=${4:-$HOST_NAME}
+    local -r grafana_uid=${5:-$GRAFANA_UID}
 
     cp "${CONFIG_DIR}/skip.wait" "${WORKSPACE_DIR}/skip.wait"
 
@@ -438,13 +447,24 @@ function workspace.updateDockerComposeYaml()
     local -r deploy_yaml="${CONFIG_DIR}/docker-compose.yml"
     [ -f "$deploy_yaml" ] || trap.die "Invalid configuration - no $deploy_yaml"
 
+    term.log "updating $dc_yaml:\n" 'white'
+
     # update copy of docker-compose
+    term.log "    removing unneeded comments\n" 'grey'
     grep -vE '^\s*#' "$deploy_yaml" > "$dc_yaml"
+
+    term.log "    updating VERSIONS referenced\n" 'grey'
     for version in $(versions.get "$CONTAINER_OS" 'echo'); do
         var="${version%=*}"
         val="${version##*=}"
         eval sed -i -r -e "'s|(\\\$\{${var}:-)[^\}]+\}|\1${val}\}|g'" "$dc_yaml"
     done
+
+    [ $(grep -cEH '255\.255\.255\.255' "$dc_yaml" 2>/dev/null | cut -d':' -f 2) -gt 0 ] && term.log "    updating IP to $host_ip\n" 'grey'
+    [ $(grep -cEH 'alpine' "$dc_yaml" 2>/dev/null | cut -d':' -f 2) -gt 0 ]             && term.log "    updating CONTAINER_OS to ${CONTAINER_OS}\n" 'grey'
+    [ $(grep -cEH 'KAFKA_BROKER_ID:' "$dc_yaml" 2>/dev/null | cut -d':' -f 2) -gt 0 ]   && term.log "    updating KAFKA_BROKER_ID to ${id}\n" 'grey'
+    [ $(grep -cEH 'ZOOKEEPER_MY_ID:' "$dc_yaml" 2>/dev/null | cut -d':' -f 2) -gt 0 ]   && term.log "    updating ZOOKEEPER_MY_ID to ${id}\n" 'grey'
+    [ $(grep -cEH 'user:' "$dc_yaml" 2>/dev/null | cut -d':' -f 2) -gt 0 ]              && term.log "    updating GRAFANA_UID to ${grafana_uid}\n" 'grey'
     sed -i -r -e "s|255\.255\.255\.255|${host_ip}|g" \
               -e "s|alpine|${CONTAINER_OS}|g" \
               -e "s|(KAFKA_BROKER_ID: ).*\$|\1${id}|" \
@@ -453,6 +473,14 @@ function workspace.updateDockerComposeYaml()
              "$dc_yaml"
 }
 export -f workspace.updateDockerComposeYaml
+
+#----------------------------------------------------------------------------------------------
+function workspace.updateSecretRefs()
+{
+    local -r dc_yaml=${1:?}
+    sed -i -r -e "s|file:\s+~/|file: /home/bobb/|"   "$dc_yaml"
+}
+export -f workspace.updateSecretRefs
 
 #----------------------------------------------------------------------------------------------
 function workspace.usage()
