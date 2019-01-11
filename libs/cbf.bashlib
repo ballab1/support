@@ -5,7 +5,7 @@
 #
 #############################################################################
 
-: ${CBF_PROPERTIES_FILE:="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P )/CBF.properties" }
+: ${CBF_PROPERTIES_FILE:="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")/CBF.properties" }
 export CBF_PROPERTIES_FILE
 
 function cbf.__init()
@@ -219,7 +219,6 @@ function cbf.initFramework()
     # update container name in runtime environment
     crf.updateRuntimeEnvironment  "CONTAINER_NAME=\"\${CONTAINER_NAME:-$CONTAINER_NAME}\""
 
-
     # copy any custom bashlibs to crf
     mapfile -t files < <(lib.getFiles "$(cbf.ACTION)/00.bashlib")
     if [ ${#files[*]} -gt 0 ]; then
@@ -230,21 +229,10 @@ function cbf.initFramework()
 
 
     # create docker-entrypoint.sh from copy default entrypoint script if none exists to invoke the CRF
-    if [ ! -e "$(cbf.BASE)/override.entrypoint" ]; then
-        # this may get refactored into processing of 'container.properties'
-        if [ !   -e /usr/local/bin/docker-entrypoint.sh ]; then
-            mkdir -p /usr/local/bin
-            echo '    creating /usr/local/bin/docker-entrypoint.sh'
-            cp "$(cbf.CRF_BIN)/default.entrypoint" /usr/local/bin/docker-entrypoint.sh
-
-        elif [ -e "$( cbf.BASE )/usr/local/bin/docker-entrypoint.sh" ]; then
-            term.log 'Potential conflict detected with existing file: /usr/local/bin/docker-entrypoint.sh' 'error'
-            term.log 'To prevent this error, either:' 'error'
-            term.log "    remove the file:       $( cbf.BASE )/usr/local/bin/docker-entrypoint.sh" 'error'
-            term.log "    or create an override: $( cbf.BASE )/override.entrypoint" 'error'
-            exit 1
-        fi
-        sed -i "s|^local -rx CONTAINER_NAME=.*$|local -rx CONTAINER_NAME=${CONTAINER_NAME}|" /usr/local/bin/docker-entrypoint.sh
+    if [ ! -e /usr/local/bin/docker-entrypoint.sh ]; then
+        mkdir -p /usr/local/bin
+        echo '    creating /usr/local/bin/docker-entrypoint.sh'
+        cp "$(cbf.CRF_BIN)/default.entrypoint" /usr/local/bin/docker-entrypoint.sh
     fi
 
 
@@ -280,7 +268,7 @@ source "$file"
 EOF
 
     cd /tmp
-    chmod 755 "$file" "$tmpScript"
+    chmod a+xr "$file" "$tmpScript"
 
     local -i status
     ( command "$tmpScript" ) && status=$? || status=$?
@@ -316,7 +304,7 @@ export -f cbf.parseDockerfile
 #############################################################################
 function cbf.propertiesFile()
 {
-    echo "${CBF_PROPERTIES_FILE:="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P )/CBF.properties"}"
+    echo "${CBF_PROPERTIES_FILE:="$(readlink -f "$(dirname "${BASH_SOURCE[0]}")/..")/CBF.properties"}"
 }
 export -f cbf.propertiesFile
 

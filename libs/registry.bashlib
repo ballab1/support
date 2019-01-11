@@ -212,9 +212,7 @@ export -f registry.GET
 #----------------------------------------------------------------------------------------------
 function registry.io()
 {
-#    local -r credentials="$(registry.credentials "$(registry.USER)")"
-#    local -r response=$(curl --insecure --user "$credentials"  "$@")
-    local -r response=$(curl --insecure "$@")
+    local -r response=$(custom.io "$@")
 
     # strip http_code
     if grep '--write-out' <<<"$*" &>/dev/null ;then
@@ -222,7 +220,8 @@ function registry.io()
         response="${response%\}*}"'}'
     fi
 
-    if [[ "$response" != '{"errors":['* ]]; then
+    local -r pattern='\{\n*[[:space:]]*"errors"[[:space:]]*:[[:space:]]*\['
+    if [[ ! $response =~ $pattern ]]; then
         echo "$response"
         return 0
     fi
@@ -232,14 +231,17 @@ function registry.io()
 
     local curl_cmd=( 'curl' '--insecure' "$@" )
     echo
-    term.log "***ERROR: failure to complete registry request
+(   term.log "***ERROR: failure to complete registry request
     command:       $(printf '%s ' "${curl_cmd[@]}")
     error code:    $(jq '.code?' <<< "$errors")
     error message: $(jq '.message?' <<< "$errors")
     error details: $(jq '.detail?' <<< "$errors")
     http_code:     ${http_code:-}
     " 'warn' >&2
-
+    )
+    if [ $? -ne 0 ]; then
+        echo "command:       $(printf '%s ' "${curl_cmd[@]}")\\n    error code:    $errors" >&2
+    fi
     return 1
 }
 export -f registry.io

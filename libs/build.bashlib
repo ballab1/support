@@ -1,6 +1,5 @@
 #!/bin/bash
 
-export KAFKA_BOOTSTRAP_SERVERS="${KAFKA_BOOTSTRAP_SERVERS:-ubuntu-s3:9092,ubuntu-s4:9092,ubuntu-s1:9092}"
 export MAX_IMAGES_TO_KEEP=10
 export PROGRESS_LOG
 
@@ -12,7 +11,11 @@ function build.all()
     shift
     local -ra userInput=( "$@" )
 
+    local -r allStartTime=$(timer.getTimestamp)
     cd "$top"
+    local logDir="${top}/logs"
+    [ -d "$logDir" ] || mkdir -p "$logDir"
+
     local updateTo
     [[ "$(git rev-parse --abbrev-ref HEAD)" = *dev* ]] && updateTo=latest
     [ "${CONTAINER_TAG:-}" ] && updateTo=latest
@@ -25,11 +28,15 @@ function build.all()
     local cbf_version="${CBF_VERSION:-}"
     if [ -z "${CBF_VERSION:-}" ]; then
         if [ -d "${top}/container_build_framework" ]; then
-            cbf_version="${CBF_VERSION:-$(artifactory.saveCBF)}"
+            cbf_version="$(build.cbfVersion)"
         else
             cbf_version='master'
         fi
     fi
+    echo "Container Build Framework version: $cbf_version"
+    echo "kafka servers:  ${KAFKA_BOOTSTRAP_SERVERS:-}"
+    echo
+    echo
 
     local request_cbf="${CBF_VERSION:-}"
     for containerOS in "${OSes[@]}"; do
@@ -37,8 +44,35 @@ function build.all()
         [ -e "$(versions.DIRECTORY)/$containerOS" ] || continue
         [ "${request_cbf:-}" ] || CBF_VERSION="$cbf_version"
 
-        (build.containersForOS "$containerOS" "${userInput[@]:-}")   # run in separate shell to avoid "VERSIONS" conflicting
+        (build.containersForOS "$containerOS" "${userInput[@]:-}") || break    # run in separate shell to avoid "VERSIONS" conflicting
     done
+
+
+    echo
+    echo
+    TZ='America/New_York' date
+    local build_time=$(date +%Y%m%d-%H%M%S.%N -u)
+    local fingerprint="n/a"
+    local git_commit=$(git rev-parse HEAD)
+    local git_url="$(git remote get-url origin)"
+    local origin=$(git describe --tags --dirty --always)
+    local git_refs="$(git log -n1 --oneline --decorate | sed 's/[^\(]*(\([^\)]*\)).*/\1/')"
+    local allEndTime=$(timer.getTimestamp)
+    local -i allElapsed=$(( allEndTime - allStartTime ))
+    local allDuration="$(timer.fmtElapsed $allElapsed)"
+    printf 'Time elapsed for overall build: %s\n' "$allDuration"
+
+    build.logToKafka "$build_time" \
+                     "$fingerprint" \
+                     "$git_commit" \
+                     "$git_url" \
+                     "$origin" \
+                     "$allDuration" \
+                     "$allElapsed" \
+                     "$git_refs" \
+                     'overall build'
+
+    [ $(ls -1A "$logDir" | wc -l) -gt 0 ] || rmdir "$logDir"
 }
 export -f build.all
 
@@ -55,6 +89,19 @@ function build.canPush()
     return 0
 }
 export -f build.canPush
+
+#----------------------------------------------------------------------------------------------
+function build.cbfVersion()
+{
+    [ -d container_build_framework ] || trap.die 'No framework directory located'
+    [ -e container_build_framework/.git ] || trap.die 'CBF is not a git directory'
+
+    local filename="$(cd container_build_framework; git describe --tags --dirty --always)"
+    [[ "$filename" == *-dirty* ]] && trap.die 'Please commit CBF directory prior to uploading to Artifactory'
+
+    custom.cbfVersion
+}
+export -f build.cbfVersion
 
 #----------------------------------------------------------------------------------------------
 function build.changeImage()
@@ -80,7 +127,7 @@ function build.containersForOS()
     [ "${containerOS:-}" ] || containerOS="${CONTAINER_OS:-alpine}"
 
 
-    local start=$(timer.getTimestamp)
+    local osStartTime=$(timer.getTimestamp)
 
     export CFG_GITHUB_EMAIL=''
     export CFG_GITHUB_HUBOT_TOKEN=''
@@ -99,8 +146,6 @@ function build.containersForOS()
     export CBF_VERSION
     export CONTAINER_OS="$containerOS"
 
-    local logDir=logs
-    [ -d "$logDir" ] || mkdir -p "$logDir"
     if [ "${BUILD_URL:-}" ]; then
         PROGRESS_LOG="$(readlink -f "$logDir")/progressInfo"
         touch "$PROGRESS_LOG"
@@ -136,7 +181,7 @@ function build.containersForOS()
         fi
 
         pushd "$dir" >/dev/null
-        build.module && status=$? || status=$?
+        build.module "$containerOS" && status=$? || status=$?
         popd >/dev/null
         [ $status -eq 0 ] || break
     done< <( build.verifyModules "$containerOS" $(printf '%s\n' "${requestModules[@]}") )
@@ -146,14 +191,11 @@ function build.containersForOS()
     # delete empty logs
     find "$logDir" -type f -size 0 -delete
 
-    local finish=$(timer.getTimestamp)
-    local -i elapsed=$(( finish - start ))
+    local osEndTime=$(timer.getTimestamp)
+    local -i osElapsed=$(( osEndTime - osStartTime ))
 
-    echo
-    echo
-    TZ='America/New_York' date
-    local duration="$(timer.fmtElapsed $elapsed)"
-    printf 'Time elapsed: %s\n' "$duration"
+    local osDuration="$(timer.fmtElapsed $osElapsed)"
+    printf '\n  Time building %s OS: %s\n' "$containerOS" "$osDuration"
 
     [ -z "${BUILD_URL:-}" ] || :> "$PROGRESS_LOG"
     build.logToKafka "$build_time" \
@@ -161,9 +203,10 @@ function build.containersForOS()
                      "$git_commit" \
                      "$git_url" \
                      "$origin" \
-                     "$duration" \
-                     "$elapsed" \
-                     "$git_refs"
+                     "$osDuration" \
+                     "$osElapsed" \
+                     "$git_refs" \
+                     "$containerOS"
 
     return $status
 }
@@ -182,7 +225,6 @@ function build.dependencyInfo()
     # SIDE EFFECTS:
     #  - ensure any FROM_BASE is local
     #  - sets CBF_VERSION
-
     local -r config=${1:?}
 
 
@@ -191,17 +233,17 @@ function build.dependencyInfo()
 
     # resolve 'docker build.args' config (without reference to FROM_BASE) from docker-compose.yml
     set +u
-    eval echo $(jq '.build.args | del(.FROM_BASE)' <<< "$config")
+    eval echo $(jq '.build.args? | del(.FROM_BASE)' <<< "$config")
     set -u
 
 
     # container digest of layer that we are building on top of
-    local base=$(eval echo $( jq '.build.args.FROM_BASE' <<< "$config" ))
+    local base=$(eval echo $( jq '.build.args.FROM_BASE?' <<< "$config" ))
     if [ -z "$(docker images --format '{{.Repository}}:{{.Tag}}' --filter "reference=$base")" ]; then
         echo pulling parent image: "$base" >&2
         [ "$(docker image ls "$base" | awk 'NR != 1')" ] || docker pull "$base" >&2 || return 0
     fi
-    docker inspect "$base" | jq '.[].Id'          # digest sha from parent
+    docker inspect "$base" | jq '.[].Id?'          # digest sha from parent
 
 
     # anything dirty in workspace
@@ -235,7 +277,7 @@ function build.dependencyInfo()
 
     else
         # use parent's cbf.version
-        docker inspect "$base" | jq '.[].Config.Labels."container.cbf.version"?' | tr -d '"'
+        docker inspect "$base" | jq '.[].Config.Labels."version.cbf"?' | tr -d '"'
     fi
 }
 export -f build.dependencyInfo
@@ -272,7 +314,7 @@ function build.findIdsWithFingerprint()
 
     curl --silent \
          --unix-socket /var/run/docker.sock http://localhost/images/json \
-         | jq ".[]|select(.Labels.\"container.fingerprint\" == \"$fingerprint\").RepoTags[]" \
+         | jq ".[]|select(.Labels.\"container.fingerprint\" == \"$fingerprint\").RepoTags[]?" \
          | tr -d '"'
 }
 export -f build.findIdsWithFingerprint
@@ -291,7 +333,7 @@ function build.parentChild()
         [ "${definedOS:-}" ] && [ $(grep -cH "$os" <<< "$definedOS" | awk -F ':' '{print $2}') -eq 0 ] && continue
 
         (( index++ )) && echo -n ','
-        eval echo $(build.yamlToJson "$dc_yaml" | jq '.services[]|{parent: .build.args.FROM_BASE, image: .image}|tojson')
+        eval echo $(build.yamlToJson "$dc_yaml" | jq '.services[]|{parent: .build.args.FROM_BASE, image: .image}?|tojson')
 
     done < <(find . -mindepth 2 -maxdepth 2 -name 'docker-compose.yml' | awk '{print substr($0,3)}')
     echo ']'
@@ -333,6 +375,18 @@ export -f build.logger
 #----------------------------------------------------------------------------------------------
 function build.logToKafka()
 {
+    if [ -z "${KAFKA_BOOTSTRAP_SERVERS:-}" ]; then
+        echo 'KAFKA_BOOTSTRAP_SERVERS not defined. No metrics gathered'
+        return 0
+    fi
+
+    local kafka_producer="$(which kafkaProducer.py 2>/dev/null ||:)"
+    [ "$kafka_producer" ] || kafka_producer="$(dirname $(readlink -f "${BASH_SOURCE[0]}"))/kafkaProducer.py"
+    if [ -z "${kafka_producer:-}" ] || [ ! -e "$kafka_producer" ]; then
+        echo 'Unable to locate KAFKA_PRODUCER script. No metrics gathered'
+        return 0
+    fi
+
     local -r build_time=${1:-}
     local -r fingerprint=${2:-}
     local -r git_commit=${3:-}
@@ -342,6 +396,7 @@ function build.logToKafka()
     local -r elapsed=${7:-}
     local -r git_refs=${8:-}
     local -r status=${9:-}
+    local -r containerOS=${10:-}
 
     local -a refs=( $git_refs )
     # create our data array that gets logged
@@ -354,18 +409,18 @@ function build.logToKafka()
                           "$(json.encodeField "elapsed" "$elapsed")"
                           "$(json.encodeArray "refs" $(json.arrayValues "${refs[@]}"))"
                           "$(json.encodeField "status" "$status")"
+                          "$(json.encodeField "containerOS" "$containerOS")"
                         )
     if [ "${PROGRESS_LOG:-}" ] && [ -s "$PROGRESS_LOG" ]; then
         local -a progress_log=( $(< "$PROGRESS_LOG") )
         build_data+=("$(json.encodeArray "actions" $(json.arrayValues "${progress_log[@]}"))")
     fi
 
+
     # now log our data to kafka
-    local kafka_producer="$(which kafkaProducer.py 2>/dev/null ||:)"
-    [ "$kafka_producer" ] || kafka_producer="$(dirname $(readlink -f "${BASH_SOURCE[0]}"))/kafkaProducer.py"
-    "${kafka_producer}" --server "$KAFKA_BOOTSTRAP_SERVERS"                        \
-                        --topic 'container_build_data'                          \
-                        --value "$( json.encodeHash '--' "${build_data[@]}" )"
+    ("$kafka_producer" --server "$KAFKA_BOOTSTRAP_SERVERS"                     \
+                      --topic 'container_build_data'                          \
+                       --value "$( json.encodeHash '--' "${build_data[@]}" )") || :
     return 0
 }
 export -f build.logToKafka
@@ -373,7 +428,9 @@ export -f build.logToKafka
 #----------------------------------------------------------------------------------------------
 function build.module()
 {
-    local -i startTime=$(timer.getTimestamp)
+    local -r containerOS=${1:?}
+
+    local -i moduleStartTime=$(timer.getTimestamp)
 
     local compose_yaml="docker-compose.yml"
     [ -e "$compose_yaml" ] || return 0
@@ -390,7 +447,8 @@ function build.module()
     # generate fingerprint from all our dependencies
     local branch=$(git branch | grep '*' |  awk '{ gsub("[\\/@]","_",$2); print $2 }')
     export BASE_TAG="${BASE_TAG:-${branch}-latest}"
-    export CONTAINER_FINGERPRINT="$( sha256sum <<< $(build.dependencyInfo "$config") | cut -d' ' -f1 )"
+    local -r dependencies="$(build.dependencyInfo "$config")"
+    export CONTAINER_FINGERPRINT="$( sha256sum <<< "$dependencies" | cut -d' ' -f1 )"
 
     local taggedImage="$(eval echo $(jq '.image?' <<< $config))"
     taggedImage="${taggedImage%:*}:${BASE_TAG}"
@@ -407,6 +465,23 @@ function build.module()
     echo "    revision:       ${CONTAINER_ORIGIN:-}"
 
     [ "${CONTAINER_FINGERPRINT:-}" ] || trap.die "No base image found for '$taggedImage'. Unable to calculate fingerprint."
+
+    local depLog="${containerOS}.dependencies.log"
+    [ -e "$depLog" ] || touch "$depLog"
+    if [ $(grep -c "$CONTAINER_FINGERPRINT" "$depLog") -eq 0 ]; then
+        local offs=$(grep -n ' :: building ' "$depLog" | tail -2 | awk -F':' '{if(NR==1){print ($1-1)}}')
+        [ -z "$offs" ] || [ $offs -le 0 ] || sed -i -e "1,$offs d" "$depLog"
+        printf '%s :: building %s\n' "$(TZ='America/New_York' date)" "$taggedImage" >> "$depLog"
+        echo "    refs:           ${CONTAINER_GIT_REFS:-}" >> "$depLog"
+        echo "    commitId:       ${CONTAINER_GIT_COMMIT:-}" >> "$depLog"
+        echo "    repo:           ${CONTAINER_GIT_URL:-}" >> "$depLog"
+        echo "    fingerprint:    ${CONTAINER_FINGERPRINT:-}" >> "$depLog"
+        echo "    revision:       ${CONTAINER_ORIGIN:-}" >> "$depLog"
+        echo '  dependencies:' >> "$depLog"
+        local -a deps=( $dependencies )
+        printf '    %s\n' "${deps[@]}" >> "$depLog"
+        printf '\n\n\n' >> "$depLog"
+    fi
 
 
     # get name of image tagged with fingerprint
@@ -450,19 +525,22 @@ function build.module()
     else
         (build.updateContainer "$compose_yaml" "$taggedImage" "$actualImage" "$CONTAINER_ORIGIN") && status=$? || status=$?
     fi
-    local -i endTime=$(timer.getTimestamp)
-    local -i elapsed=$(( endTime - startTime ))
-    local duration="$(timer.fmtElapsed $elapsed)"
-    printf '    duration:       %s\n' "$duration"
+    local -i moduleEndTime=$(timer.getTimestamp)
+    local -i moduleElapsed=$(( moduleEndTime - moduleStartTime ))
+    local moduleDuration="$(timer.fmtElapsed $moduleElapsed)"
+    printf '    duration:       %s\n' "$moduleDuration"
+
     build.logToKafka "$CONTAINER_BUILD_TIME" \
                      "$CONTAINER_FINGERPRINT" \
                      "$CONTAINER_GIT_COMMIT" \
                      "$CONTAINER_GIT_URL" \
                      "$CONTAINER_ORIGIN" \
-                     "$duration" \
-                     "$elapsed" \
+                     "$moduleDuration" \
+                     "$moduleElapsed" \
                      "$CONTAINER_GIT_REFS" \
-                     "$status"
+                     "$status" \
+                     "$containerOS"
+
     [ $status -eq 9 ] && status=0
     return $status
 }
@@ -482,29 +560,6 @@ function build.pushImage()
 export -f build.pushImage
 
 #----------------------------------------------------------------------------------------------
-function build.resolveCbfReference()
-{
-    local cbf_version=${1:?}
-
-    local branch="${cbf_version:-}"
-    case "${branch:-}" in
-        master|integration)
-            ;;
-        latest)
-            branch='dev'
-            ;;
-        *)
-            echo '$branch'
-            return 0
-            ;;
-    esac
-
-#    echo -n 'v0.0-00-g'
-#    wget -qO- "https://api.github.com/repos/ballab1/container_build_framework/git/refs/heads/${branch}" | jq '.object.sha' | awk '{substr($1,2,8)}'
-}
-export -f build.resolveCbfReference
-
-#----------------------------------------------------------------------------------------------
 function build.updateContainer()
 {
     local -r compose_yaml=${1:?}
@@ -515,7 +570,7 @@ function build.updateContainer()
     if [ "${ALWAYS_BUILD:-0}" = 0 ]; then
         build.logger "checking for local $taggedImage with the correct fingerprint"
         local -a images
-        mapfile -t images < <(build.findIdsWithFingerprint "$CONTAINER_FINGERPRINT")
+        mapfile -t images < <(build.findIdsWithFingerprint "$CONTAINER_FINGERPRINT" | grep -v '<none>:<none>' || :)
         if [ ${#images[*]} -gt 0 ]; then
             build.logger "${taggedImage} has not changed."
             local -i doPush=0
@@ -529,6 +584,7 @@ function build.updateContainer()
             [ $doPush -eq 0 ] || build.pushImage "$taggedImage"
             return 9
         fi
+
 
         # check if there is an image in the registry with the correct fingerprint
         build.logger "checking if $actualImage is available in registry"
@@ -571,7 +627,11 @@ function build.verifyModules()
 
     local -a modules=( $(grep -Ev '^\s*#' "$(versions.DIRECTORY)/${containerOS}.modules") )
     for defMod in "${modules[@]}"; do
-        [ -e "$skip_builds_file" ] && [ $(grep -cHE "^$defMod" "$skip_builds_file" 2>/dev/null | cut -d':' -f2) -gt 0 ] && continue
+        [ -d "$defMod" ] && [ -e "${defMod}/docker-compose.yml" ] || continue
+        [ -e "$skip_builds_file" ] && [ $(grep -cHE "^$defMod\s*$" "$skip_builds_file" 2>/dev/null | cut -d':' -f2) -gt 0 ] && continue
+
+        local definedOS=$(grep -E '^#\s+containerOS:\s+' "${defMod}/docker-compose.yml" ||:)
+        [ "${definedOS:-}" ] && [ $(grep -cH "$containerOS" <<< "$definedOS" | awk -F ':' '{print $2}') -eq 0 ] && continue
 
         if [ "${#requestedModules[*]}" -eq 0 ]; then
             echo "$defMod"

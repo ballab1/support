@@ -1,6 +1,18 @@
 TODO
 ```
-deploy docker-compose.yml for prod
+
+add docker-compose checking to deploy
+error in uid_gid.validateUser when passed 2222:2222
+occasional error at registry.bashlib:175
+	    for digest in "${!digests[@]}"; do
+		tags=( ${digests[$digest]} )
+		createTime="$(registry.createTime "$name" "${tags[0]}" | tr -d '"')"
+		[ "$createTime" != '                      ' ] || createTime='null'
+		[ "${times[$createTime]:-}" ] || times[$createTime]="$digest"
+	    done
+
+
+
 build dependencies
 nginx index.html
 nagios:
@@ -38,14 +50,6 @@ CBF:
         - should never unset
         - should check if specified version same as installed version (no point in wget)
         - base_container does not have a dependency on CBF
-        - query github for CBF reference when it is downloaded
-        	- make something up if it is included
-        	- add reference to directories
-                  curl -k -u <...>:<...> -X GET https://api.github.com/repos/ballab1/support/branches
-        	- add reference to labels
-                  curl -k -u <...>:<...> -X GET https://api.github.com/repos/ballab1/support/tags
-        	- if not downloaded, use parent to add to labels
-    Track created users for runtime changes
 
 builds
     quality ladder:  dev -> staging -> master
@@ -62,7 +66,6 @@ builds
              https://github.com/docker-library/redis/blob/e95c0cf4ffd9a52aa48d05b93fe3b42069c05032/5.0-rc/32bit/Dockerfile
     Separate build, package and deploy/run actions
         Fix up docker dependency script
-    when ENTRYPOINT is not defined, and CMD is, how does startup behave?
 
 enhancements:
     setup elasticsearch
@@ -110,6 +113,11 @@ enhancements:
         recipes: 
             add side menu for categories filtering
             backup needs more intelligence + moved to jenkinsfile
+    registry
+        scan and reduce all entries to max
+        scan and remove fingerprints 'from' n-x repos unless tags > 1
+        remove specific tag (needs testing)
+        docker-dependents: show labels for images
     jenkins
         implement jenkins jobs as containers
         make fancy report for 'Jenkins Uptime Pipeline' and export data to kafka
@@ -124,6 +132,7 @@ future development
 Done
 =============================================================
 ```
+deploy docker-compose.yml for prod
 Kafka broker/zookeeper issues
 Grafana update
 mysql update

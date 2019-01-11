@@ -14,7 +14,7 @@ function docker.UID()
 }
 export -f docker.UID
 
-#############################################################################
+#----------------------------------------------------------------------------------------------
 function docker.GID()
 {
     local -r group_name="${1:-docker}"
@@ -24,7 +24,7 @@ function docker.GID()
 }
 export -f docker.GID
 
-#############################################################################
+#----------------------------------------------------------------------------------------------
 function docker.containerVersion()
 {
     local -r line=${1:?}
@@ -36,7 +36,7 @@ function docker.containerVersion()
         [ $(jq '.image' <<< "$service" | tr -d '"') = "$image" ] || continue
 
         local container=$(jq '.container_name' <<< "$service" | tr -d '"')
-        local version=$(docker inspect "$container" | jq '.[].Config.Labels."container.origin"' | tr -d '"')
+        local version=$(docker inspect "$container" | jq '.[].Config.Labels."container.fingerprint"' | tr -d '"')
         [ "$version" != 'null' ] || break
         local newimage="$(docker inspect "$container" | jq '.[].Config.Image' | tr -d '"')"
         newimage="${newimage%:*}:$version"
@@ -108,12 +108,12 @@ function docker.rmOldContainers()
 }
 export -f docker.rmOldContainers
 
-#----------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------------
 function docker.services()
 {
     local -r dc_yaml="${1:?'no docker-compose.yml specified'}"
 
-    docker.yamlToJson "$dc_yaml" | jq '.services|keys[]' | tr -d '"'
+    docker.yamlToJson "$dc_yaml" | jq '.services|keys[]?' | tr -d '"'
 }
 export -f docker.services
 
@@ -123,7 +123,7 @@ function docker.showProcessReport()
     local -r opts=${1:-}
 
     local fmt='table {{.Names}}\t{{.ID}}\t{{.Size}}\t{{.Status}}\t{{.RunningFor}}'
-    [ "opts" ] || fmt="$fmt"'\t{{.Ports}}'
+    [ "$opts" ] || fmt="$fmt"'\t{{.Ports}}'
 
     # show process report
     echo

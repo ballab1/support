@@ -8,7 +8,7 @@
 function term.__init()
 {
     declare -rx LOG=term.log
-    declare -rx TERM_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/properties" && pwd )"
+    declare -rx TERM_DIR="$(readlink -f "$( dirname "${BASH_SOURCE[0]}" )/properties")"
 }
 
 #############################################################################
@@ -30,7 +30,7 @@ function term.decode()
     local -r fg=${1:?"Input parameter 'fg' must be passed to 'function ${FUNCNAME[0]}()'"}
     local -r bg=${2:-}
 
-    if [ -z "$bg" ]; then
+    if [ -z "${bg:-}" ]; then
         case "$fg" in
              task)     term.codes 'FOREGROUND' 'lt_cyan';;
              info)     term.codes 'FOREGROUND' 'lt_green';;
@@ -83,7 +83,16 @@ function term.propertiesDir()
 {
     local -r file=${1:?"Input parameter 'file' must be passed to 'function ${FUNCNAME[0]}()'"}
 
-    for _props_dir in "${TERM_DIR:-}" "$(crf.LIB)" "$(cbf.CRF_BASE)" "$(cbf.CRT_BASE)" "/usr/local/crf" "."; do
+    local -a search_path=("${TERM_DIR:-}"
+                          "$(crf.LIB)"
+                          "$(cbf.CRF_BASE)"
+                          "$(cbf.CRT_BASE)"
+                          "$(readlink -f "$( dirname "${BASH_SOURCE[0]}" )/properties" 2>/dev/null ||:)"
+                          "/usr/local/crf"
+                          "."
+                         )
+
+    for _props_dir in "${search_path[@]}"; do
         [ -z "$_props_dir" ] && continue
 
         if [ -f "${_props_dir}/bashlib/properties/$file" ]; then

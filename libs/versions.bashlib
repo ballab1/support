@@ -6,19 +6,22 @@
 #
 #############################################################################
 
+export VERSIONS_INFO_FILE
+
 #----------------------------------------------------------------------------------------------
 function versions.COMMIT()
 {
-    lib.getProperty "${FUNCNAME[0]##*.}" "${1:-$VERSIONS_INFO_FILE}"
+    local file="${1:-$VERSIONS_INFO_FILE}"
+    lib.getProperty "${FUNCNAME[0]##*.}" "$file"
 }
 export -f versions.COMMIT
 
 #----------------------------------------------------------------------------------------------
 function versions.set_VERSIONS_INFO_FILE()
 {
-    : ${VERSIONS_INFO_FILE:=$(readlink -f ${1:?})}
-    export VERSIONS_INFO_FILE
-    export _VERSIONS_DIRECTORY="$(versions.DIRECTORY "$VERSIONS_INFO_FILE")"
+    local file="${1:-$VERSIONS_INFO_FILE}"
+    [ "${VERSIONS_INFO_FILE:-}" ] || VERSIONS_INFO_FILE="$(readlink -f "$file")"
+    [ "${_VERSIONS_DIRECTORY:-}" ] || _VERSIONS_DIRECTORY="$(versions.DIR "$VERSIONS_INFO_FILE")"
     export _VERSIONS_REPO="$(versions.REPO "$VERSIONS_INFO_FILE")"
 }
 export -f versions.set_VERSIONS_INFO_FILE
@@ -29,16 +32,23 @@ function versions.data()
     versions.set_VERSIONS_INFO_FILE ${1:?}
     local commit=${2:-}
 
-    local -r versions_dir="$(versions.DIRECTORY)"
-
+    local -r versions_dir="$(versions.DIR)"
     if [ ! -d "$versions_dir" ]; then
-#        mkdir -p "$versions_dir" || trap.die 'no version information available'
+        mkdir -p "$(dirname "$versions_dir")" || trap.die 'no version information available'
         git clone --quiet "$(versions.REPO)" "$versions_dir"
     fi
 
     # ensure version info is up-to-date
     if [ "${commit,,:-}" != 'latest' ]; then
-        ( cd "$versions_dir"; git checkout --quiet "$(versions.COMMIT)" )
+        ( cd "$versions_dir"
+          if ! git checkout --quiet "$(versions.COMMIT)" ; then
+              cd ..
+              rm -rf "$versions_dir"
+              git clone --no-checkout "$(versions.REPO)" "$versions_dir"
+              cd "$versions_dir"
+              git checkout --quiet "$(versions.COMMIT)"
+          fi
+        )
         return 0
     fi
 
@@ -52,23 +62,30 @@ export -f versions.data
 #----------------------------------------------------------------------------------------------
 function versions.DIRECTORY()
 {
-    echo ${_VERSIONS_DIRECTORY:=$(readlink -f $(versions.DIR "${1:-$VERSIONS_INFO_FILE}"))}
+    if [ -z "$_VERSIONS_DIRECTORY" ]; then
+        local file="${1:-$VERSIONS_INFO_FILE}"
+        _VERSIONS_DIRECTORY:=$( readlink -m $(versions.DIR "$file") )
+    fi
+    echo "$_VERSIONS_DIRECTORY"
 }
 export -f versions.DIRECTORY
 
 #----------------------------------------------------------------------------------------------
 function versions.DIR()
 {
-    local dir=$(lib.getProperty "${FUNCNAME[0]##*.}" "${1:-$VERSIONS_INFO_FILE}")
-    [ "${dir:0:1}" = '/' ] || dir="$(dirname "${1:-$VERSIONS_INFO_FILE}")/$dir"
-    echo $dir
+    local file="${1:-$VERSIONS_INFO_FILE}"
+    local dir=$(lib.getProperty "${FUNCNAME[0]##*.}" "$file")
+    [ "${dir:0:1}" = '/' ] || dir="$( dirname "$file" )/$dir"
+    echo $(readlink -m "$dir")
 }
 export -f versions.DIR
 
 #----------------------------------------------------------------------------------------------
 function versions.FILE()
 {
-    readlink -f "$(versions.DIRECTORY ${2:-$VERSIONS_INFO_FILE})/${1:?}"
+    local -r containerOS=${1:?}
+    local file="${2:-$VERSIONS_INFO_FILE}"
+    readlink -m "$(versions.DIRECTORY "$file")/$containerOS"
 }
 export -f versions.FILE
 
@@ -92,7 +109,8 @@ export -f versions.get
 #----------------------------------------------------------------------------------------------
 function versions.REPO()
 {
-    echo ${_VERSIONS_REPO:=$(lib.getProperty "${FUNCNAME[0]##*.}" "${1:-$VERSIONS_INFO_FILE}")}
+    local file="${1:-$VERSIONS_INFO_FILE}"
+    echo ${_VERSIONS_REPO:=$(lib.getProperty "${FUNCNAME[0]##*.}" "$file")}
 }
 export -f versions.REPO
 
