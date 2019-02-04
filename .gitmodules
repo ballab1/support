@@ -31,6 +31,9 @@
 [submodule "kafka-manager"]
     path = kafka-manager
     url = ../kafka-manager.git
+[submodule "kafka-rest"]
+    path = kafka-rest
+    url = ../kafka-rest
 [submodule "kafka-zookeeper"]
     path = kafka-zookeeper
     url = ../kafka-zookeeper.git
