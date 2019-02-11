@@ -36,9 +36,10 @@ export -f git.branchOrTagName
 function git.checkout()
 {
     local -r commit=${1:?}
-    local -r flags=${2:-}
+    shift
+    local -r flags=( "$@" )
 
-    git checkout $flags "$commit"
+    git checkout ${flags[*]:-} "$commit"
 }
 export -f git.checkout
 
@@ -47,9 +48,10 @@ function git.clone()
 {
     local -r repo=${1:?}
     local -r dir=${2:-}
-    local -r flags=${3:-}
+    shift 2
+    local -r flags=( "$@" )
 
-    git clone $flags "$repo" "$dir"
+    git clone ${flags[*]:-} -- "$repo" ${dir:-}
 }
 export -f git.clone
 
@@ -93,7 +95,7 @@ function git.cryptUnlock()
 {
     local -r key=${1:-}
 
-    git crypt unlock "$key"
+    git crypt unlock ${key:-}
 }
 export -f git.cryptUnlock
 
@@ -129,9 +131,10 @@ function git.lsTree()
 {
     local -r tree_ish=${1:?}
     local -r path=${2:?}
-    local -r flags=${3:-}
+    shift 2
+    local -r flags=( "$@" )
 
-    git ls-tree $flags -- "$branch"
+    git ls-tree ${flags[*]:-} -- "$tree_ish" "$path"
 }
 export -f git.lsTree
 
@@ -148,9 +151,9 @@ export -f git.origin
 #----------------------------------------------------------------------------------------------
 function git.pull()
 {
-    local -r flags=${1:-}
+    local -r flags=( "$@" )
 
-    git pull $flags
+    git pull ${flags[*]:-}
 }
 export -f git.pull
 
@@ -172,9 +175,9 @@ export -f git.remoteUrl
 #----------------------------------------------------------------------------------------------
 function git.status()
 {
-    local -r flags=${1:-}
+    local -r flags=( "$@" )
 
-    git status $flags
+    git status ${flags[*]:-}
 }
 export -f git.status
 

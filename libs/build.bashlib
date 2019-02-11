@@ -133,15 +133,15 @@ function build.containersForOS()
     local osStartTime=$(timer.getTimestamp)
 
     export CBF_VERSION
-    export CFG_GITHUB_EMAIL=''
-    export CFG_GITHUB_HUBOT_TOKEN=''
-    export CFG_GITHUB_JENKINS_EMAIL=''
-    export CFG_GITHUB_JENKINS_NAME=''
-    export CFG_GITHUB_JENKINS_TOKEN=''
-    export CFG_GITHUB_JENKINS_USER=''
-    export CFG_GITHUB_NAME=''
-    export CFG_GITHUB_TOKEN=''
-    export CFG_GITHUB_USER=''
+    export CFG_EMAIL=''
+    export CFG_HUBOT_TOKEN=''
+    export CFG_JENKINS_EMAIL=''
+    export CFG_JENKINS_NAME=''
+    export CFG_JENKINS_TOKEN=''
+    export CFG_JENKINS_USER=''
+    export CFG_NAME=''
+    export CFG_TOKEN=''
+    export CFG_USER=''
     export CFG_PASS=''
     export CFG_SLACK_HUBOT_TOKEN=''
     export CFG_USER=''
@@ -258,7 +258,7 @@ function build.dependencyInfo()
             *)
                 echo "$line";;
         esac
-    done < <(git.status '--porcelain')
+    done < <(git.status --porcelain)
 
     # add our cbf version
     local localDir
@@ -270,7 +270,7 @@ function build.dependencyInfo()
 
     elif [ $(basename "$(pwd)") = 'base_container' ]; then
         if [ -d "../container_build_framework" ]; then
-            export CBF_VERSION=$(git.origin '../container_build_framework')
+            export CBF_VERSION=$(git.origin ../container_build_framework)
         elif [ "${CBF_VERSION:-}" ]; then
             :
         else
@@ -647,6 +647,19 @@ function build.verifyModules()
     done
 }
 export -f build.verifyModules
+
+#----------------------------------------------------------------------------------------------
+function build.wrapper()
+{
+    if [ -z "${BUILD_URL:-}" ]; then
+        echo 'build.all "$@" 2>&1 | tee /opt/bld.log'
+        build.all "$@" 2>&1 | tee /opt/bld.log ||:
+    else
+        echo 'build.all "$@"'
+        build.all "$@"
+    fi
+}
+export -f build.wrapper
 
 #----------------------------------------------------------------------------------------------
 function build.yamlToJson()

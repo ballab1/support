@@ -20,7 +20,7 @@ function deploy.__initGlobals()
 
     # setup environment
 
-    export CONFIG_DIR="${base_dir}/config"
+    export CONFIG_DIR="${base_dir}"
     readonly CONFIG_DIR
 
 
@@ -64,8 +64,8 @@ function deploy.__initGlobals()
     CFG_USER="${CFG_USER%@*}"
     readonly CFG_USER
 
-    export CFG_GITHUB_NAME="${CFG_GITHUB_NAME:-$(git.userName)}"
-    readonly CFG_GITHUB_NAME
+    export CFG_NAME="${CFG_GITHUB_NAME:-$(git.userName)}"
+    readonly CFG_NAME
 
     export CFG_EMAIL="${CFG_EMAIL:-$(git.userEmail)}"
     readonly CFG_EMAIL
@@ -297,7 +297,7 @@ function deploy.populateSecrets()
 
     elif git.lsRemote "${CFG_USER_SECRETS}" &> /dev/null ; then
         mkdir -p "$(dirname "$secrets_dir")"
-        git.clone "$CFG_USER_SECRETS" "$secrets_dir" '--quiet'
+        git.clone "$CFG_USER_SECRETS" "$secrets_dir" --quiet
         if [ "$(grep -cH 'git-crypt' "${secrets_dir}/.gitattributes" 2>/dev/null | cut -d ':' -f2)" -gt 0 ]; then
             [ -e "${CRYPT_FILE:-}" ] || trap.die "secrets are encoded, but CRYPT_FILE: '${CRYPT_FILE:-}' does not exist"
             (cd "$secrets_dir"; git.cryptUnlock )
@@ -446,7 +446,7 @@ function deploy.updateDockerComposeYaml()
     local -r grafana_uid=${5:-$GRAFANA_UID}
     local -r email=${6:-$CFG_EMAIL}
     local -r user=${7:-$CFG_USER}
-    local -r github_name=${5:-$CFG_GITHUB_NAME}
+    local -r github_name=${5:-$CFG_NAME}
 
     cp "${CONFIG_DIR}/skip.wait" "${WORKSPACE_DIR}/skip.wait"
 
@@ -475,7 +475,7 @@ function deploy.updateDockerComposeYaml()
               -e 's|user:\s+"?1000"?|user: "'"${grafana_uid}"'"|' \
              "$dc_yaml"
     [ -z "${CFG_EMAIL:-}" ]       || sed -i -r -e 's|\$\{CFG_EMAIL:-\}|${CFG_EMAIL:-'"${email}"'}|g' "$dc_yaml"
-    [ -z "${CFG_GITHUB_NAME:-}" ] || sed -i -r -e 's|\$\{CFG_GITHUB_NAME:-\}|${CFG_GITHUB_NAME:-'"${github_name}"'}|g' "$dc_yaml"
+    [ -z "${CFG_NAME:-}" ] || sed -i -r -e 's|\$\{CFG_GITHUB_NAME:-\}|${CFG_GITHUB_NAME:-'"${github_name}"'}|g' "$dc_yaml"
     [ -z "${CFG_USER:-}" ]        || sed -i -r -e 's|\$\{CFG_USER:-\}|${CFG_USER:-'"${user}"'}|g' "$dc_yaml"
 
 }
