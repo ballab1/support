@@ -1,6 +1,6 @@
-[submodule "alpinefull"]
-    path = alpinefull
-    url = ../alpinefull.git
+[submodule "build_container"]
+    path = build_container
+    url = ../build_container.git
 [submodule "base_container"]
     path = base_container
     url = ../base_container.git
@@ -25,12 +25,15 @@
 [submodule "jenkins"]
     path = jenkins
     url = ../jenkins.git
-[submodule "kafka-broker"]
-    path = kafka-broker
-    url = ../kafka-broker.git
+[submodule "kafka"]
+	path = kafka
+    url = ../kafka.git
 [submodule "kafka-manager"]
     path = kafka-manager
     url = ../kafka-manager.git
+[submodule "kafka-rest"]
+    path = kafka-rest
+    url = ../kafka-rest
 [submodule "kafka-zookeeper"]
     path = kafka-zookeeper
     url = ../kafka-zookeeper.git
@@ -91,6 +94,3 @@
 [submodule "zenphoto"]
     path = zenphoto
     url = ../zenphoto.git
-[submodule "versions"]
-    path = versions
-    url = ../versions

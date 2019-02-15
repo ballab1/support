@@ -1,6 +1,6 @@
 #!/bin/bash
 
-declare fn=registry.deleteImages
+declare fn=build.wrapper
 if [ "$(env | grep "BASH_FUNC_${fn}%%")" ]; then
     TOP=/opt
 else
@@ -8,4 +8,5 @@ else
     source "${TOP}/libs/loadLibraries.sh"
 fi
 
-"$fn" "$@"
+: ${BASE_TAG:=latest}
+"$fn" "$TOP" "$@"

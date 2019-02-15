@@ -6,8 +6,8 @@ set -o nounset
 set -o pipefail
 IFS=$'\n\t'
 declare -r CBF_URL="https://github.com/ballab1/container_build_framework/archive"
-declare CBF_DIR_TEMP
-declare CHAIN_EXIT_HANDLER
+export CBF_DIR_TEMP
+export CHAIN_EXIT_HANDLER
 
 
 function __init.die() {
@@ -16,7 +16,7 @@ function __init.die() {
 }
 
 function __init.loader() {
-    __init.loadCBF
+#    __init.loadCBF
 
     # only load libraries from bashlib (not below). Sort to be deterministic
     local __libdir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
@@ -24,14 +24,19 @@ function __init.loader() {
     mapfile -t __libs < <(find "$__libdir" -maxdepth 1 -mindepth 1 -name '*.bashlib' | sort)
     if [ ${#__libs[*]} -gt 0 ]; then
         echo -en "    loading project libraries from $__libdir: \e[35m"
+        [ "${DEBUG:-}" ] && echo
         for __lib in "${__libs[@]}"; do
-            echo -n " $(basename "$__lib")"
+            if [ "${DEBUG:-}" ]; then
+                echo "        $__lib"
+            else
+                echo -n " $(basename "$__lib")"
+            fi
             source "$__lib"
         done
         echo -e '\e[0m'
         unset __lib
     fi
-    [ -e "${__libdir}/init.cache" ] && source "${__libdir}/init.cache"
+    [ ! -e "${__libdir}/init.cache" ] || source "${__libdir}/init.cache"
 }
 
 function __init.loadCBF() {
@@ -90,15 +95,18 @@ function __init.loadCBF() {
 }
 
 function __init.myExitHandler() {
-    rmTmpDir() {
+    __init.rmTmpDir() {
         local -i status=$?
-        [ ! -d "$CBF_DIR_TEMP" ] || rm -rf "$CBF_DIR_TEMP"
-        [ -z "${CHAIN_EXIT_HANDLER:-}" || "$CHAIN_EXIT_HANDLER"
-        echo 'all done'
+        [ -z "${CBF_DIR_TEMP:-}" ] || [ ! -d "$CBF_DIR_TEMP" ] || rm -rf "$CBF_DIR_TEMP"
+        [ -z "${CHAIN_EXIT_HANDLER:-}" ] || "$CHAIN_EXIT_HANDLER"
         exit $status
     }
     CHAIN_EXIT_HANDLER=$(trap -p EXIT | awk '{print $3}' | tr -d "'")
     trap __init.rmTmpDir EXIT
 }
 
-__init.loader >&2
+if [ "${DEBUG:-}" ]; then
+    __init.loader >&2
+else
+    __init.loader &> /dev/null
+fi

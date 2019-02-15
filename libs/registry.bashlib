@@ -7,33 +7,25 @@
 export http_code
 
 #----------------------------------------------------------------------------------------------
-function registry.canPush()
-{
-    local -r revision=${1:?}
-
-    [ "${DOCKER_ALWAYS_PUSH:-}" ] && return 0
-    [[ "$revision" != *dirty ]] || return 1
-
-#    [ "$CONTAINER_GIT_REFS" = 'master' ]
-
-    return 0
-}
-export -f registry.canPush
-
-#----------------------------------------------------------------------------------------------
 function registry.catalog()
 {
     local -a entries=()
-    registry.GET --silent "$(registry.URL)/_catalog" | jq '.repositories| sort[]? ' | tr -d '"'
+    registry.GET --silent "$(registry.URL)/_catalog" | jq -r '.repositories| sort[]? ' || echo "Failed to get $(registry.URL)/_catalog" >&2
 }
 export -f registry.catalog
 
 #----------------------------------------------------------------------------------------------
 function registry.credentials()
 {
-    local -r user=${1:-"${USERNAME:-$USER}"}
+    if [ "${_REGISTRY_CREDENTIALS:-}" ]; then
+        echo "${_REGISTRY_CREDENTIALS:=${user}:$password}"
+    else
+        local -r user="${1:-${USERNAME:-$USER}}"
+        local  password="${!user:-}"
+        [ "${password:-}" ] || password="$(lib.getProperty "$user" "$( registry.secretsFile )")"
 
-#    echo "$user:$(lib.getProperty "$user" "$( registry.propertiesFile )")"
+        echo "${_REGISTRY_CREDENTIALS:=${user}:$password}"
+    fi
 }
 export -f registry.credentials
 
@@ -41,30 +33,78 @@ export -f registry.credentials
 function registry.createTime()
 {
     local -r name=${1:?}
-    local -r tag=${2:?}
+    local -r digest=${2:?}
+    shift 2
+    local -ra tags=( "$@" )
 
-    local -r manifests="$(registry.manifest "$name" "$tag" )"
-    if [ -z "$manifests" ] || [[ $manifests =~ MANIFEST_INVALID ]]; then
-        echo '                      '
-    else
-        (jq '[ .history[].v1Compatibility|fromjson.created | sub("\\.\\d+Z"; "Z") | fromdate] | max | todate' ) <<< "$manifests"
+    local -r manifests="$(registry.manifest "$name" "${tags[0]}")"
+    if [ "$manifests" ] && [[ ! $manifests =~ MANIFEST_INVALID ]]; then
+        local createTime=$(jq -r 'try [ .history[].v1Compatibility|fromjson.created | sub("\\.\\d+Z"; "Z") | fromdate] | max | todate' <<< "$manifests")
+        if [ "$createTime" ]; then
+            echo "$createTime"
+            return 0
+        fi
     fi
+
+    {
+    echo -en '    \e[93m'
+    echo "unable to parse time from manifest returned for $name:${tags[0]}"
+    echo "        digest: $digest"
+    if [ "${#tags[*]}" -gt 1 ]; then
+        echo '        other tags: '"${tags[1]}"
+        local -i i=2
+        while [ $i -lt "${#tags[*]}" ]; do
+            echo '                    '"${tags[$i]}"
+        done
+    fi
+    echo "    recommend verifying that this image can be downloaded using 'docker pull $name:${tags[0]}'"
+    echo '    if this image cannot be downloaded, it should be deleted from the repository'
+    echo -e '\e[0m'
+    } >&2
 }
 export -f registry.createTime
 
 #----------------------------------------------------------------------------------------------
-function registry.DELETE()
+function registry.curateRepository()
 {
-    registry.io --request DELETE "$@"
+    local name=${1:?}
+
+    [ $(awk -F '/' '{print NF}' <<< "$name") -gt 1 ] || trap.die 'top level repository cannot be curated'
+
+    local -a catalog
+    mapfile -t catalog < <(registry.catalog | grep "$name" | sort)
+    [ "${#catalog[*]}" -gt 0 ] || trap.die 'invalid repository passed to registry.curateRepository'
+
+    # remove latest to keep all working images
+    unset 'catalog[${#catalog[*]}-1]'
+
+    [ "${#catalog[*]}" -gt 0 ] || return 0
+
+    for name in "${#catalog[@]}"; do
+        local digests="$(registry.digests "$name")"
+        [ "$digests" ] || continue
+
+        if [ "$(jq '.|length' <<< "$digests")" -gt 1 ]; then
+            local json createTime digest
+            local -a tags
+
+            # remove all but last image
+            for ((i=0; i < $(jq '.|length -1' <<< "$digests"); i++)); do
+                json=$(jq ".[$i]" <<< "$digests")
+                digest=$(jq -r '.digest' <<< "$json")
+                registry.deleteImage "$name" "$digest"
+            done
+        fi
+    done
 }
-export -f registry.DELETE
+export -f registry.curateRepository
 
 #----------------------------------------------------------------------------------------------
-function registry.GET()
+function registry.DELETE()
 {
-    registry.io --request GET "$@"
+    registry.io --request DELETE "$@" || return 1
 }
-export -f registry.GET
+export -f registry.DELETE
 
 #----------------------------------------------------------------------------------------------
 function registry.deleteImage()
@@ -72,9 +112,8 @@ function registry.deleteImage()
     local -r name=${1:?}
     local -r digest=${2:?}
 
-    [ "$digest" ] || trap.die 'invalid digest passed to registry.delete'
     echo -n "deleting ${name} - $digest  "
-    registry.DELETE --silent --show-error --write-out '%{http_code}\n' "$(registry.URL)/${name}/manifests/$digest"
+    registry.DELETE --silent --show-error --write-out '%{http_code}\n' "$(registry.URL)/${name}/manifests/$digest" || echo "Failed to delete $name:$digest"
 #    echo "http_code: ${http_code:-}"
 }
 export -f registry.deleteImage
@@ -103,6 +142,7 @@ function registry.deleteImages()
 
         else
             eval tags=( $(registry.tags "$id") )
+            [ "${#tags[*]}" -gt 0 ] || continue
             for digest in $(printf '%s\n' "${tags[@]}" | sort -u); do
                 registry.deleteImage "$id" "$digest"
             done
@@ -120,7 +160,7 @@ function registry.digest()
     local -r digest="$(registry.GET --header "Accept: application/vnd.docker.distribution.manifest.v2+json" \
                                     --silent \
                                     --head \
-                                    "$(registry.URL)/${name}/manifests/$(tr -d '"' <<< "$tag")" )"
+                                    "$(registry.URL)/${name}/manifests/$(tr -d '"' <<< "$tag")" || echo "Failed to get $(registry.URL)//${name}/manifests/$tag" >&2)"
 
     [ -z "$digest" ] || ( awk '{gsub(/\r/,"");if ($1 == "Docker-Content-Digest:") {print $2}}' ) <<< "$digest"
 }
@@ -131,11 +171,11 @@ function registry.digests()
 {
     local -r name=${1:?}
 
-    local -r manifest=$(registry.GET --silent "$(registry.URL)/${name}/tags/list")
+    local -r manifest=$(registry.GET --silent "$(registry.URL)/${name}/tags/list" || echo "Failed to get $(registry.URL)/${name}/tags/list" >&2)
     [ "${manifest:-}" ] || return 0
 
     local -a tags
-    mapfile -t tags < <(jq '.tags[]?' <<< "$manifest" | tr -d '"')
+    mapfile -t tags < <(jq -r '.tags[]?' <<< "$manifest")
     [ "${#tags[*]}" -gt 0 ] || return 0
 
 
@@ -146,11 +186,12 @@ function registry.digests()
         digests["$digest"]="$(echo -en "${tag}\n${digests[$digest]:-}")"
     done
 
+
     local -A times=()
     for digest in "${!digests[@]}"; do
         tags=( ${digests[$digest]} )
-        createTime="$(registry.createTime "$name" "${tags[0]}" | tr -d '"')"
-        [ "$createTime" != '                      ' ] || createTime='null'
+        createTime="$(registry.createTime "$name" "$digest" "${tags[@]}" )"
+        [ "${createTime:-}" ] || continue
         [ "${times[$createTime]:-}" ] || times[$createTime]="$digest"
     done
 
@@ -166,7 +207,8 @@ function registry.digests()
         echo -n '"tags":['
         tags=( ${digests[$digest]} )
         tag="${tags[0]}"
-        for ((i=1; i < ${#tags[*]}; i++)); do
+        for i in ${!tags[@]}; do
+             [ $i -ne 0 ] || continue
              if [ "${#tag}" -gt "${#tags[i]}" ]; then
                  echo -n '"'"${tag}"'",'
                  tag="${tags[i]}"
@@ -181,10 +223,16 @@ function registry.digests()
 export -f registry.digests
 
 #----------------------------------------------------------------------------------------------
+function registry.GET()
+{
+    registry.io --request GET "$@" || return 1
+}
+export -f registry.GET
+
+#----------------------------------------------------------------------------------------------
 function registry.io()
 {
-#    local -r response=$(curl --insecure --user "$(registry.credentials "$(registry.USER)"  "$@")
-    local -r response=$(curl --insecure "$@")
+    local -r response=$(custom.io "$@")
 
     # strip http_code
     if grep '--write-out' <<<"$*" &>/dev/null ;then
@@ -192,7 +240,8 @@ function registry.io()
         response="${response%\}*}"'}'
     fi
 
-    if [[ "$response" != '{"errors":['* ]]; then
+    local -r pattern='\{\n*[[:space:]]*"errors"[[:space:]]*:[[:space:]]*\['
+    if [[ ! $response =~ $pattern ]]; then
         echo "$response"
         return 0
     fi
@@ -202,14 +251,17 @@ function registry.io()
 
     local curl_cmd=( 'curl' '--insecure' "$@" )
     echo
-    term.log "***ERROR: failure to complete registry request
+(   term.log "***ERROR: failure to complete registry request
     command:       $(printf '%s ' "${curl_cmd[@]}")
     error code:    $(jq '.code?' <<< "$errors")
     error message: $(jq '.message?' <<< "$errors")
     error details: $(jq '.detail?' <<< "$errors")
     http_code:     ${http_code:-}
     " 'warn' >&2
-
+    )
+    if [ $? -ne 0 ]; then
+        echo "command:       $(printf '%s ' "${curl_cmd[@]}")\\n    error code:    $errors" >&2
+    fi
     return 1
 }
 export -f registry.io
@@ -220,7 +272,7 @@ function registry.layer()
     local -r name=${1:?}
     local -r digest=${2:?}
 
-    registry.GET --silent "$(registry.URL)/${name}/blobs/${digest}"
+    registry.GET --silent "$(registry.URL)/${name}/blobs/${digest}" || echo "Failed to get $(registry.URL)/${name}/blobs/${digest}" >&2
 }
 export -f registry.layer
 
@@ -230,14 +282,14 @@ function registry.manifest()
     local -r name=${1:?}
     local -r reference=${2:?}
 
-    registry.GET --silent "$(registry.URL)/${name}/manifests/${reference}"
+    registry.GET --silent "$(registry.URL)/${name}/manifests/${reference}" || echo "Failed to get $(registry.URL)/${name}/manifests/${reference}" >&2
 }
 export -f registry.manifest
 
 #----------------------------------------------------------------------------------------------
 function registry.POST()
 {
-    registry.io --request POST "$@"
+    registry.io --request POST "$@" || return 1
 }
 export -f registry.POST
 
@@ -252,9 +304,9 @@ function registry.printTags()
 
     for ((i=0; i < $(jq '.|length' <<< "$digests"); i++)); do
         json=$(jq ".[$i]" <<< "$digests")
-        digest=$(jq '.digest' <<< "$json" | tr -d '"')
-        createTime=$(jq '.createTime' <<< "$json" | tr -d '"')
-        mapfile -t tags < <(jq '.tags[]' <<< "$json" | tr -d '"')
+        digest=$(jq -r '.digest' <<< "$json" )
+        createTime=$(jq -r '.createTime' <<< "$json")
+        mapfile -t tags < <(jq -r '.tags[]' <<< "$json")
 
         echo -e '\e[97m'${space:-}${digest}'\e[0m'
         echo "${space:-}"'    created at : '"${createTime:-}"
@@ -290,7 +342,7 @@ function registry.push()
     local -a allImages=()
     for image in "${images[@]}"; do
         allImages+=( "$image" )
-        local fp="$(docker inspect "$image" | jq '.[].Config.Labels."container.fingerprint"?' | tr -d '"')"
+        local fp="$(docker inspect "$image" | jq -r '.[].Config.Labels."container.fingerprint"?')"
         if [ "${fp:-}" ]; then
             allImages+=( "${image%:*}:${fp}" )
             docker tag "$image" "${image%:*}:${fp}"  > /dev/null 2>&1 || : # ignore any errors
@@ -334,12 +386,15 @@ function registry.pushImage()
 
     local -ir imageCount=$(jq '.|length' <<< "$digests")
     if [ $imageCount -ge $maxImages ]; then
-        local -ir delta=$(( maxImages - imageCount + 1 ))
+        local -ir delta=$(( imageCount - maxImages + 1 ))
+        [ $delta -le 1 ] || echo -e "    \e[93mrepo ${name} contains ${delta} images over recommended limit\e[0m"
         local -a oldImages
-        mapfile -t oldImages < <(jq "[.[]|select((.tags|length) == 1)]|sort_by(.createTime|fromdate)|.[0:${delta}]|.[].digest" <<< "$digests" | tr -d '"')
-        for digest in "${oldImages[@]}"; do
-            registry.deleteImage "$name" "$digest"
-        done
+        mapfile -t oldImages < <(jq -r "[.[]|select((.tags|length) == 1)]|sort_by(.createTime|fromdate)|.[0:${delta}]|.[].digest" <<< "$digests")
+        if [ "${#oldImages[*]}" -gt 0 ]; then
+            for digest in "${oldImages[@]}"; do
+                registry.deleteImage "$name" "$digest"
+            done
+        fi
     fi
 
     registry.push "$image1" "$image2"
@@ -349,9 +404,40 @@ export -f registry.pushImage
 #----------------------------------------------------------------------------------------------
 function registry.PUT()
 {
-    registry.io --request PUST "$@"
+    registry.io --request PUST "$@" || return 1
 }
 export -f registry.PUT
+
+#----------------------------------------------------------------------------------------------
+function registry.removeTag()
+{
+    local image=${1:?}
+    image=${image#$(registry.SERVER)}
+
+    local name="${image%:*}"
+    local xtag="${image##*:}"
+
+    local digests="$(registry.digests "$name")"
+    local -a tags
+    mapfile -t tags < <(jq -r '.[]|select(.tags|contains(["master"]))|.tags[]' <<< "${digests}" )
+    [ "${#tags[*]}" -gt 0 ] || trap.die "repository: ${name} - does not exist"
+
+    local -i pulledImageExists=$(docker images --format '{{.Repository}}:{{.Tag}}' | grep -cH "$(registry.SERVER)$image" | awk -F ':' '{print $2}' ||:)
+    [ "$pulledImageExists" -gt 0 ] || docker pull "$(registry.SERVER)$image"
+    registry.deleteImages "$image"
+
+    if [ "${#tags[*]}" -gt 1 ]; then
+        for tag in "${tags[@]}"; do
+            [ "$tag" != "$xtag" ] || continue
+            echo "pushing $(registry.SERVER)${name}:$tag"
+            docker tag "$(registry.SERVER)$image" "$(registry.SERVER)${name}:$tag"
+            docker push "$(registry.SERVER)${name}:$tag"
+            docker rmi "$(registry.SERVER)${name}:$tag"
+        done
+        [ "$pulledImageExists" -gt 0 ] || echo docker rmi "$(registry.SERVER)$image"
+    fi
+}
+export -f registry.removeTag
 
 #----------------------------------------------------------------------------------------------
 function registry.rename()
@@ -389,14 +475,14 @@ function registry.reportCatalogAsJson()
     local -a catalog=( "$@" )
     [ ${#catalog[*]} -eq 0 ] && mapfile -t catalog < <(registry.catalog)
 
-    local -i index=-1
+    local -i index=0
 
     echo -n '['
     for entry in "${catalog[@]}"; do
-        (( index++ )) || echo -n ','
+        (( index++ )) && echo -n ','
 
         local digests="$(registry.digests "$entry")"
-        printf '{"id":"%05d","count":"%d","name":"%s","digests":' "$index" "$(jq '.|length' <<< "$digests")" "$entry"
+        printf '{"id":"%05d","repository":"%s","digests":' "$index" "$entry"
         [ -z "$digests" ] || echo -n "${digests}}"
     done
     echo -n ']'
@@ -423,6 +509,13 @@ function registry.reportCatalog()
 export -f registry.reportCatalog
 
 #----------------------------------------------------------------------------------------------
+function registry.secretsFile()
+{
+    echo "${_REGISTRY_SECRETS_FILE:=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/properties/secret.properties}"
+}
+export -f registry.secretsFile
+
+#----------------------------------------------------------------------------------------------
 function registry.SERVER()
 {
     echo "${_REGISTRY_SERVER:=$(lib.getProperty "${FUNCNAME[0]##*.}" "$( registry.propertiesFile )")}"
@@ -435,9 +528,10 @@ function registry.tags()
     local -r name=${1:?}
 
     local -a tags=()
-    local -r manifest=$(registry.GET --silent "$(registry.URL)/${name}/tags/list")
+    local -r manifest=$(registry.GET --silent "$(registry.URL)/${name}/tags/list" || echo "Failed to get $(registry.URL)/${name}/tags/list" >&2)
 
-    [ -z "${manifest:-}" ] || mapfile -t tags < <(jq '.tags[]?' <<< "$manifest" | tr -d '"')
+    [ -z "${manifest:-}" ] || mapfile -t tags < <(jq -r '.tags[]?' <<< "$manifest")
+    [ "${#tags[*]}" -eq 0 ] && return 0
     for tag in "${tags[@]}"; do
         printf "['%s']='%s'\n" "$tag" "$(registry.digest "$name" "$tag")"
     done

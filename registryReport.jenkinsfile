@@ -3,15 +3,15 @@ node('ubuntu-s3') {
         stage('Prepare Workspace') {
             ws {
                 checkout([$class: 'GitSCM', 
-                           branches: [[name: 'master']], 
+                           branches: [[name: 'dev']], 
                            doGenerateSubmoduleConfigurations: false, 
-                           extensions: [[$class: 'LocalBranch', localBranch: 'master'], 
+                           extensions: [[$class: 'LocalBranch', localBranch: 'dev'], 
                                         [$class: 'CleanBeforeCheckout']],
                            submoduleCfg: [],
                            userRemoteConfigs: [[credentialsId: '935a7b57-da74-45f7-9119-5a0529afb8ae', url: 'https://github.com/ballab1/support']]
                            ])
                 sh "git submodule update --init container_build_framework"
-                sh "cd container_build_framework; git checkout master"
+                sh "cd container_build_framework; git checkout dev"
             }
         }    
         stage('Generate JSON') {
