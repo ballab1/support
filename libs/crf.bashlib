@@ -308,10 +308,12 @@ function sourcingMessage()
 # load the associative array defitions
 declare -i __env_count=0
 declare -ra _files=( \$(lib.getFiles "\$(crf.ENV)") )
-for _src in "$(printf '%s\n' "\${_files[@]}" | sort)"; do
-    sourcingMessage "\${_src}"
-    source "\$_src"
-done
+if [ "\${#_files[*]}" -gt 0 ]; then
+    for _src in "$(printf '%s\n' "\${_files[@]}" | sort)"; do
+        sourcingMessage "\${_src}"
+        source "\$_src"
+    done
+fi
 [ \$__env_count -gt 0 ] && echo ''
 
 cd "$WORKDIR"

@@ -3,13 +3,6 @@ TODO
 
 add docker-compose checking to deploy
 error in uid_gid.validateUser when passed 2222:2222
-occasional error at registry.bashlib:175
-	    for digest in "${!digests[@]}"; do
-		tags=( ${digests[$digest]} )
-		createTime="$(registry.createTime "$name" "${tags[0]}" | tr -d '"')"
-		[ "$createTime" != '                      ' ] || createTime='null'
-		[ "${times[$createTime]:-}" ] || times[$createTime]="$digest"
-	    done
 
 
 
@@ -30,7 +23,6 @@ get stuff working:
    nagiosgraph issues
 
    Jenkins
-     rename all pipelines to *.jenkinsfile
      (on nginx):
         need to examine/tune Garbage collection
         	https://www.slideshare.net/TidharKleinOrbach/why-does-my-jenkins-freeze-sometimes-and-what-can-i-do-about-it
@@ -49,7 +41,6 @@ CBF:
     use CBF_VERSION better
         - should never unset
         - should check if specified version same as installed version (no point in wget)
-        - base_container does not have a dependency on CBF
 
 builds
     quality ladder:  dev -> staging -> master
@@ -132,6 +123,13 @@ future development
 Done
 =============================================================
 ```
+occasional error at registry.bashlib:175
+	    for digest in "${!digests[@]}"; do
+		tags=( ${digests[$digest]} )
+		createTime="$(registry.createTime "$name" "${tags[0]}" | tr -d '"')"
+		[ "$createTime" != '                      ' ] || createTime='null'
+		[ "${times[$createTime]:-}" ] || times[$createTime]="$digest"
+	    done
 deploy docker-compose.yml for prod
 Kafka broker/zookeeper issues
 Grafana update
@@ -167,6 +165,7 @@ phpadmin:
 Phpmyadmin configuration
 Jenkins:   Permission denied: /var/run/docker.sock
            permission denied on /usr/local/crf/CRF.properties are runtime
+           rename all pipelines to *.jenkinsfile
 consolidate nginx_alt into nginx_base
 Move bashlib to action_folder
 Consolidate build & runtime folder structure
@@ -218,4 +217,5 @@ CBF
     parse Dockerfile for 'sudo' requirement  (USER + VOLUME): warn on 'USER' rather than 'USER_UID'
     base_container does not recognize changes in CBF
     fingerprint calculation should not be dependent on "$CONTAINER_TAG"
+    base_container does not have a dependency on CBF
 ```
