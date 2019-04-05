@@ -144,7 +144,17 @@ function git.origin()
     local -r dir=${1:-.}
 
     cd "$dir"
-    git describe --tags --dirty --always
+    local version=$(git describe --tags --dirty --always)
+    echo -n "$version"
+
+    local -i untracked=$(git ls-files --others --exclude-standard | wc -l)
+    if [ "$untracked" -eq 0 ]; then
+        echo
+    elif [[ "$version" = *dirty ]]; then
+        echo '+'
+    else
+        echo '-dirty-'
+    fi
 }
 export -f git.origin
 
