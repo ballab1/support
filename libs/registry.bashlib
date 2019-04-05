@@ -456,13 +456,26 @@ function registry.rename()
 export -f registry.rename
 
 #----------------------------------------------------------------------------------------------
+function registry.reportCatalog()
+{
+    local output_file="${1:?}"
+    shift
+
+    if [ "${output_file:-}" ]; then
+        registry.reportCatalogAsJson "$@" > "$output_file"
+    else
+        registry.reportCatalogAsJson "$@"
+    fi
+}
+export -f registry.reportCatalog
+
+#----------------------------------------------------------------------------------------------
 function registry.reportCatalogAsJson()
 {
     local -a catalog=( "$@" )
-    [ ${#catalog[*]} -eq 0 ] && mapfile -t catalog < <(registry.catalog)
+    [ $# -eq 0 ] && mapfile -t catalog < <(registry.catalog)
 
     local -i index=0
-
     echo -n '['
     for entry in "${catalog[@]}"; do
         (( index++ )) && echo -n ','
@@ -474,25 +487,6 @@ function registry.reportCatalogAsJson()
     echo -n ']'
 }
 export -f registry.reportCatalogAsJson
-
-#----------------------------------------------------------------------------------------------
-function registry.reportCatalog()
-{
-    local -a catalog=( "$@" )
-    [ ${#catalog[*]} -eq 0 ] && mapfile -t catalog < <(registry.catalog)
-
-    local -i index=0
-    for entry in "${catalog[@]}"; do
-        (( index++ )) || true
-
-        local digests="$(registry.digests "$entry")"
-        echo -en '\e[92m'
-        printf '%05d,%d,%s:\n' "$index" "$(jq '.|length' <<< "$digests")" "$entry"
-        echo -en '\e[0m'
-        [ -z "$digests" ] || registry.printTags "$digests" '    '
-    done
-}
-export -f registry.reportCatalog
 
 #----------------------------------------------------------------------------------------------
 function registry.secretsFile()

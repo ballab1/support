@@ -5,3 +5,6 @@ nginx_alt
 #cesi
 #kafka-rest
 ticket-checker
+#kafka-manager
+build_container
+gradle

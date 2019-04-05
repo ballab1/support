@@ -8,6 +8,38 @@
 #
 #############################################################################
 
+#----------------------------------------------------------------------------------------------
+function lib.args()
+{
+    local argsproc=${1:?}
+    local usage=${2:?}
+    local longopts=${3:?}
+    local shortopts=${4:?}
+    shift 4
+
+    # Parse command-line options into above variable
+    local -r progname="$( basename "${BASH_SOURCE[0]}" )"
+    local -r options=$(getopt --longoptions "help,Help,HELP,$longopts" --options "Hh$shortopts" --name "$progname" -- "$@") || "$usage" $?
+    eval set -- "$options"
+
+    local -i retval=0 shVal
+    while true; do
+        case "${1:-}" in
+            -h|--h|--help|-help)  "$usage"; exit 0;;
+            -H|--H|--HELP|-HELP)  "$usage"; exit 0;;
+            --Help|-Help)         "$usage"; exit 0;;
+            --)                     return $retval;;
+            *)  $argsproc "$1" "$2" && shVal=$? || shVal=$?;;
+        esac
+        retval=$(( retval + shVal )) ||:
+        [ "$shVal" -eq 0 ] || shift "$shVal"
+        [ $# -gt 0 ] || return $retval
+    done
+    return $retval
+}
+export -f lib.args
+
+#############################################################################
 #
 # usage: lib.file_env VAR [DEFAULT]
 #    ie: lib.file_env 'XYZ_DB_PASSWORD' 'example'

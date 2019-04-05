@@ -29,5 +29,6 @@ build/container_build_framework*
 scanned.paths
 *.loaded
 *.json
-
+registryReport.groovy
+registryReport.txt
 versions

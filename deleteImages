@@ -1,11 +1,80 @@
 #!/bin/bash
 
+declare top OUTPUT_FILE
+
+#----------------------------------------------------------------------------------------------
+function my.deployUsage()
+{
+    local -i exit_status=${1:-1}
+
+    cat >&2 << EOF
+Usage:
+    $progname [ -h|--help ] | [ --OUTPUD <FILENAME> ]
+
+    Common options:
+        -h --help              Display a basic set of usage instructions
+        -o --output            name of file to output
+
+EOF
+    exit "$exit_status"
+}
+export -f my.deployUsage
+
+#----------------------------------------------------------------------------------------------
+function my.deployArgs()
+{
+    case "${1:-}" in
+        -o|--o|--output)      OUTPUT_FILE="$2"; return 2;;
+    esac
+    return 0
+}
+export -f my.deployArgs
+
+#----------------------------------------------------------------------------------------------
+function my.environment()
+{
+    export HOST_IP=$(hostname -i)
+    export HOST_NAME=$(hostname -s)
+    export HOST_FQDN=$(hostname -f)
+    export CFG_USER_SECRETS=${CFG_USER_SECRETS:-}
+    export CRYPT_FILE=~/.crypt-key
+}
+export -f my.environment
+
+#----------------------------------------------------------------------------------------------
+function my.loadLibs()
+{
+    local fn="${1:?}"
+
+    if [ "$(env | grep -c "BASH_FUNC_${fn}%%")" -eq 0 ]; then
+        top="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+        if [ "$top" = '/usr/local/bin' ] && [ -e /usr/local/crf/bin/loadLibraries.sh ]; then       
+            source /usr/local/crf/bin/loadLibraries.sh
+            top =/opt
+        elif [ -e "${top}/libs/loadLibraries.sh" ]; then
+            source "${top}/libs/loadLibraries.sh"
+            my.environment
+        else
+            echo '***ERROR unable to locate libraries'; exit 1
+        fi
+    fi
+}
+export -f my.loadLibs
+
+#----------------------------------------------------------------------------------------------
+
 declare fn=registry.deleteImages
-if [ "$(env | grep "BASH_FUNC_${fn}%%")" ]; then
-    TOP=/opt
-else
-    declare TOP="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
-    source "${TOP}/libs/loadLibraries.sh"
+
+my.loadLibs "$fn"
+
+declare -i shVal=0
+lib.args 'my.registryDeleteImagesArgs' 'my.registryDeleteImagesUsage' 'ouptput:' 'o:' "$@" && shVal=$? || shVal=$?
+if [ "${shVal:-}" -gt 0 ];then
+    if [ "${shVal:-}" -gt $# ]; then
+        echo '***ERROR failure while loading libraries'
+        exit 1
+    fi
+    shift "${shVal:-}"
 fi
 
 "$fn" "$@"

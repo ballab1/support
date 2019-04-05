@@ -83,7 +83,7 @@ function build.canPush()
     local -r revision=${1:?}
 
     [ "${BUILD_PUSH:-0}" != 0 ] && return 0
-    if [[ "$revision" = *dirty ]]; then
+    if [[ "$revision" = *dirty* ]]; then
         echo -n '    '
         echo -en '\e[93m'
         echo -n 'This image will not be pushed to the docker registry because it was built from a dirty repo'
@@ -101,9 +101,10 @@ function build.cbfVersion()
     [ -e container_build_framework/.git ] || trap.die 'CBF is not a git directory'
 
     local filename="$(git.origin 'container_build_framework')"
-    [[ "$filename" == *-dirty* ]] && trap.die 'Please commit CBF directory prior to uploading to Artifactory'
+    [[ "$filename" == *-dirty* ]] && return 1
 
     custom.cbfVersion
+    return 0
 }
 export -f build.cbfVersion
 
@@ -355,6 +356,33 @@ function build.logger()
 export -f build.logger
 
 #----------------------------------------------------------------------------------------------
+function build.logImageInfo()
+{
+    local -r image=${1:?}
+    local -r dc_yaml=${2:?}
+
+    local containerOS="${image#*/}"
+    containerOS="${containerOS%%/*}"
+
+    local json="$(docker inspect "$image" | jq '.[].Config.Labels')"
+    local depLog="${containerOS}.dependencies.log"
+    [ -e "$depLog" ] || touch "$depLog"
+
+    printf '%s :: pulling %s\n' "$(TZ='America/New_York' date)" "$image" >> "$depLog"
+    echo '    refs:           '$(jq -r '."container.git.refs"' <<< "$json") >> "$depLog"
+    echo '    commitId:       '$(jq -r '."container.git.commit"' <<< "$json") >> "$depLog"
+    echo '    repo:           '$(jq -r '."container.git.url"' <<< "$json") >> "$depLog"
+    echo '    fingerprint:    '$(jq -r '."container.fingerprint"' <<< "$json") >> "$depLog"
+    echo '    revision:       '$(jq -r '."container.origin"' <<< "$json") >> "$depLog"
+    echo '    build.time:     '$(jq -r '."container.build.time"' <<< "$json") >> "$depLog"
+    echo '    original.name:  '$(jq -r '."container.original.name"' <<< "$json") >> "$depLog"
+
+    build.dependencyInfo "$(build.dockerCompose "$dc_yaml")" >> "$depLog"
+    printf '\n\n\n' >> "$depLog"
+}
+export -f build.logImageInfo
+
+#----------------------------------------------------------------------------------------------
 function build.logToKafka()
 {
     if [ -z "${KAFKA_BOOTSTRAP_SERVERS:-}" ]; then
@@ -401,8 +429,8 @@ function build.logToKafka()
 
     # now log our data to kafka
     ("$kafka_producer" --server "$KAFKA_BOOTSTRAP_SERVERS"                     \
-                      --topic 'container_build_data'                          \
-                       --value "$( json.encodeHash '--' "${build_data[@]}" )") || :
+                       --topic 'container_build_data'                          \
+                       --value "$( json.encodeHash '--' "${build_data[@]}" )" &) || :
     return 0
 }
 export -f build.logToKafka
@@ -594,6 +622,7 @@ function build.updateContainer()
         if docker pull "$actualImage" 2>/dev/null; then
             # downloaded image from registry
             build.changeImage "$taggedImage" "$actualImage"
+            build.logImageInfo "$taggedImage" "$compose_yaml"
             if [ "${BUILD_PUSH:-0}" != 0 ]; then
                 build.logger "pushing ${taggedImage} to registry"
                 build.pushImage "$taggedImage" "$actualImage"

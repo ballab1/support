@@ -60,9 +60,9 @@ export -f versions.data
 #----------------------------------------------------------------------------------------------
 function versions.DIRECTORY()
 {
-    if [ -z "$_VERSIONS_DIRECTORY" ]; then
+    if [ -z "${_VERSIONS_DIRECTORY:-}" ]; then
         local file="${1:-$VERSIONS_INFO_FILE}"
-        _VERSIONS_DIRECTORY:=$( readlink -m $(versions.DIR "$file") )
+        _VERSIONS_DIRECTORY=$( readlink -m $(versions.DIR "$file"))
     fi
     echo "$_VERSIONS_DIRECTORY"
 }
