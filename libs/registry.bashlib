@@ -4,6 +4,7 @@
 #"redis not configured"
 #"using inmemory blob descriptor cache"
 
+export MAX_IMAGES_TO_KEEP=10
 export http_code
 
 #----------------------------------------------------------------------------------------------
@@ -363,34 +364,6 @@ function registry.push()
 export -f registry.push
 
 #----------------------------------------------------------------------------------------------
-function registry.pushImage()
-{
-    local -i maxImages=${1:?}
-    local image1=${2:?}
-    local image2=${3:-}
-
-    local name="${image1%:*}"
-    name="${name//$(registry.SERVER)}"
-    local digests="$(registry.digests "$name")"
-
-    local -ir imageCount=$(jq '.|length' <<< "$digests")
-    if [ $imageCount -ge $maxImages ]; then
-        local -ir delta=$(( imageCount - maxImages + 1 ))
-        [ $delta -le 1 ] || echo -e "    \e[93mrepo ${name} contains ${delta} images over recommended limit\e[0m"
-        local -a oldImages
-        mapfile -t oldImages < <(jq -r "[.[]|select((.tags|length) == 1)]|sort_by(.createTime|fromdate)|.[0:${delta}]|.[].digest" <<< "$digests")
-        if [ "${#oldImages[*]}" -gt 0 ]; then
-            for digest in "${oldImages[@]}"; do
-                registry.deleteImage "$name" "$digest"
-            done
-        fi
-    fi
-
-    registry.push "$image1" "$image2"
-}
-export -f registry.pushImage
-
-#----------------------------------------------------------------------------------------------
 function registry.PUT()
 {
     registry.io --request PUST "$@" || return 1
@@ -457,6 +430,31 @@ function registry.rename()
     registry.deleteImage "$(registry.SERVER)$src"
 }
 export -f registry.rename
+
+#----------------------------------------------------------------------------------------------
+function registry.repoRetention()
+{
+    local image=${1:?}
+    local -i maxImages=${2:-MAX_IMAGES_TO_KEEP}
+
+    local name="${image%:*}"
+    name="${name//$(registry.SERVER)}"
+    local digests="$(registry.digests "$name")"
+
+    local -ir imageCount=$(jq '.|length' <<< "$digests")
+    if [ $imageCount -ge $maxImages ]; then
+        local -ir delta=$(( imageCount - maxImages + 1 ))
+        [ $delta -le 1 ] || echo -e "    \e[93mrepo ${name} contains ${delta} images over recommended limit\e[0m"
+        local -a oldImages
+        mapfile -t oldImages < <(jq -r "[.[]|select((.tags|length) == 1)]|sort_by(.createTime|fromdate)|.[0:${delta}]|.[].digest" <<< "$digests")
+        if [ "${#oldImages[*]}" -gt 0 ]; then
+            for digest in "${oldImages[@]}"; do
+                registry.deleteImage "$name" "$digest"
+            done
+        fi
+    fi
+}
+export -f registry.repoRetention
 
 #----------------------------------------------------------------------------------------------
 function registry.reportCatalog()

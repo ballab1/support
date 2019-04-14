@@ -1,8 +1,6 @@
 #!/bin/bash
 
-export MAX_IMAGES_TO_KEEP=10
 export PROGRESS_LOG
-
 
 #----------------------------------------------------------------------------------------------
 function build.all()
@@ -467,7 +465,7 @@ function build.module()
 
     # generate fingerprint from all our dependencies
     local branch=$(git.branch)
-    export BASE_TAG="${BASE_TAG:-${branch}-latest}"
+    export BASE_TAG="${BASE_TAG:-${branch//\//-}}"
     local -r dependencies="$(build.dependencyInfo "$config")"
     export CONTAINER_FINGERPRINT="$( sha256sum <<< "$dependencies" | cut -d' ' -f1 )"
 
@@ -591,19 +589,6 @@ function build.parentChild()
 export -f build.parentChild
 
 #----------------------------------------------------------------------------------------------
-function build.pushImage()
-{
-    local -r tagged="${1:?}"
-    local -r actual="${2:-}"
-
-    local -r prefix='#\s+max\s+registry\s+entries:'
-    local max_images=$(grep -E "$prefix" "$compose_yaml" | sed -r "s|${prefix}\s+(\d+)|\1|")
-    : ${max_images:=$MAX_IMAGES_TO_KEEP}
-    registry.pushImage "$max_images" "$tagged" "$actual"
-}
-export -f build.pushImage
-
-#----------------------------------------------------------------------------------------------
 function build.updateContainer()
 {
     local -r compose_yaml=${1:?}
@@ -625,7 +610,7 @@ function build.updateContainer()
             elif [ "${BUILD_PUSH:-0}" != 0 ] || [ $(docker inspect "$taggedImage" | jq -r '.[].RepoDigests?|length') -eq 0 ]; then
                 doPush=1
             fi
-            [ $doPush -eq 0 ] || build.pushImage "$taggedImage"
+            [ $doPush -eq 0 ] || registry.push "$taggedImage"
             return 9
         fi
 
@@ -638,7 +623,7 @@ function build.updateContainer()
             build.logImageInfo "$taggedImage" "$compose_yaml"
             if [ "${BUILD_PUSH:-0}" != 0 ]; then
                 build.logger "pushing ${taggedImage} to registry"
-                build.pushImage "$taggedImage" "$actualImage"
+                registry.push "$taggedImage" "$actualImage"
             fi
             docker rmi "$actualImage"
             return 9
@@ -654,7 +639,7 @@ function build.updateContainer()
 
     if build.canPush "$revision"; then
         build.logger "pushing ${taggedImage} to registry"
-        build.pushImage "$taggedImage" "$actualImage"
+        registry.push "$taggedImage" "$actualImage"
     fi
     docker rmi "$actualImage"
     return 0
