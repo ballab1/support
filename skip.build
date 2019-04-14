@@ -6,5 +6,5 @@ nginx_alt
 #kafka-rest
 ticket-checker
 #kafka-manager
-build_container
+#build_container
 gradle

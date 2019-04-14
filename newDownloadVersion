@@ -7,13 +7,26 @@ function my.usage()
 
     cat >&2 << EOF
 Usage:
-    $progname [ -h|--help ] <repository> | <image> <image>
+    $progname [ -h | --help ] 
+              [ -d | --download <download> ]
+              [ -p | --project <project> }
+              <version>
 
     Common options:
-        -h --help              Display a basic set of usage instructions
+        -h --help                  Display a basic set of usage instructions
+        -d --download <download>   Name of file in 'build/actions_folder/04.downloads' to use.
+                                   May be ommitted when project contains only one download  
+        -p --project <project>     Project directory. If not specified, defaults to current directory 
+        version                    version to add to download file
 
-    delete specific images, or all images within one or more docker registry repositories
-    image and/or repo name should not include a registry reference
+    update a <project>'s <download> specifier with <version>
+    actions performed:
+        find file in <project>/build/action_folders/04.downloads
+        read file to determine download URL
+        download from URL and calculate sha256
+        insert new sha256 into file
+        update versions files
+        upload to Artifactory
 
 EOF
     exit "$exit_status"
@@ -22,6 +35,8 @@ EOF
 #----------------------------------------------------------------------------------------------
 function my.cmdLineArgs()
 {
+    local base="${1:?}"
+    shift
     local usage='my.usage'
 
     # Parse command-line options into above variable
@@ -30,12 +45,13 @@ function my.cmdLineArgs()
     eval set -- "$options"
 
     local -A opts=()
+    [ "$base" ] && opts['base']="$base" 
     while true; do
         case "${1:-}" in
             -h|--h|--help|-help)  "$usage" 1;;
             -H|--H|--HELP|-HELP)  "$usage" 1;;
             --Help|-Help)         "$usage" 1;;
-            --)                 shift; break;;
+            --)                   shift; break;;
         esac
     done
     
@@ -59,14 +75,14 @@ function my.cmdLineArgs()
 
 declare -i status
 declare -a args
-declare fn=registry.deleteImages
+declare fn=build.wrapper
 
-declare loader="$(dirname "${BASH_SOURCE[0]}")/libs/appenv.bashlib"
-if [ ! -e "$loader" ]; then
-    echo 'Unable to load libraries'
-    exit 1
-fi
-source "$loader"
+source "$(dirname "${BASH_SOURCE[0]}")/libs/appenv.bashlib"
 appenv.loader "$fn"
-args=( $( my.cmdLineArgs "$@" ) ) && status=$? || status=$?
-[ $status -eq 0 ] && "$fn" ${args[@]}
+
+args=$( my.cmdLineArgs "$@" ) && status=$? || status=$?
+
+[ $status -eq 0 ] || exit 1
+[ "${#args[*]}" -ne 2 ] && echo 'invalid arguements specified' && exit 1
+
+"$fn" "${args[@]}" 

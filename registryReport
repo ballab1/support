@@ -1,80 +1,86 @@
 #!/bin/bash
 
-declare top OUTPUT_FILE
-
 #----------------------------------------------------------------------------------------------
-function my.deployUsage()
+function my.usage()
 {
     local -i exit_status=${1:-1}
 
     cat >&2 << EOF
 Usage:
-    $progname [ -h|--help ] | [ --output <filename> ]
+    $progname [ -h|--help ] | [ --output <filename> ]  <repository> | <repository> | <repository>
 
     Common options:
-        -h --help              Display a basic set of usage instructions
-        -o --output            name of file to output
+        -h --help                 Display a basic set of usage instructions
+        -o --output <filename>    name of file to output
 
-EOF
-    exit "$exit_status"
+    Report the contents of the name docker repository from the registry, if no repositories are name, all are reported
+    The name of the docker registry should not be included in the repository name.
+
+EOF     exit "$exit_status"
 }
-export -f my.deployUsage
 
 #----------------------------------------------------------------------------------------------
-function my.deployArgs()
+function my.cmdLineArgs()
 {
-    case "${1:-}" in
-        -o|--o|--output)      OUTPUT_FILE="$2"; return 2;;
-    esac
-    return 0
-}
-export -f my.deployArgs
+    local usage='my.usage'
 
-#----------------------------------------------------------------------------------------------
-function my.environment()
-{
-    export HOST_IP=$(hostname -i)
-    export HOST_NAME=$(hostname -s)
-    export HOST_FQDN=$(hostname -f)
-    export CFG_USER_SECRETS=${CFG_USER_SECRETS:-}
-    export CRYPT_FILE=~/.crypt-key
-}
-export -f my.environment
+    # Parse command-line options into above variable
+    local -r progname="$( basename "${BASH_SOURCE[0]}" )"
+    local -r options=$(getopt --longoptions "help,Help,HELP,output:" --options "Hho:" --name "$progname" -- "$@") || "$usage" $?
+    eval set -- "$options"
 
-#----------------------------------------------------------------------------------------------
-function my.loadLibs()
-{
-    local fn="${1:?}"
-
-    if [ "$(env | grep -c "BASH_FUNC_${fn}%%")" -eq 0 ]; then
-        top="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
-        if [ "$top" = '/usr/local/bin' ] && [ -e /usr/local/crf/bin/loadLibraries.sh ]; then       
-            source /usr/local/crf/bin/loadLibraries.sh
-            top =/opt
-        elif [ -e "${top}/libs/loadLibraries.sh" ]; then
-            source "${top}/libs/loadLibraries.sh"
-            my.environment
-        else
-            echo '***ERROR unable to locate libraries'; exit 1
-        fi
+    local -A opts=()
+    while true; do
+        case "${1:-}" in
+            -h|--h|--help|-help)  "$usage" 1;;
+            -H|--H|--HELP|-HELP)  "$usage" 1;;
+            --Help|-Help)         "$usage" 1;;
+            -o|--o|--output)      opts['output']="$2"; shift 2;;
+            --)                 shift; break;;
+        esac
+    done
+    
+    local val
+    if [ ${#opts[*]} -gt 0 ]; then
+        local -i i=0
+        for val in "${!opts[@]}"; do
+            [ $(( i++ )) -gt 0 ] && echo -n ' '
+            printf '['\''%s'\'']='\''%s'\' "$val" "${opts[$val]}"
+        done
+    fi
+    echo
+    if [ $# -gt 0 ]; then
+        for val in "$@"; do
+            echo "$val"
+        done
     fi
 }
-export -f my.loadLibs
+
+#----------------------------------------------------------------------------------------------
+function formatTextReport()
+{
+    declare -r TOOLS="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )" 
+
+    docker run --rm \
+               --volume "$TOOLS":/home/groovy/scripts \
+               --environment "JSON=registryReport.json" \
+               --workdir /home/groovy/scripts \
+               groovy:2.6-jre-alpine \
+               groovy registryReport.groovy  
+}
 
 #----------------------------------------------------------------------------------------------
 
+declare -i status
+declare -a args
 declare fn=registry.reportCatalog
 
-my.loadLibs "$fn"
-
-declare -i shVal=0
-lib.args 'my.reportCatalogArgs' 'my.reportCatalogUsage' 'ouptput:' 'o:' "$@" && shVal=$? || shVal=$?
-if [ "${shVal:-}" -gt 0 ];then
-    if [ "${shVal:-}" -gt $# ]; then
-        echo '***ERROR failure while loading libraries'
-        exit 1
-    fi
-    shift "${shVal:-}"
+declare loader="$(dirname "${BASH_SOURCE[0]}")/libs/appenv.bashlib"
+if [ ! -e "$loader" ]; then
+    echo 'Unable to load libraries'
+    exit 1
 fi
-
-"$fn" registryReport.json "$@"
+source "$loader"
+appenv.loader "$fn"
+args=( $( my.cmdLineArgs "$@" ) ) && status=$? || status=$?
+[ $status -eq 0 ] && "$fn" ${args[@]}

@@ -15,9 +15,6 @@ function deploy.__initGlobals()
 
     export START_TIME=$(date)
 
-    # enable container logging during startup
-    export DEBUG_TRACE=1
-
     [ -e "${base_dir}/.git" ] || trap.die "invalid base directory specified"
 
 
@@ -72,6 +69,11 @@ function deploy.__initGlobals()
 
     export CFG_EMAIL="${CFG_EMAIL:-$(git.userEmail)}"
     readonly CFG_EMAIL
+
+
+    # enable container logging during startup
+    : ${DEBUG_TRACE:=0}
+    export DEBUG_TRACE=$(( DEBUG_TRACE++ ))
 }
 export -f deploy.__initGlobals
 
@@ -188,6 +190,7 @@ function deploy.initialize()
             if [ ! -d "$dir" ]; then
                 mkdir -p "$dir" ||:
                 sudo chown "$EUID" "$dir"
+                [ "$dir" = "${service_name}/log" ] && chmod 777 "$dir"
             fi
 
             # ensure log symlinks are setup
@@ -216,7 +219,9 @@ export -f deploy.initialize
 #----------------------------------------------------------------------------------------------
 function deploy.main()
 {
-    eval local -rA opts=( ${1:?} )
+    local -A opts
+    eval opts=( ${1:?} )
+    readonly opts
     shift
     local -ra args=( "$@" )
 
@@ -227,8 +232,12 @@ function deploy.main()
     [ -z "${opts['clean']:-}" ] || deploy.clean "$workspace"
     mkdir -p "$workspace" ||:
 
+
+    (( DEBUG_TRACE-- )) ||:
     versions.data "$VERSIONS_INFO" "${CONTAINER_TAG:-}"
     versions.get "$CONTAINER_OS" 'export'
+    (( DEBUG_TRACE++ )) ||:
+
 
     if [ "${opts['init']:-}" ]; then
         #  initialize devops_container_environment

@@ -8,38 +8,6 @@
 #
 #############################################################################
 
-#----------------------------------------------------------------------------------------------
-function lib.args()
-{
-    local argsproc=${1:?}
-    local usage=${2:?}
-    local longopts=${3:?}
-    local shortopts=${4:?}
-    shift 4
-
-    # Parse command-line options into above variable
-    local -r progname="$( basename "${BASH_SOURCE[0]}" )"
-    local -r options=$(getopt --longoptions "help,Help,HELP,$longopts" --options "Hh$shortopts" --name "$progname" -- "$@") || "$usage" $?
-    eval set -- "$options"
-
-    local -i retval=0 shVal
-    while true; do
-        case "${1:-}" in
-            -h|--h|--help|-help)  "$usage"; exit 0;;
-            -H|--H|--HELP|-HELP)  "$usage"; exit 0;;
-            --Help|-Help)         "$usage"; exit 0;;
-            --)                     return $retval;;
-            *)  $argsproc "$1" "$2" && shVal=$? || shVal=$?;;
-        esac
-        retval=$(( retval + shVal )) ||:
-        [ "$shVal" -eq 0 ] || shift "$shVal"
-        [ $# -gt 0 ] || return $retval
-    done
-    return $retval
-}
-export -f lib.args
-
-#############################################################################
 #
 # usage: lib.file_env VAR [DEFAULT]
 #    ie: lib.file_env 'XYZ_DB_PASSWORD' 'example'
@@ -128,18 +96,22 @@ function lib.getProperty()
 
     # get definition from property file
     if [ ! -e "$file" ]; then
-        [ -z "$default_val" ] || echo "$default_val"
-        return
+        [ -z "${default_val:-}" ] || echo "$default_val"
+        return 0
     fi
 
-    local -r val="$( grep -e "^${prop}\s*=" "$file" )"
+    local -i status
+    local -r val="$( grep -e "^${prop}\s*=" "$file" )" && status=$? || status=$?
 
     # only report eval'd string (after removing 'prop=' prefix) if something was found
-    if [ $? -eq 0 ] && [ "$val" ]; then
+    if [ $status -eq 0 ] && [ "${val:-}" ]; then
         eval 'echo' "${val#*=}"
-    elif [ "$default_val" ]; then
+        return 0
+    elif [ "${default_val:-}" ]; then
         echo "$default_val"
+        return 0
     fi
+    return $status
 }
 export -f lib.getProperty
 

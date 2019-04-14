@@ -99,7 +99,6 @@ function registry.deleteImage()
 
     echo -n "deleting ${name} - $digest  "
     registry.DELETE --silent --show-error --write-out '%{http_code}\n' "$(registry.URL)/${name}/manifests/$digest" || echo "Failed to delete $name:$digest"
-#    echo "http_code: ${http_code:-}"
 }
 export -f registry.deleteImage
 
@@ -168,6 +167,10 @@ function registry.digests()
     local -A digests=()
     for tag in "${tags[@]}"; do
         digest=$(registry.digest "$name" "$tag")
+        if [ -z "${digest:-}" ]; then
+            term.log "WARNING:  $name:$tag failed to return a digest" 'warning'
+            continue
+        fi
         digests["$digest"]="$(echo -en "${tag}\n${digests[$digest]:-}")"
     done
 
