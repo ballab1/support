@@ -44,9 +44,7 @@ CBF:
 
 builds
     quality ladder:  dev -> staging -> master
-        - dev:  where we make changes
-        - staging: PRs from dev + CI builds
-        - master: production
+        - deploy should set 'latest' (not build). (use registry API to get and work with available images)
     docker-registry
         - handle more tags to fingerprint lookup (ex: latest, master, staging)
         - move old named content to new repos
@@ -65,7 +63,6 @@ enhancements:
         base jenkins and webdav on supervisord image
         tie DBMS backups into startup by copying SQL files to "ubuntu-s:\home\bobb\prod\mysql\vols\loader\dumps" 
         improve logging   (make use of /dev/fd/1 or /dev/fd/2)
-        ubuntu-s1 zookeeper/broker
         need generic uS for "kafka topic -> DBMS table"
         file checksums -> kafka topic
     kafka to MySQL
@@ -185,6 +182,7 @@ issues pushing/pulling to registry
         	jenkins:latest
      need a way to 'just push'
 
+ubuntu-s1 zookeeper/broker
 
 Smonitor/nodervisor
 Hubot update

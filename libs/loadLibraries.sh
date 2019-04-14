@@ -22,11 +22,15 @@ function __init.loader() {
     local __libdir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
     local -a __libs
     mapfile -t __libs < <(find "$__libdir" -maxdepth 1 -mindepth 1 -name '*.bashlib' | sort)
-    if [ ${#__libs[*]} -gt 0 ]; then
+    if [ "${#__libs[*]}" -eq 0 ] && [ -d /usr/local/crf/bashlib ]; then
+        mapfile -t __libs < <(find /usr/local/crf/bashlib -maxdepth 1 -mindepth 1 -name '*.bashlib' | sort)
+    fi
+
+    if [ "${#__libs[*]}" -gt 0 ]; then
         echo -en "    loading project libraries from $__libdir: \e[35m"
-        [ "${DEBUG:-}" ] && echo
+        [[ "${DEBUG:-}" || "${DEBUG_TRACE:-0}" -gt 0 ]] && echo
         for __lib in "${__libs[@]}"; do
-            if [ "${DEBUG:-}" ]; then
+            if [[ "${DEBUG:-}" || "${DEBUG_TRACE:-0}" -gt 0 ]]; then
                 echo "        $__lib"
             else
                 echo -n " $(basename "$__lib")"
@@ -105,7 +109,7 @@ function __init.myExitHandler() {
     trap __init.rmTmpDir EXIT
 }
 
-if [ "${DEBUG:-}" ]; then
+if [[ "${DEBUG:-}" || "${DEBUG_TRACE:-0}" -gt 0 ]]; then
     __init.loader >&2
 else
     __init.loader &> /dev/null
