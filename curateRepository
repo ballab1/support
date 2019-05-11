@@ -1,0 +1,107 @@
+#!/bin/bash
+
+#----------------------------------------------------------------------------------------------
+function cyrateRepository.usage()
+{
+    local -i exit_status=${1:-1}
+
+    cat >&2 << EOF
+Usage:
+    $progname [ -h|--help ] | [ <repoName> <repoName> <repoName> ]
+
+    Common options:
+        -h --help              Display a basic set of usage instructions
+
+    Curate a docker repository, where <repoName> is its name  
+
+
+EOF
+    exit "$exit_status"
+}
+
+#----------------------------------------------------------------------------------------------
+function cyrateRepository.cmdLineArgs()
+{
+    local usage='cyrateRepository.usage'
+
+    # Parse command-line options into above variable
+    local -r progname="$( basename "${BASH_SOURCE[0]}" )"
+    local -r options=$(getopt --longoptions "help,Help,HELP" --options "Hh" --name "$progname" -- "$@") || "$usage" $?
+    eval set -- "$options"
+
+    local -A opts=()
+    while true; do
+        case "${1:-}" in
+            -h|--h|--help|-help)  "$usage" 1;;
+            -H|--H|--HELP|-HELP)  "$usage" 1;;
+            --Help|-Help)         "$usage" 1;;
+            --)                 shift; break;;
+        esac
+    done
+    
+    local val
+    if [ ${#opts[*]} -gt 0 ]; then
+        local -i i=0
+        for val in "${!opts[@]}"; do
+            [ $(( i++ )) -gt 0 ] && echo -n ' '
+            printf '['\''%s'\'']='\''%s'\' "$val" "${opts[$val]}"
+        done
+    fi
+    echo
+    if [ $# -gt 0 ]; then
+        for val in "$@"; do
+            echo "$val"
+        done
+    fi
+}
+
+#----------------------------------------------------------------------------------------------
+function curateRepository.main()
+{
+    local -A opts
+    eval opts=( $1 )
+    readonly opts
+    shift
+
+    local -a catalog
+    mapfile -t catalog < <(registry.matchRepos "$@" | sort)
+    [ "${#catalog[*]}" -gt 0 ] || trap.die 'invalid repository passed to curateRepository.main'
+
+    # remove latest to keep all working images
+    unset 'catalog[${#catalog[*]}-1]'
+
+    [ "${#catalog[*]}" -gt 0 ] || return 0
+
+    local name
+    for name in "${#catalog[@]}"; do
+        local digests="$(registry.digests "$name")"
+        [ "$digests" ] || continue
+
+        if [ "$(jq '.|length' <<< "$digests")" -gt 1 ]; then
+            local json createTime digest
+            local -a tags
+
+            # remove all but last image
+            for ((i=0; i < $(jq '.|length -1' <<< "$digests"); i++)); do
+                json=$(jq ".[$i]" <<< "$digests")
+                digest=$(jq -r '.digest' <<< "$json")
+                registry.deleteImage "$name" "$digest"
+            done
+        fi
+    done
+}
+
+#----------------------------------------------------------------------------------------------
+
+declare -i status
+declare -a args
+
+declare loader="$(dirname "${BASH_SOURCE[0]}")/libs/appenv.bashlib"
+if [ ! -e "$loader" ]; then
+    echo 'Unable to load libraries'
+    exit 1
+fi
+source "$loader"
+appenv.loader
+args=( $( cyrateRepository.cmdLineArgs "$@" ) ) && status=$? || status=$?
+[ $status -eq 0 ] && curateRepository.main ${args[@]}

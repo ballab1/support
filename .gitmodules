@@ -7,6 +7,9 @@
 [submodule "cesi"]
     path = cesi
     url = ../cesi.git
+[submodule "confluent"]
+    path = confluent
+    url = ../confluent.git
 [submodule "container_build_framework"]
     path = container_build_framework
     url = ../container_build_framework.git
@@ -33,7 +36,7 @@
     url = ../kafka-manager.git
 [submodule "kafka-rest"]
     path = kafka-rest
-    url = ../kafka-rest
+    url = ../kafka-rest.git
 [submodule "kafka-zookeeper"]
     path = kafka-zookeeper
     url = ../kafka-zookeeper.git
@@ -48,7 +51,7 @@
     url = ../nagios.git
 [submodule "nginx_alt"]
     path = nginx_alt
-    url = ../nginx_alt
+    url = ../nginx_alt.git
 [submodule "nginx-base"]
     path = nginx-base
     url = ../nginx-base.git
@@ -57,7 +60,7 @@
     url = ../nginx-proxy.git
 [submodule "nodervisor"]
     path = nodervisor
-    url = ../nodervisor
+    url = ../nodervisor.git
 [submodule "openjdk"]
     path = openjdk
     url = ../openjdk.git
@@ -82,9 +85,12 @@
 [submodule "php7"]
     path = php7
     url = ../php7.git
+[submodule "python"]
+    path = python
+    url = ../python.git
 [submodule "supervisord"]
     path = supervisord
-    url = ../supervisord
+    url = ../supervisord.git
 [submodule "supervisord-monitor"]
     path = supervisord-monitor
     url = ../supervisord-monitor.git

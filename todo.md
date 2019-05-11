@@ -1,9 +1,26 @@
 TODO
 ```
 
+change 'versions' to subtree for production and submodule for support
+change cbf/bashlib to 
+  - subtree for cbf
+  - submodule for support
+  - subtree for production
+docker-dependants: change to annon associative arrays
+jenkins
+  kafka logging from pipelines
+  improve logging from 'Clean Docker Registry': show badge when reclaim shows > 0
+  improve 'Check for Linux updates' to more clearly show list of updated packages
+add registry analysis to report
+usLib to save to mySQL
+fix hosts on nginx
+fix small pics on zen
+use confluent container in place of kafka (deprecate kafka)
+setup rsync for registry
+add drive checking to nagios
 add docker-compose checking to deploy
 error in uid_gid.validateUser when passed 2222:2222
-
+change docker-registry-fe to delimit pagination using '?' rather than '/'
 
 
 build dependencies
@@ -15,7 +32,7 @@ nagios:
 	***ERROR at environment:9. '"${NCONF_HOME}/bin/generate_config.pl"' exited with status 115
 	Stack trace:
 	>>>    02: /usr/local/crf/startup/05.nagios:35 nagios.redeployConfig  <<<
-
+	checkout https://github.com/harisekhon/nagios-plugins
 
 
 get stuff working:
@@ -37,7 +54,24 @@ get stuff working:
         nagios logs to supervisord.log
     complete unit tests
 
+build_container:
+    build dependencies
+        - handled by Gradle
+    add more docker registry management
+    	- delete tag from multiple repos
+    	- squash repo when new version created
+    	- other repo reports (what needs squashing, tags in use/where, image sizes and space reuse)
+    	- deploy for 'git describe' container; finish deploy workflow
+        - handle more tags to fingerprint lookup (ex: latest, master, staging)
+        - move old named content to new repos
+        - permit deletion of content based on
+        	tag  (as in all tags which match ... in a repo)
+        	do not use 'master' but instead 'yyyymmdd-$(git-describe)' and update docker-compose
+
 CBF:
+    check if download file already exists (to allow use of Git-LFS)
+    Track created users for runtime changes
+    migrate to python
     use CBF_VERSION better
         - should never unset
         - should check if specified version same as installed version (no point in wget)
@@ -45,6 +79,17 @@ CBF:
 builds
     quality ladder:  dev -> staging -> master
         - deploy should set 'latest' (not build). (use registry API to get and work with available images)
+        - dev:  where we make changes
+        - staging: PRs from dev + CI builds
+        - master: production
+    fix promotions: quality ladder:  dev -> staging -> master
+    	- keep dev at 1 build
+    	- deploy should update 'latest' tag
+    provide 'updateDownload'
+    	- download file
+    	- calc sha256
+    	- upload file to artifactory
+    	- update action_folders/04.downloads/
     docker-registry
         - handle more tags to fingerprint lookup (ex: latest, master, staging)
         - move old named content to new repos
@@ -120,6 +165,7 @@ future development
 Done
 =============================================================
 ```
+add parent sha to labels
 occasional error at registry.bashlib:175
 	    for digest in "${!digests[@]}"; do
 		tags=( ${digests[$digest]} )
@@ -157,9 +203,9 @@ CI/CD
     add ENV for HOST_IP
     every container should update config with HOST_IP
         script to reconfigure demo (change IP addresses in correct places)
-phpadmin:
-    resolve login issue where page is left blank
 Phpmyadmin configuration
+    resolve login issue where page is left blank
+    fix phpmyAdmin issues (missing config)
 Jenkins:   Permission denied: /var/run/docker.sock
            permission denied on /usr/local/crf/CRF.properties are runtime
            rename all pipelines to *.jenkinsfile
@@ -216,4 +262,6 @@ CBF
     base_container does not recognize changes in CBF
     fingerprint calculation should not be dependent on "$CONTAINER_TAG"
     base_container does not have a dependency on CBF
+
+bin/git-keep: add help
 ```
