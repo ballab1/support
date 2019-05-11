@@ -21,10 +21,13 @@ function build.all()
     cd "$top"
     [ -d "$logDir" ] || mkdir -p "$logDir"
 
+
+    VERSIONS_DIRECTORY="${top}/versions"
+
+
     local updateTo
     [[ "$(git.branch)" = *dev* ]] && updateTo=latest
     [ "${CONTAINER_TAG:-}" ] && updateTo=latest
-    versions.data "${top}/.versions" "${updateTo:-}"
 
     local -a OSes
     mapfile -t OSes < <(sed '/^[[:blank:]]*#/d;s/[[:blank:]]*#.*//' container.os)
@@ -47,7 +50,7 @@ function build.all()
     local request_cbf="${CBF_VERSION:-}"
     for containerOS in "${OSes[@]}"; do
         [ ${containerOS:-} ] || continue
-        [ -e "$(versions.DIRECTORY)/$containerOS" ] || continue
+        [ -e "$VERSIONS_DIRECTORY/$containerOS" ] || continue
         [ "${request_cbf:-}" ] || CBF_VERSION="$cbf_version"
 
         (build.containersForOS "$containerOS" "${userInput[@]:-}") || break    # run in separate shell to avoid "VERSIONS" conflicting
@@ -155,9 +158,6 @@ function build.containersForOS()
     echo "    refs:           (${git_refs})"
     echo "    commitId:       $git_commit"
     echo "    revision:       $origin"
-
-    # get versions  (do not redefine any that are alresady in ENV)
-    versions.get "$containerOS" 'export'
 
     exec 3>&1  # create special stdout
 
@@ -641,7 +641,7 @@ function build.verifyModules()
     [ "${#requestedModules[*]}" -gt 0 ] || requestedModules=()
     local -r skip_builds_file='skip.build'
 
-    local -a modules=( $(grep -Ev '^\s*#' "$(versions.DIRECTORY)/${containerOS}.modules") )
+    local -a modules=( $(grep -Ev '^\s*#' "$VERSIONS_DIRECTORY/${containerOS}.modules") )
     local retval=1
     for defMod in "${modules[@]}"; do
         [ -d "$defMod" ] && [ -e "${defMod}/docker-compose.yml" ] || continue
