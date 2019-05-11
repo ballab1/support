@@ -1,10 +1,10 @@
 #!/bin/bash
 
-#############################################################################
+#----------------------------------------------------------------------------------------------
 #
 #   versions.bashlib; basic functions to access 'versions' repo
 #
-#############################################################################
+#----------------------------------------------------------------------------------------------
 
 export VERSIONS_INFO_FILE
 
@@ -37,6 +37,9 @@ function versions.data()
         mkdir -p "$(dirname "$versions_dir")" || trap.die 'no version information available'
         git.clone "$(versions.REPO)" "$versions_dir"  --quiet
     fi
+
+    # return if versions directory is dirty
+    (versions.isNotDirty "$versions_dir") || return 0
 
     # ensure version info is up-to-date
     if [ "${commit,,:-}" != 'latest' ]; then
@@ -86,6 +89,16 @@ function versions.FILE()
     readlink -m "$(versions.DIRECTORY "$file")/$containerOS"
 }
 export -f versions.FILE
+
+#----------------------------------------------------------------------------------------------
+function versions.isNotDirty()
+{
+    local versions_dir="${1:?}"
+
+    cd "$versions_dir"
+    [[ "$(git describe --tags --always --dirty)" != *-dirty ]]
+}
+export -f versions.isNotDirty
 
 #----------------------------------------------------------------------------------------------
 function versions.lastCommit()

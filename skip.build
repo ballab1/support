@@ -2,9 +2,9 @@ jira-fd-kafka
 jenkins-build-events
 mysql
 nginx_alt
-#cesi
-#kafka-rest
+supervisord-monitor
 ticket-checker
-#kafka-manager
-build_container
 gradle
+#kafka-rest
+python
+
