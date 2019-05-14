@@ -32,4 +32,4 @@ scanned.paths
 *.json
 registryReport.groovy
 registryReport.txt
-versions
+build

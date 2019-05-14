@@ -13,15 +13,6 @@
 [submodule "container_build_framework"]
     path = container_build_framework
     url = ../container_build_framework.git
-[submodule "files-kafka"]
-    path = files-kafka
-    url = ../files-kafka.git
-[submodule "files-librd"]
-    path = files-librd
-    url = ../files-librd.git
-[submodule "gradle"]
-    path = gradle
-    url = ../gradle.git
 [submodule "hubot"]
     path = hubot
     url = ../hubot.git
@@ -37,21 +28,12 @@
 [submodule "kafka-rest"]
     path = kafka-rest
     url = ../kafka-rest.git
-[submodule "kafka-zookeeper"]
-    path = kafka-zookeeper
-    url = ../kafka-zookeeper.git
 [submodule "movefiles"]
     path = movefiles
     url = ../movefiles.git
-[submodule "mysql"]
-    path = mysql
-    url = ../mysql.git
 [submodule "nagios"]
     path = nagios
     url = ../nagios.git
-[submodule "nginx_alt"]
-    path = nginx_alt
-    url = ../nginx_alt.git
 [submodule "nginx-base"]
     path = nginx-base
     url = ../nginx-base.git
@@ -91,12 +73,12 @@
 [submodule "supervisord"]
     path = supervisord
     url = ../supervisord.git
-[submodule "supervisord-monitor"]
-    path = supervisord-monitor
-    url = ../supervisord-monitor.git
 [submodule "webdav"]
     path = webdav
     url = ../webdav.git
 [submodule "zenphoto"]
     path = zenphoto
     url = ../zenphoto.git
+[submodule "versions"]
+	path = versions
+	url = ../versions
