@@ -1,6 +1,7 @@
 TODO
 ```
 
+add https://hub.docker.com/r/pihole/pihole to production
 change 'versions' to subtree for production and submodule for support
 change cbf/bashlib to 
   - subtree for cbf
