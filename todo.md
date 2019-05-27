@@ -1,23 +1,27 @@
 TODO
 ```
 
+
 add https://hub.docker.com/r/pihole/pihole to production
-change 'versions' to subtree for production and submodule for support
+	fix hosts on nginx
+change 'versions' to subtree for production
 change cbf/bashlib to 
   - subtree for cbf
   - submodule for support
   - subtree for production
-docker-dependants: change to annon associative arrays
 jenkins
   kafka logging from pipelines
   improve logging from 'Clean Docker Registry': show badge when reclaim shows > 0
   improve 'Check for Linux updates' to more clearly show list of updated packages
-add registry analysis to report
+registry report
+ - include packed sizes
+docker-search
+ - include sizes
+ - layers: include count
+ - dependants: include count
 usLib to save to mySQL
-fix hosts on nginx
 fix small pics on zen
 use confluent container in place of kafka (deprecate kafka)
-setup rsync for registry
 add drive checking to nagios
 add docker-compose checking to deploy
 error in uid_gid.validateUser when passed 2222:2222
@@ -27,12 +31,22 @@ change docker-registry-fe to delimit pagination using '?' rather than '/'
 build dependencies
 nginx index.html
 nagios:
-	DBI connect('database=nconf;host=mysql','bobb',...) failed: Can't connect to MySQL server on 'mysql' (115) at /usr/local/nagios/share/nconf/bin/lib/NConf/DB.pm line 103.
-	Compilation failed in require at /usr/local/nagios/share/nconf/bin/generate_config.pl line 51.
-	BEGIN failed--compilation aborted at /usr/local/nagios/share/nconf/bin/generate_config.pl line 51.
-	***ERROR at environment:9. '"${NCONF_HOME}/bin/generate_config.pl"' exited with status 115
-	Stack trace:
-	>>>    02: /usr/local/crf/startup/05.nagios:35 nagios.redeployConfig  <<<
+	2 sources of truth:  mysql & NagiosCOnfig.tgz :: need to select one or other
+	nagiosgraph does not display
+	does not correctly spawn nagios.finishStartup.
+	    - /run/nagios.lock does not exists (should contain PID of primary nagios for supervisord)
+	    - var/rw/nagios.cmd has incorrect permissions (resrticts what nconf can do)
+	    docker-entrypoint.sh
+	        my.defaultInit
+	    	crf.prepareEnvironment
+	    	    ( command "$tmp_script" ) && status=$? || status=$?
+	    		cd "$WORKDIR"
+	    		source "$file"
+	            or sudo -E
+	        	    crf.prepareEnvironment
+	    	        ( command "$tmp_script" ) && status=$? || status=$?
+	    	   	    cd "$WORKDIR"
+	    		    source "$file"
 	checkout https://github.com/harisekhon/nagios-plugins
 
 
@@ -166,6 +180,21 @@ future development
 Done
 =============================================================
 ```
+2019-05-26
+change 'versions' to submodule for support
+docker-dependants: change to annon associative arrays
+add registry analysis to report
+setup rsync for registry
+nagios:
+	DBI connect('database=nconf;host=mysql','bobb',...) failed: Can't connect to MySQL server on 'mysql' (115) at /usr/local/nagios/share/nconf/bin/lib/NConf/DB.pm line 103.
+	Compilation failed in require at /usr/local/nagios/share/nconf/bin/generate_config.pl line 51.
+	BEGIN failed--compilation aborted at /usr/local/nagios/share/nconf/bin/generate_config.pl line 51.
+	***ERROR at environment:9. '"${NCONF_HOME}/bin/generate_config.pl"' exited with status 115
+	Stack trace:
+	>>>    02: /usr/local/crf/startup/05.nagios:35 nagios.redeployConfig  <<<
+
+
+
 add parent sha to labels
 occasional error at registry.bashlib:175
 	    for digest in "${!digests[@]}"; do
