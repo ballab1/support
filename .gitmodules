@@ -30,7 +30,7 @@
     url = ../kafka-rest.git
 [submodule "movefiles"]
     path = movefiles
-    url = ../movefiles.git
+    url = ../moveFiles.git
 [submodule "nagios"]
     path = nagios
     url = ../nagios.git
