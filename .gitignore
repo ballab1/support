@@ -6,6 +6,8 @@
 *.zip
 **/*.bak
 *.log
+build/libs
+build.tmp
 
 # OSX
 .DS_Store
@@ -32,3 +34,7 @@ scanned.paths
 *.json
 registryReport.groovy
 registryReport.txt
+
+.gradle
+build
+
