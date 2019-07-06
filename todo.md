@@ -1,7 +1,35 @@
 TODO
 ```
 
+build.sh
+	recognize parent on different branch
 
+deploy:
+        update of ${CONFIG_DIR}/docker-compose.yml should only update 'image:'
+	recognize ">>>>> issue while executing 06.nagios <<<<<" 
+	add docker-compose checking to deploy
+
+	cyc@hopcyc-ballab1-1-00 ~/GIT/devops_container_environment (dev/ballab1/mres3291)
+	$ ./deploy --clean
+	***ERROR at /home/cyc/GIT/devops_container_environment/libs/deploy.bashlib:95. 'grep -cs "$network"' exited with status 1
+	>>>    Current directory /home/cyc/GIT/devops_container_environment
+	Stack trace:
+	>>>    01: /home/cyc/GIT/devops_container_environment/libs/deploy.bashlib:95 trap.catch_error  <<<
+	>>>    02: /home/cyc/GIT/devops_container_environment/libs/deploy.bashlib:331 deploy.clean  <<<
+	>>>    03: ./deploy:78 deploy.main  <<<
+	$rm -rf /home/cyc/GIT/devops_container_environment/workspace.devops_container_environment
+	$deploy.restart 2>&1 | tee restart.log
+	INFO: updating /home/cyc/GIT/devops_container_environment/workspace.devops_container_environment/docker-compose.yml
+	populating secrets
+
+	the following also reported because of interference with CFG_USER_SECRETS=~/.inf
+	***ERROR: Password file: '.secrets/grafana_admin.pwd' not found. Used by startup of service: grafana
+	***ERROR: Password file: '.secrets/mysql_root.pwd' not found. Used by startup of service: mysql
+	***ERROR: Password file: '.secrets/mysql.pwd' not found. Used by startup of service: nagios
+	>> GENERATING SSL CERT
+
+
+nagios:  nohup: can't execute 'nagios.finishStartup': No such file
 add https://hub.docker.com/r/pihole/pihole to production
 	fix hosts on nginx
 change 'versions' to subtree for production
@@ -21,18 +49,25 @@ docker-search
  - dependants: include count
 usLib to save to mySQL
 fix small pics on zen
-use confluent container in place of kafka (deprecate kafka)
 add drive checking to nagios
-add docker-compose checking to deploy
 error in uid_gid.validateUser when passed 2222:2222
 change docker-registry-fe to delimit pagination using '?' rather than '/'
 
+deleteImage: when deleting a repo, 202 is shown, but none of images or tags shown
+    add more docker registry management
+    	- delete tag from multiple repos
+    	- squash repo when new version created
+    	- other repo reports (what needs squashing, tags in use/where, image sizes and space reuse)
+    	- deploy for 'git describe' container; finish deploy workflow
+        - handle more tags to fingerprint lookup (ex: latest, master, staging)
+        - move old named content to new repos
+        - permit deletion of content based on
+        	tag  (as in all tags which match ... in a repo)
+        	do not use 'master' but instead 'yyyymmdd-$(git-describe)' and update docker-compose
 
-build dependencies
 nginx index.html
 nagios:
 	2 sources of truth:  mysql & NagiosCOnfig.tgz :: need to select one or other
-	nagiosgraph does not display
 	does not correctly spawn nagios.finishStartup.
 	    - /run/nagios.lock does not exists (should contain PID of primary nagios for supervisord)
 	    - var/rw/nagios.cmd has incorrect permissions (resrticts what nconf can do)
@@ -52,7 +87,6 @@ nagios:
 
 get stuff working:
    reverse proxy for cesi
-   nagiosgraph issues
 
    Jenkins
      (on nginx):
@@ -72,16 +106,6 @@ get stuff working:
 build_container:
     build dependencies
         - handled by Gradle
-    add more docker registry management
-    	- delete tag from multiple repos
-    	- squash repo when new version created
-    	- other repo reports (what needs squashing, tags in use/where, image sizes and space reuse)
-    	- deploy for 'git describe' container; finish deploy workflow
-        - handle more tags to fingerprint lookup (ex: latest, master, staging)
-        - move old named content to new repos
-        - permit deletion of content based on
-        	tag  (as in all tags which match ... in a repo)
-        	do not use 'master' but instead 'yyyymmdd-$(git-describe)' and update docker-compose
 
 CBF:
     check if download file already exists (to allow use of Git-LFS)
@@ -139,6 +163,8 @@ enhancements:
     nagios
         reconfigue nagios
         configuration: load DBMS from config files
+	registryReport (summary):
+		add amount of space used
     PHP
         Nagios/nconf with php7
         create/use base containers for 'nginx+php5+fpm'/'nginx+php7+fpm': use port for PHP
@@ -180,6 +206,24 @@ future development
 Done
 =============================================================
 ```
+2019-06-16
+	use confluent container in place of kafka (deprecate kafka)
+        fix 'Space Recovered: -268 kb'
+        nagiosgraph issues
+	nagiosgraph does not display
+
+2019-06-15
+registryReport (summary):
+	add time
+	add amount of space used
+
+2019-06-09
+nginx:  05.applications/01.NGINX.installer
+	create /usr/lib/nginx/modules.debug and /usr/lib/nginx/modules.non-debug
+	create links for /usr/lib/nginx/modules, /etc/nginx/modules and /usr/sbin/nginx
+        permit runtime config based on [ $NGINX_DEBUG -eq 1 ], also add "error_log /var/log/nginx_error.log debug;"  to nginx.conf
+
+
 2019-05-26
 change 'versions' to submodule for support
 docker-dependants: change to annon associative arrays
