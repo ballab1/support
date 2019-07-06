@@ -93,7 +93,7 @@ function docker-utilities.cmdLineArgs()
     local longOpts=''
     local shortOpts=''
     local -i numberOfArgs=0
-    
+
     case "${1:-}" in
         help|Help|HELP)
             opts['cmd']='docker-utilities.usage'
@@ -240,6 +240,9 @@ function docker-utilities.cmdLineArgs()
         for i in "${!opts[@]}"; do
            printf '%s: %s\n' $i "${opts[$i]}" >&2
         done
+        for i in "$@"; do
+           printf ' %s\n' "$i" >&2
+        done
     fi
 
     [ $numberOfArgs -gt 0 ] && [ $numberOfArgs -ne $# ] && trap.die 'invalid arguments!'
@@ -306,21 +309,19 @@ function docker-utilities.addImageToList()
 function docker-utilities.catalogIterator()
 {
     local fn=${1:?}
-    local msg=${2:?}
-    shift 2
+    shift
 
     local -a requests=( "$@" )
     [ "${#requests[*]}" -gt 0 ] || requests=( '.+' )
 
     local -i status=0
     local -i content=0
-    local id name repo tag digest
-    local -a tags catalog
-    local -A digests
-    
-    catalog="$(registry.catalog)"
-    for name in "${requests[@]}"; do
+    local id name repo tag
+    local -a repos catalog
 
+    catalog="$(registry.catalog)"
+
+    for name in "${requests[@]}"; do
         if [[ "$name" = *@sha256:* ]]; then
            repo="${name%@*}"
            tag="${name##*@}"
@@ -334,11 +335,10 @@ function docker-utilities.catalogIterator()
             tag='^.*$'
         fi
 
-
-        mapfile -t repos < <(grep -Es "$repo" <<< "$catalog" ||:)
+        mapfile -t repos < <(grep -Es '^'"$repo"'$' <<< "$catalog" ||:)
         [ "${#repos[*]}" -gt 0 ] || continue
-
         (( content++ )) ||:
+
         for repo in "${repos[@]}"; do
             "$fn" "$repo" "$tag" || status=1
             [ $status -ne 0 ] && return $status
@@ -355,17 +355,15 @@ function docker-utilities.delete()
     local -r image=${1:?}
     local -r tag=${2:?}
 
-    local -i status=0
-    local id name repo tag digest
-    local -a tags catalog
+    local digest
     local -A digests
     
 
-    eval "digests=( $(docker-utilities.digests "$repo" 'notimes' | jq -r '.[]|.tags|=join(",")|"[\(.digest)]=\(.tags)"') )"
+    eval "digests=( $(docker-utilities.digests "$image" 'notimes' | jq -r '.[]|.tags|=join(",")|"[\(.digest)]=\(.tags)"') )"
     [ "${#digests[*]}" -le 0 ] && continue
 
     for digest in "${!digests[@]}"; do
-        grep -Esq "$tag" <<< ${digests[$digest]} && docker-utilities.addImageToList "${repo}@$digest" "${digests[$digest]}"
+        grep -Esq '^'"$tag"'$' <<< ${digests[$digest]} && docker-utilities.addImageToList "${image}@$digest" "${digests[$digest]}"
     done
     return 0
 }
@@ -575,7 +573,6 @@ function docker-utilities.main()
     [ "${opts['output']:-}" ] && REPORT_OUTPUT="${opts['output']}"
     [ "${opts['quiet']:-}" ] && IS_QUIET=1
     [ "${opts['start']:-}" ] && REPO_START=${opts['start']}
- 
 
     term.elog "${opts['message']:-} : $*"'\n' 'grey'
     local status=0
