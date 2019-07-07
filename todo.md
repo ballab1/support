@@ -2,36 +2,37 @@ TODO
 ```
 
 build.sh
-	recognize parent on different branch
+        recognize parent on different branch
 
 deploy:
         update of ${CONFIG_DIR}/docker-compose.yml should only update 'image:'
-	recognize ">>>>> issue while executing 06.nagios <<<<<" 
-	add docker-compose checking to deploy
+        recognize ">>>>> issue while executing 06.nagios <<<<<" 
+        add docker-compose checking to deploy
 
-	cyc@hopcyc-ballab1-1-00 ~/GIT/devops_container_environment (dev/ballab1/mres3291)
-	$ ./deploy --clean
-	***ERROR at /home/cyc/GIT/devops_container_environment/libs/deploy.bashlib:95. 'grep -cs "$network"' exited with status 1
-	>>>    Current directory /home/cyc/GIT/devops_container_environment
-	Stack trace:
-	>>>    01: /home/cyc/GIT/devops_container_environment/libs/deploy.bashlib:95 trap.catch_error  <<<
-	>>>    02: /home/cyc/GIT/devops_container_environment/libs/deploy.bashlib:331 deploy.clean  <<<
-	>>>    03: ./deploy:78 deploy.main  <<<
-	$rm -rf /home/cyc/GIT/devops_container_environment/workspace.devops_container_environment
-	$deploy.restart 2>&1 | tee restart.log
-	INFO: updating /home/cyc/GIT/devops_container_environment/workspace.devops_container_environment/docker-compose.yml
-	populating secrets
+        cyc@hopcyc-ballab1-1-00 ~/GIT/devops_container_environment (dev/ballab1/mres3291)
+        $ ./deploy --clean
+        ***ERROR at /home/cyc/GIT/devops_container_environment/libs/deploy.bashlib:95. 'grep -cs "$network"' exited with status 1
+        >>>    Current directory /home/cyc/GIT/devops_container_environment
+        Stack trace:
+        >>>    01: /home/cyc/GIT/devops_container_environment/libs/deploy.bashlib:95 trap.catch_error  <<<
+        >>>    02: /home/cyc/GIT/devops_container_environment/libs/deploy.bashlib:331 deploy.clean  <<<
+        >>>    03: ./deploy:78 deploy.main  <<<
+        $rm -rf /home/cyc/GIT/devops_container_environment/workspace.devops_container_environment
+        $deploy.restart 2>&1 | tee restart.log
+        INFO: updating /home/cyc/GIT/devops_container_environment/workspace.devops_container_environment/docker-compose.yml
+        populating secrets
 
-	the following also reported because of interference with CFG_USER_SECRETS=~/.inf
-	***ERROR: Password file: '.secrets/grafana_admin.pwd' not found. Used by startup of service: grafana
-	***ERROR: Password file: '.secrets/mysql_root.pwd' not found. Used by startup of service: mysql
-	***ERROR: Password file: '.secrets/mysql.pwd' not found. Used by startup of service: nagios
-	>> GENERATING SSL CERT
+        the following also reported because of interference with CFG_USER_SECRETS=~/.inf
+        ***ERROR: Password file: '.secrets/grafana_admin.pwd' not found. Used by startup of service: grafana
+        ***ERROR: Password file: '.secrets/mysql_root.pwd' not found. Used by startup of service: mysql
+        ***ERROR: Password file: '.secrets/mysql.pwd' not found. Used by startup of service: nagios
+        >> GENERATING SSL CERT
 
 
 nagios:  nohup: can't execute 'nagios.finishStartup': No such file
+add drive checking to nagios
 add https://hub.docker.com/r/pihole/pihole to production
-	fix hosts on nginx
+        fix hosts on nginx
 change 'versions' to subtree for production
 change cbf/bashlib to 
   - subtree for cbf
@@ -43,69 +44,48 @@ jenkins
   improve 'Check for Linux updates' to more clearly show list of updated packages
 registry report
  - include packed sizes
-docker-search
- - include sizes
- - layers: include count
- - dependants: include count
 usLib to save to mySQL
 fix small pics on zen
-add drive checking to nagios
 error in uid_gid.validateUser when passed 2222:2222
 change docker-registry-fe to delimit pagination using '?' rather than '/'
-
-deleteImage: when deleting a repo, 202 is shown, but none of images or tags shown
-    add more docker registry management
-    	- delete tag from multiple repos
-    	- squash repo when new version created
-    	- other repo reports (what needs squashing, tags in use/where, image sizes and space reuse)
-    	- deploy for 'git describe' container; finish deploy workflow
-        - handle more tags to fingerprint lookup (ex: latest, master, staging)
-        - move old named content to new repos
-        - permit deletion of content based on
-        	tag  (as in all tags which match ... in a repo)
-        	do not use 'master' but instead 'yyyymmdd-$(git-describe)' and update docker-compose
-
-nginx index.html
-nagios:
-	2 sources of truth:  mysql & NagiosCOnfig.tgz :: need to select one or other
-	does not correctly spawn nagios.finishStartup.
-	    - /run/nagios.lock does not exists (should contain PID of primary nagios for supervisord)
-	    - var/rw/nagios.cmd has incorrect permissions (resrticts what nconf can do)
-	    docker-entrypoint.sh
-	        my.defaultInit
-	    	crf.prepareEnvironment
-	    	    ( command "$tmp_script" ) && status=$? || status=$?
-	    		cd "$WORKDIR"
-	    		source "$file"
-	            or sudo -E
-	        	    crf.prepareEnvironment
-	    	        ( command "$tmp_script" ) && status=$? || status=$?
-	    	   	    cd "$WORKDIR"
-	    		    source "$file"
-	checkout https://github.com/harisekhon/nagios-plugins
-
-
-get stuff working:
-   reverse proxy for cesi
-
-   Jenkins
-     (on nginx):
-        need to examine/tune Garbage collection
-        	https://www.slideshare.net/TidharKleinOrbach/why-does-my-jenkins-freeze-sometimes-and-what-can-i-do-about-it
-        	http://engineering.taboola.com/5-simple-tips-boosting-jenkins-performance/
-        	https://www.cloudbees.com/blog/joining-big-leagues-tuning-jenkins-gc-responsiveness-and-stability
-        	https://jenkins.io/blog/2016/11/21/gc-tuning/
-        	analyze GC logs with tools such as http://gceasy.io/
-        2018/01/01 16:29:15 [error] 6#6: *9 connect() failed (111: Connection refused) while connecting to upstream, client: 10.1.3.24, server: default, request: "POST /jenkins/ajaxBuildQueue HTTP/1.1", upstream: "http://172.18.0.5:8080/jenkins/ajaxBuildQueue", host: "10.1.3.6", referrer: "https://10.1.3.6/jenkins/"
-        2018/01/01 16:29:15 [error] 6#6: *10 connect() failed (111: Connection refused) while connecting to upstream, client: 10.1.3.24, server: default, request: "POST /jenkins/ajaxExecutors HTTP/1.1", upstream: "http://172.18.0.5:8080/jenkins/ajaxExecutors", host: "10.1.3.6", referrer: "https://10.1.3.6/jenkins/" 
-    nagios:
-        fcgiwrap: REMOTE_USER not found  - when initial page loads
-        nagios logs to supervisord.log
-    complete unit tests
 
 build_container:
     build dependencies
         - handled by Gradle
+
+nginx index.html
+nagios:
+        2 sources of truth:  mysql & NagiosCOnfig.tgz :: need to select one or other
+        does not correctly spawn nagios.finishStartup.
+            - /run/nagios.lock does not exists (should contain PID of primary nagios for supervisord)
+            - var/rw/nagios.cmd has incorrect permissions (resrticts what nconf can do)
+            docker-entrypoint.sh
+                my.defaultInit
+                    crf.prepareEnvironment
+                        ( command "$tmp_script" ) && status=$? || status=$?
+                            cd "$WORKDIR"
+                            source "$file"
+                    or sudo -E
+                            crf.prepareEnvironment
+                            ( command "$tmp_script" ) && status=$? || status=$?
+                                   cd "$WORKDIR"
+                                source "$file"
+        checkout https://github.com/harisekhon/nagios-plugins
+
+
+get stuff working:
+   reverse proxy for cesi
+   Jenkins
+     (on nginx):
+        need to examine/tune Garbage collection
+                https://www.slideshare.net/TidharKleinOrbach/why-does-my-jenkins-freeze-sometimes-and-what-can-i-do-about-it
+                http://engineering.taboola.com/5-simple-tips-boosting-jenkins-performance/
+                https://www.cloudbees.com/blog/joining-big-leagues-tuning-jenkins-gc-responsiveness-and-stability
+                https://jenkins.io/blog/2016/11/21/gc-tuning/
+                analyze GC logs with tools such as http://gceasy.io/
+        2018/01/01 16:29:15 [error] 6#6: *9 connect() failed (111: Connection refused) while connecting to upstream, client: 10.1.3.24, server: default, request: "POST /jenkins/ajaxBuildQueue HTTP/1.1", upstream: "http://172.18.0.5:8080/jenkins/ajaxBuildQueue", host: "10.1.3.6", referrer: "https://10.1.3.6/jenkins/"
+        2018/01/01 16:29:15 [error] 6#6: *10 connect() failed (111: Connection refused) while connecting to upstream, client: 10.1.3.24, server: default, request: "POST /jenkins/ajaxExecutors HTTP/1.1", upstream: "http://172.18.0.5:8080/jenkins/ajaxExecutors", host: "10.1.3.6", referrer: "https://10.1.3.6/jenkins/" 
+    complete unit tests
 
 CBF:
     check if download file already exists (to allow use of Git-LFS)
@@ -122,26 +102,16 @@ builds
         - staging: PRs from dev + CI builds
         - master: production
     fix promotions: quality ladder:  dev -> staging -> master
-    	- keep dev at 1 build
-    	- deploy should update 'latest' tag
-    provide 'updateDownload'
-    	- download file
-    	- calc sha256
-    	- upload file to artifactory
-    	- update action_folders/04.downloads/
+            - keep dev at 1 build
+            - deploy should update 'latest' tag
     docker-registry
-        - handle more tags to fingerprint lookup (ex: latest, master, staging)
-        - move old named content to new repos
-        - permit deleteion of content based on
-        	tag  (as in all tags which match ... in a repo)
-        	do not use 'master' but instead 'yyyymmdd-$(git-describe)' and update docker-compose
+        - change to https
         - configure to use redis
              https://github.com/docker-library/redis/blob/e95c0cf4ffd9a52aa48d05b93fe3b42069c05032/5.0-rc/32bit/Dockerfile
     Separate build, package and deploy/run actions
         Fix up docker dependency script
 
 enhancements:
-    setup elasticsearch
     container kafka logging with https://hub.docker.com/r/mickyg/kafka-logdriver/
     containers
         base jenkins and webdav on supervisord image
@@ -163,8 +133,8 @@ enhancements:
     nagios
         reconfigue nagios
         configuration: load DBMS from config files
-	registryReport (summary):
-		add amount of space used
+        registryReport (summary):
+                add amount of space used
     PHP
         Nagios/nconf with php7
         create/use base containers for 'nginx+php5+fpm'/'nginx+php7+fpm': use port for PHP
@@ -187,11 +157,6 @@ enhancements:
         recipes: 
             add side menu for categories filtering
             backup needs more intelligence + moved to jenkinsfile
-    registry
-        scan and reduce all entries to max
-        scan and remove fingerprints 'from' n-x repos unless tags > 1
-        remove specific tag (needs testing)
-        docker-dependents: show labels for images
     jenkins
         implement jenkins jobs as containers
         make fancy report for 'Jenkins Uptime Pipeline' and export data to kafka
@@ -206,21 +171,60 @@ future development
 Done
 =============================================================
 ```
+2019-07-07
+    provide 'updateDownload'
+            - download file
+            - calc sha256
+            - upload file to artifactory
+            - update action_folders/04.downloads/
+    docker-search
+     - include sizes
+     - layers: include count
+     - dependants: include count
+       docker-dependents: show labels for images
+    docker-registry
+    : registry
+    : deleteImage: when deleting a repo, 202 is shown, but none of images or tags shown
+        - handle more tags to fingerprint lookup (ex: latest, master, staging)
+        - move old named content to new repos
+        - permit deleteion of content based on
+                tag  (as in all tags which match ... in a repo)
+                do not use 'master' but instead 'yyyymmdd-$(git-describe)' and update docker-compose
+        scan and reduce all entries to max
+        scan and remove fingerprints 'from' n-x repos unless tags > 1
+        remove specific tag (needs testing)
+        add more docker registry management
+            - delete tag from multiple repos
+            - squash repo when new version created
+            - other repo reports (what needs squashing, tags in use/where, image sizes and space reuse)
+            - deploy for 'git describe' container; finish deploy workflow
+            - handle more tags to fingerprint lookup (ex: latest, master, staging)
+            - move old named content to new repos
+            - permit deletion of content based on
+                    tag  (as in all tags which match ... in a repo)
+                    do not use 'master' but instead 'yyyymmdd-$(git-describe)' and update docker-compose
+    nagios:
+        fcgiwrap: REMOTE_USER not found  - when initial page loads  (occurs because no user has logged int)
+        nagios logs to supervisord.log
+enhancements:
+    setup elasticsearch
+
+
 2019-06-16
-	use confluent container in place of kafka (deprecate kafka)
+        use confluent container in place of kafka (deprecate kafka)
         fix 'Space Recovered: -268 kb'
         nagiosgraph issues
-	nagiosgraph does not display
+        nagiosgraph does not display
 
 2019-06-15
 registryReport (summary):
-	add time
-	add amount of space used
+        add time
+        add amount of space used
 
 2019-06-09
 nginx:  05.applications/01.NGINX.installer
-	create /usr/lib/nginx/modules.debug and /usr/lib/nginx/modules.non-debug
-	create links for /usr/lib/nginx/modules, /etc/nginx/modules and /usr/sbin/nginx
+        create /usr/lib/nginx/modules.debug and /usr/lib/nginx/modules.non-debug
+        create links for /usr/lib/nginx/modules, /etc/nginx/modules and /usr/sbin/nginx
         permit runtime config based on [ $NGINX_DEBUG -eq 1 ], also add "error_log /var/log/nginx_error.log debug;"  to nginx.conf
 
 
@@ -230,23 +234,23 @@ docker-dependants: change to annon associative arrays
 add registry analysis to report
 setup rsync for registry
 nagios:
-	DBI connect('database=nconf;host=mysql','bobb',...) failed: Can't connect to MySQL server on 'mysql' (115) at /usr/local/nagios/share/nconf/bin/lib/NConf/DB.pm line 103.
-	Compilation failed in require at /usr/local/nagios/share/nconf/bin/generate_config.pl line 51.
-	BEGIN failed--compilation aborted at /usr/local/nagios/share/nconf/bin/generate_config.pl line 51.
-	***ERROR at environment:9. '"${NCONF_HOME}/bin/generate_config.pl"' exited with status 115
-	Stack trace:
-	>>>    02: /usr/local/crf/startup/05.nagios:35 nagios.redeployConfig  <<<
+        DBI connect('database=nconf;host=mysql','bobb',...) failed: Can't connect to MySQL server on 'mysql' (115) at /usr/local/nagios/share/nconf/bin/lib/NConf/DB.pm line 103.
+        Compilation failed in require at /usr/local/nagios/share/nconf/bin/generate_config.pl line 51.
+        BEGIN failed--compilation aborted at /usr/local/nagios/share/nconf/bin/generate_config.pl line 51.
+        ***ERROR at environment:9. '"${NCONF_HOME}/bin/generate_config.pl"' exited with status 115
+        Stack trace:
+        >>>    02: /usr/local/crf/startup/05.nagios:35 nagios.redeployConfig  <<<
 
 
 
 add parent sha to labels
 occasional error at registry.bashlib:175
-	    for digest in "${!digests[@]}"; do
-		tags=( ${digests[$digest]} )
-		createTime="$(registry.createTime "$name" "${tags[0]}" | tr -d '"')"
-		[ "$createTime" != '                      ' ] || createTime='null'
-		[ "${times[$createTime]:-}" ] || times[$createTime]="$digest"
-	    done
+            for digest in "${!digests[@]}"; do
+                tags=( ${digests[$digest]} )
+                createTime="$(registry.createTime "$name" "${tags[0]}" | tr -d '"')"
+                [ "$createTime" != '                      ' ] || createTime='null'
+                [ "${times[$createTime]:-}" ] || times[$createTime]="$digest"
+            done
 deploy docker-compose.yml for prod
 Kafka broker/zookeeper issues
 Grafana update
@@ -294,12 +298,12 @@ split 'production' into two: "broker,zookeeper,hubot,mysql", "other"
 git-crypt: encode/decode files (aka GIT-LFS encoding) which are protected so they can go into GIT
 
 issues pushing/pulling to registry
-     sometimes ':latest' not defined, sometimes 'fingerprint' not defined		
+     sometimes ':latest' not defined, sometimes 'fingerprint' not defined                
      projects should have definition of /version:tags
          so we can have
-        	jenkins/2.121.2:latest
-        	jenkins/2.121.3:latest
-        	jenkins:latest
+                jenkins/2.121.2:latest
+                jenkins/2.121.3:latest
+                jenkins:latest
      need a way to 'just push'
 
 ubuntu-s1 zookeeper/broker

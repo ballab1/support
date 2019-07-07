@@ -82,3 +82,6 @@
 [submodule "versions"]
 	path = versions
 	url = ../versions
+[submodule "bashlib"]
+	path = bashlib
+	url = ../bashlib
