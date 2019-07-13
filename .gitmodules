@@ -20,7 +20,7 @@
     path = jenkins
     url = ../jenkins.git
 [submodule "kafka"]
-	path = kafka
+    path = kafka
     url = ../kafka.git
 [submodule "kafka-manager"]
     path = kafka-manager
@@ -73,15 +73,15 @@
 [submodule "supervisord"]
     path = supervisord
     url = ../supervisord.git
+[submodule "versions"]
+    path = versions
+    url = ../versions
 [submodule "webdav"]
     path = webdav
     url = ../webdav.git
 [submodule "zenphoto"]
     path = zenphoto
     url = ../zenphoto.git
-[submodule "versions"]
-	path = versions
-	url = ../versions
-[submodule "bashlib"]
-	path = bashlib
-	url = ../bashlib
+[submodule "utilities"]
+	path = bin
+	url = ../utilities
