@@ -2,48 +2,43 @@ TODO
 ```
 
 build.sh
-        recognize parent on different branch
+    recognize parent on different branch
 
 deploy:
-        update of ${CONFIG_DIR}/docker-compose.yml should only update 'image:'
-        recognize ">>>>> issue while executing 06.nagios <<<<<" 
-        add docker-compose checking to deploy
+    update of ${CONFIG_DIR}/docker-compose.yml should only update 'image:'
+    recognize ">>>>> issue while executing 06.nagios <<<<<" 
+    add docker-compose checking to deploy
 
-        cyc@hopcyc-ballab1-1-00 ~/GIT/devops_container_environment (dev/ballab1/mres3291)
-        $ ./deploy --clean
-        ***ERROR at /home/cyc/GIT/devops_container_environment/libs/deploy.bashlib:95. 'grep -cs "$network"' exited with status 1
-        >>>    Current directory /home/cyc/GIT/devops_container_environment
-        Stack trace:
-        >>>    01: /home/cyc/GIT/devops_container_environment/libs/deploy.bashlib:95 trap.catch_error  <<<
-        >>>    02: /home/cyc/GIT/devops_container_environment/libs/deploy.bashlib:331 deploy.clean  <<<
-        >>>    03: ./deploy:78 deploy.main  <<<
-        $rm -rf /home/cyc/GIT/devops_container_environment/workspace.devops_container_environment
-        $deploy.restart 2>&1 | tee restart.log
-        INFO: updating /home/cyc/GIT/devops_container_environment/workspace.devops_container_environment/docker-compose.yml
-        populating secrets
+    cyc@hopcyc-ballab1-1-00 ~/GIT/devops_container_environment (dev/ballab1/mres3291)
+    $ ./deploy --clean
+    ***ERROR at /home/cyc/GIT/devops_container_environment/libs/deploy.bashlib:95. 'grep -cs "$network"' exited with status 1
+    >>>    Current directory /home/cyc/GIT/devops_container_environment
+    Stack trace:
+    >>>    01: /home/cyc/GIT/devops_container_environment/libs/deploy.bashlib:95 trap.catch_error  <<<
+    >>>    02: /home/cyc/GIT/devops_container_environment/libs/deploy.bashlib:331 deploy.clean  <<<
+    >>>    03: ./deploy:78 deploy.main  <<<
+    $rm -rf /home/cyc/GIT/devops_container_environment/workspace.devops_container_environment
+    $deploy.restart 2>&1 | tee restart.log
+    INFO: updating /home/cyc/GIT/devops_container_environment/workspace.devops_container_environment/docker-compose.yml
+    populating secrets
 
-        the following also reported because of interference with CFG_USER_SECRETS=~/.inf
-        ***ERROR: Password file: '.secrets/grafana_admin.pwd' not found. Used by startup of service: grafana
-        ***ERROR: Password file: '.secrets/mysql_root.pwd' not found. Used by startup of service: mysql
-        ***ERROR: Password file: '.secrets/mysql.pwd' not found. Used by startup of service: nagios
-        >> GENERATING SSL CERT
+    the following also reported because of interference with CFG_USER_SECRETS=~/.inf
+    ***ERROR: Password file: '.secrets/grafana_admin.pwd' not found. Used by startup of service: grafana
+    ***ERROR: Password file: '.secrets/mysql_root.pwd' not found. Used by startup of service: mysql
+    ***ERROR: Password file: '.secrets/mysql.pwd' not found. Used by startup of service: nagios
+    >> GENERATING SSL CERT
 
 
-nagios:  nohup: can't execute 'nagios.finishStartup': No such file
-add drive checking to nagios
 add https://hub.docker.com/r/pihole/pihole to production
         fix hosts on nginx
 change 'versions' to subtree for production
-change cbf/bashlib to 
-  - subtree for cbf
-  - submodule for support
-  - subtree for production
+
 jenkins
-  kafka logging from pipelines
-  improve logging from 'Clean Docker Registry': show badge when reclaim shows > 0
-  improve 'Check for Linux updates' to more clearly show list of updated packages
+    kafka logging from pipelines
+    improve logging from 'Clean Docker Registry': show badge when reclaim shows > 0
+    improve 'Check for Linux updates' to more clearly show list of updated packages
 registry report
- - include packed sizes
+    - include packed sizes
 usLib to save to mySQL
 fix small pics on zen
 error in uid_gid.validateUser when passed 2222:2222
@@ -55,22 +50,24 @@ build_container:
 
 nginx index.html
 nagios:
-        2 sources of truth:  mysql & NagiosCOnfig.tgz :: need to select one or other
-        does not correctly spawn nagios.finishStartup.
-            - /run/nagios.lock does not exists (should contain PID of primary nagios for supervisord)
-            - var/rw/nagios.cmd has incorrect permissions (resrticts what nconf can do)
-            docker-entrypoint.sh
-                my.defaultInit
-                    crf.prepareEnvironment
+    nagios:  nohup: can't execute 'nagios.finishStartup': No such file
+    add drive checking to nagios
+    2 sources of truth:  mysql & NagiosCOnfig.tgz :: need to select one or other
+    does not correctly spawn nagios.finishStartup.
+        - /run/nagios.lock does not exists (should contain PID of primary nagios for supervisord)
+        - var/rw/nagios.cmd has incorrect permissions (resrticts what nconf can do)
+        docker-entrypoint.sh
+            my.defaultInit
+                crf.prepareEnvironment
+                    ( command "$tmp_script" ) && status=$? || status=$?
+                        cd "$WORKDIR"
+                        source "$file"
+                or sudo -E
+                        crf.prepareEnvironment
                         ( command "$tmp_script" ) && status=$? || status=$?
-                            cd "$WORKDIR"
+                               cd "$WORKDIR"
                             source "$file"
-                    or sudo -E
-                            crf.prepareEnvironment
-                            ( command "$tmp_script" ) && status=$? || status=$?
-                                   cd "$WORKDIR"
-                                source "$file"
-        checkout https://github.com/harisekhon/nagios-plugins
+    checkout https://github.com/harisekhon/nagios-plugins
 
 
 get stuff working:
@@ -171,6 +168,25 @@ future development
 Done
 =============================================================
 ```
+2019-07-13
+    change cbf/bashlib to 
+      - subtree for cbf
+      - submodule for support
+      - subtree for production
+            git clone https://github.com/ballab1/container_build_framework
+            cd container_build_framework/
+            git remote add -t master -f --no-tags bashlib ../bashlib
+            git fetch bashlib
+            git rm -rf cbf/bashlib
+            git commit -m 'remove bashlibs prior to adding subtree'
+            git subtree add --squash --prefix=cbf/bashlib bashlib master
+            git push
+            git br -d dev
+            git push origin -d dev
+            git checkout -b dev
+            git push origin -u dev
+            git checkout master
+
 2019-07-07
     provide 'updateDownload'
             - download file
