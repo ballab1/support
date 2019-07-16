@@ -175,7 +175,8 @@ Done
       - subtree for production
             git clone https://github.com/ballab1/container_build_framework
             cd container_build_framework/
-            git remote add -t master -f --no-tags bashlib ../bashlib
+#            git remote add -t master -f --no-tags bashlib ../bashlib
+            git remote add -t master -f --no-tags bashlib https://github.com/ballab1/bashlib
             git fetch bashlib
             git rm -rf cbf/bashlib
             git commit -m 'remove bashlibs prior to adding subtree'
