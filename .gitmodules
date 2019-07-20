@@ -70,9 +70,15 @@
 [submodule "python"]
     path = python
     url = ../python.git
+[submodule "smee"]
+    path = smee
+    url = ../smee
 [submodule "supervisord"]
     path = supervisord
     url = ../supervisord.git
+[submodule "utilities"]
+    path = bin
+    url = ../utilities
 [submodule "versions"]
     path = versions
     url = ../versions
@@ -82,6 +88,3 @@
 [submodule "zenphoto"]
     path = zenphoto
     url = ../zenphoto.git
-[submodule "utilities"]
-	path = bin
-	url = ../utilities
