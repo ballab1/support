@@ -1,6 +1,40 @@
 TODO
 ```
 
+docker-utilities
+    report:  needs to handle 'null' data better (-f test) throws groovy exception. Also rename docker-utilities.formatTextReport to docker-utilities.reportTextFormat
+	    $ ./docker-utilities report devops/centos:7.4.1708
+	    report local images and push them to afeoscyc-mw.cec.lab.emc.com/  : devops/centos:7.4.1708
+
+	    No content specified
+	    Caught: groovy.json.JsonException: Unable to determine the current character, it is not a string, number, array, or object
+
+	    The current character read is '}' with an int value of 125
+	    Unable to determine the current character, it is not a string, number, array, or object
+	    line number 1
+	    index number 8
+	    {"data":}
+	    ........^
+	    groovy.json.JsonException: Unable to determine the current character, it is not a string, number, array, or object
+
+	    The current character read is '}' with an int value of 125
+	    Unable to determine the current character, it is not a string, number, array, or object
+	    line number 1
+	    index number 8
+	    {"data":}
+	    ........^
+		    at org.apache.groovy.json.internal.JsonParserCharArray.decodeValueInternal(JsonParserCharArray.java:206)
+		    at org.apache.groovy.json.internal.JsonParserCharArray.decodeJsonObject(JsonParserCharArray.java:132)
+		    at org.apache.groovy.json.internal.JsonParserCharArray.decodeValueInternal(JsonParserCharArray.java:186)
+		    at org.apache.groovy.json.internal.JsonParserCharArray.decodeValue(JsonParserCharArray.java:157)
+		    at org.apache.groovy.json.internal.JsonParserCharArray.decodeFromChars(JsonParserCharArray.java:46)
+		    at org.apache.groovy.json.internal.JsonParserCharArray.parse(JsonParserCharArray.java:384)
+		    at org.apache.groovy.json.internal.BaseJsonParser.parse(BaseJsonParser.java:112)
+		    at JsonData.readJson(registryReport.groovy:126)
+		    at JsonData.<init>(registryReport.groovy:84)
+		    at registryReport.run(registryReport.groovy:165)
+
+
 build.sh
     recognize parent on different branch
 
