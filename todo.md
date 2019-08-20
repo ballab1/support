@@ -1,28 +1,28 @@
 TODO
 ```
 
+move to python:3.7
+
+get working
+    fix project updates
+    zenphoto
+    kafkamgr
+    microservices from kafka to DBMS
+    supervisord monitor
+    docker-utilities: registory curation
+    finish nginx front end
+
 jenkins
-    UpdateRepoDirs.jenkinsfile
-	2 executors on master caused deadlock
-
-	does not sync
-		bobb@ubuntu-s4 ~/GIT/support/bin (dev)
-		$ gl
-		* 5e68f67 - (9 minutes ago) fixes to utilities - Ballantyne, Bob (origin/master, origin/HEAD, master)
-		| * 2bf7d84 - (2 days ago) fixes to utilities - Ballantyne, Bob (HEAD -> dev, origin/dev)
-		|/
-		* b6d4941 - (6 days ago) fixes to utilities - Ballantyne, Bob
-		* 37cd250 - (3 weeks ago) add submodule - Ballantyne, Bob
-		* d79c65f - (3 weeks ago) first commit - Ballantyne, Bob
-
+    k8s jobs
+    clean workspace directory
     CleanDockerRegistry.jenkinsfile
 	$ df
 	df: /media/WDMyCloud: Stale file handle
 	returns exit code 1
 
 
-docker-utilities
-build.sh
+docker-utilities 
+build.sh + deploy
     recognize parent on different branch
 
 deploy:
@@ -189,6 +189,21 @@ future development
 Done
 =============================================================
 ```
+2019-07-31
+jenkins
+    UpdateRepoDirs.jenkinsfile
+	2 executors on master caused deadlock
+	does not sync
+		bobb@ubuntu-s4 ~/GIT/support/bin (dev)
+		$ gl
+		* 5e68f67 - (9 minutes ago) fixes to utilities - Ballantyne, Bob (origin/master, origin/HEAD, master)
+		| * 2bf7d84 - (2 days ago) fixes to utilities - Ballantyne, Bob (HEAD -> dev, origin/dev)
+		|/
+		* b6d4941 - (6 days ago) fixes to utilities - Ballantyne, Bob
+		* 37cd250 - (3 weeks ago) add submodule - Ballantyne, Bob
+		* d79c65f - (3 weeks ago) first commit - Ballantyne, Bob
+
+
 2019-07-13
     change cbf/bashlib to 
       - subtree for cbf
