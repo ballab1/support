@@ -12,6 +12,14 @@ get working
     docker-utilities: registory curation
     finish nginx front end
 
+docker-utilities
+    recognize filer on tags for 'docker-utilities images '*:*'
+    pushImage needs to be able to rename to latest if needed
+
+deploy
+    --container_tag needed. Also, retag existing images if (needed and ! inuse)
+
+
 jenkins
     k8s jobs
     clean workspace directory
@@ -21,7 +29,6 @@ jenkins
 	returns exit code 1
 
 
-docker-utilities 
 build.sh + deploy
     recognize parent on different branch
 
@@ -189,6 +196,10 @@ future development
 Done
 =============================================================
 ```
+2019-09-07
+docker-utilities 
+
+
 2019-07-31
 jenkins
     UpdateRepoDirs.jenkinsfile
