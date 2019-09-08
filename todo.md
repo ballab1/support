@@ -16,9 +16,14 @@ docker-utilities
     recognize filer on tags for 'docker-utilities images '*:*'
     pushImage needs to be able to rename to latest if needed
 
-deploy
-    --container_tag needed. Also, retag existing images if (needed and ! inuse)
 
+deploy
+    --container_tag needed. 
+    retag existing images if (needed and ! inuse)
+    when CONTAINER_TAG is a 'git tag' (for something ?):
+    	set default CONTAINER_TAG to tag
+    	push images with tag=CONTAINER_TAG
+    	set tag on current repo (if not exists)
 
 jenkins
     k8s jobs
@@ -62,7 +67,6 @@ add https://hub.docker.com/r/pihole/pihole to production
 change 'versions' to subtree for production
 
 jenkins
-    kafka logging from pipelines
     improve logging from 'Clean Docker Registry': show badge when reclaim shows > 0
     improve 'Check for Linux updates' to more clearly show list of updated packages
 registry report
@@ -74,7 +78,7 @@ change docker-registry-fe to delimit pagination using '?' rather than '/'
 
 build_container:
     build dependencies
-        - handled by Gradle
+        - handled by Gradle: change build.sh to work inside each sub-repo. iter on OS in each repo (rather than repo for each OS) 
 
 nginx index.html
 nagios:
@@ -198,6 +202,8 @@ Done
 ```
 2019-09-07
 docker-utilities 
+jenkins
+    kafka logging from pipelines
 
 
 2019-07-31
