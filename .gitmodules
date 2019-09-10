@@ -19,15 +19,9 @@
 [submodule "jenkins"]
     path = jenkins
     url = ../jenkins.git
-[submodule "kafka"]
-    path = kafka
-    url = ../kafka.git
 [submodule "kafka-manager"]
     path = kafka-manager
     url = ../kafka-manager.git
-[submodule "kafka-rest"]
-    path = kafka-rest
-    url = ../kafka-rest.git
 [submodule "movefiles"]
     path = movefiles
     url = ../moveFiles.git

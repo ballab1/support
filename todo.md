@@ -1,6 +1,7 @@
 TODO
 ```
 
+change nagiosgraph to pnp4nagios
 move to python:3.7
 
 get working
@@ -13,7 +14,6 @@ get working
     finish nginx front end
 
 docker-utilities
-    recognize filer on tags for 'docker-utilities images '*:*'
     pushImage needs to be able to rename to latest if needed
 
 
@@ -202,6 +202,8 @@ Done
 ```
 2019-09-07
 docker-utilities 
+    multiple updates
+    recognize filer on tags for 'docker-utilities images '*:*'
 jenkins
     kafka logging from pipelines
 
