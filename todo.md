@@ -15,6 +15,32 @@ get working
 
 docker-utilities
     pushImage needs to be able to rename to latest if needed
+    minor issue:
+	$ docker-utilities report -o x.txt -f text
+	docker-utilities: invalid option -- 'f'
+	report remote images in ubuntu-s2:5000/  : text
+
+	No content specified
+	Caught: groovy.json.JsonException: Unable to determine the current character, it is not a string, number, array, or object
+
+	The current character read is '}' with an int value of 125
+	Unable to determine the current character, it is not a string, number, array, or object
+	line number 1
+	index number 8
+	{"data":}
+	........^
+	groovy.json.JsonException: Unable to determine the current character, it is not a string, number, array, or object
+
+	The current character read is '}' with an int value of 125
+	Unable to determine the current character, it is not a string, number, array, or object
+	line number 1
+	index number 8
+	{"data":}
+	........^
+		at org.apache.groovy.json.internal.JsonParserCharArray.decodeValueInternal(JsonParserCharArray.java:206)
+		at org.apache.groovy.json.internal.JsonParserCharArray.decodeJsonObject(JsonParserCharArray.java:132)
+		at org.apache.groovy.json.internal.JsonParserCharArray.decodeValueInternal(JsonParserCharArray.java:186)
+		at org.apache.groovy.json.internal.JsonParserCharArray.decodeValue(JsonParserCharArray.java:157)
 
 
 deploy
