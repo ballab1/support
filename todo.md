@@ -268,6 +268,11 @@ jenkins
             git checkout -b dev
             git push origin -u dev
             git checkout master
+or/
+            git fetch bashlib
+            git subtree merge --squash --prefix=cbf/bashlib bashlib master
+            git push
+
 
 2019-07-07
     provide 'updateDownload'
