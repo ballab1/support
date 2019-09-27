@@ -1,6 +1,7 @@
 TODO
 ```
 
+implement Docker.findImage  (should check local and remote. Need flag to indicate to pull remote)
 change nagiosgraph to pnp4nagios
 move to python:3.7
 
