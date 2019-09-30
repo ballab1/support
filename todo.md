@@ -2,7 +2,6 @@ TODO
 ```
 
 implement Docker.findImage  (should check local and remote. Need flag to indicate to pull remote)
-change nagiosgraph to pnp4nagios
 move to python:3.7
 
 get working
@@ -13,6 +12,15 @@ get working
     supervisord monitor
     docker-utilities: registory curation
     finish nginx front end
+
+zen
+    get admin working
+
+nagios
+    change nagiosgraph to pnp4nagios
+    reconfigue nagios:
+    	remove lock on startup (backgound process)
+	restart process after NCONF deploys new config
 
 docker-utilities
     pushImage needs to be able to rename to latest if needed
@@ -45,7 +53,6 @@ docker-utilities
 
 
 deploy
-    --container_tag needed. 
     retag existing images if (needed and ! inuse)
     when CONTAINER_TAG is a 'git tag' (for something ?):
     	set default CONTAINER_TAG to tag
@@ -99,7 +106,6 @@ jenkins
 registry report
     - include packed sizes
 usLib to save to mySQL
-fix small pics on zen
 error in uid_gid.validateUser when passed 2222:2222
 change docker-registry-fe to delimit pagination using '?' rather than '/'
 
@@ -233,6 +239,9 @@ docker-utilities
     recognize filer on tags for 'docker-utilities images '*:*'
 jenkins
     kafka logging from pipelines
+deploy
+    --container_tag needed. 
+fix small pics on zen
 
 
 2019-07-31
