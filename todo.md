@@ -18,11 +18,9 @@ zen
 
 nagios
     change nagiosgraph to pnp4nagios
-    reconfigue nagios:
-    	remove lock on startup (backgound process)
-	restart process after NCONF deploys new config
 
 docker-utilities
+    getimage should update 'versions' filder
     pushImage needs to be able to rename to latest if needed
     minor issue:
 	$ docker-utilities report -o x.txt -f text
@@ -113,7 +111,6 @@ build_container:
     build dependencies
         - handled by Gradle: change build.sh to work inside each sub-repo. iter on OS in each repo (rather than repo for each OS) 
 
-nginx index.html
 nagios:
     nagios:  nohup: can't execute 'nagios.finishStartup': No such file
     add drive checking to nagios
@@ -196,7 +193,7 @@ enhancements:
         reconfigue nagios
         configuration: load DBMS from config files
         registryReport (summary):
-                add amount of space used
+                add amount of space used  (use ` ssh ubuntu-s2 df /dev/sdb1 | tail -1 | awk '{print $5 " used, " $3/1024/1024 " GB  available"}'`)
     PHP
         Nagios/nconf with php7
         create/use base containers for 'nginx+php5+fpm'/'nginx+php7+fpm': use port for PHP
@@ -233,6 +230,14 @@ future development
 Done
 =============================================================
 ```
+2019-10-02
+nginx index.html
+nagios
+    change nagiosgraph to pnp4nagios
+    reconfigue nagios:
+    	remove lock on startup (backgound process)
+	restart process after NCONF deploys new config
+
 2019-09-07
 docker-utilities 
     multiple updates
