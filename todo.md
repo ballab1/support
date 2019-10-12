@@ -20,12 +20,17 @@ nagios
     change nagiosgraph to pnp4nagios
 
 docker-utilities
+    retagimages should be specific to build_PDR directory, deploy directory or a docker-compose.yml
+    need more help info in context help
     getimage should update 'versions' folder
     pushImage needs to be able to rename to latest if needed
 
 
 deploy
+    git login required even on 'down'
+    regression: CONTAINER_TAG always honored, may have other side effects
     retag existing images if (needed and ! inuse)
+    should be able to specify (and replace in docker-compose.yml) a 'named' container_tag
     when CONTAINER_TAG is a 'git tag' (for something ?):
     	set default CONTAINER_TAG to tag
     	push images with tag=CONTAINER_TAG
@@ -206,6 +211,7 @@ Done
 ```
 2019-10-04
 docker-utilities
+    deletetag --allrepos fails when a tag does not exist in a nrepo
     minor issue:
 	$ docker-utilities report -o x.txt -f text
 	docker-utilities: invalid option -- 'f'
