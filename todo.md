@@ -20,6 +20,20 @@ nagios
     change nagiosgraph to pnp4nagios
 
 docker-utilities
+	$ docker-utilities deleteTag 'devops/.*:dev-ballab1-f4072' -u svc_cyclonebuild -c $__SETTINGS_FILE
+	delete specific tag from afeoscyc-mw.cec.lab.emc.com/ : devops/.*:dev-ballab1-f4072
+	retrieving digests for devops/.*
+	***ERROR: failure to complete registry request
+	    command:       curl --insecure --request GET --silent https://afeoscyc-mw.cec.lab.emc.com/artifactory/api/docker/cyclone-dockerv2-local/v2/devops/.*/tags/list
+	    error code:    "NAME_UNKNOWN"
+	    error message: "Repository name not known to registry."
+	    error details: {
+	  "name": "devops/.*"
+	}
+	    http_code:     404 Not Found
+	    Failed to get https://afeoscyc-mw.cec.lab.emc.com/artifactory/api/docker/cyclone-dockerv2-local/v2/devops/.*/tags/list
+
+	***ERROR: repository: devops/.* - does not exist
     retagimages should be specific to build_PDR directory, deploy directory or a docker-compose.yml
     need more help info in context help
     getimage should update 'versions' folder
@@ -295,7 +309,7 @@ jenkins
             git checkout master
 or/
             git fetch bashlib
-            git subtree merge --squash --prefix=cbf/bashlib bashlib master
+            git subtree merge --squash --prefix=cbf/bashlib bashlib/master
             git push
 
 
