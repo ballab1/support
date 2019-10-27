@@ -6,17 +6,86 @@ move to python:3.7
 
 get working
     fix project updates
+    zenphoto
     kafkamgr
     microservices from kafka to DBMS
     supervisord monitor
     docker-utilities: registory curation
-    reverse proxy for cesi
+    finish nginx front end
 
 zen
     get admin working
 
 nagios
     change nagiosgraph to pnp4nagios
+
+docker-utilities
+    getimage should update 'versions' folder
+    pushImage needs to be able to rename to latest if needed
+
+
+deploy
+    retag existing images if (needed and ! inuse)
+    when CONTAINER_TAG is a 'git tag' (for something ?):
+    	set default CONTAINER_TAG to tag
+    	push images with tag=CONTAINER_TAG
+    	set tag on current repo (if not exists)
+
+jenkins
+    k8s jobs
+    clean workspace directory
+    CleanDockerRegistry.jenkinsfile
+	$ df
+	df: /media/WDMyCloud: Stale file handle
+	returns exit code 1
+
+
+build.sh + deploy
+    recognize parent on different branch
+
+deploy:
+    update of ${CONFIG_DIR}/docker-compose.yml should only update 'image:'
+    recognize ">>>>> issue while executing 06.nagios <<<<<" 
+    add docker-compose checking to deploy
+
+    cyc@hopcyc-ballab1-1-00 ~/GIT/devops_container_environment (dev/ballab1/mres3291)
+    $ ./deploy --clean
+    ***ERROR at /home/cyc/GIT/devops_container_environment/libs/deploy.bashlib:95. 'grep -cs "$network"' exited with status 1
+    >>>    Current directory /home/cyc/GIT/devops_container_environment
+    Stack trace:
+    >>>    01: /home/cyc/GIT/devops_container_environment/libs/deploy.bashlib:95 trap.catch_error  <<<
+    >>>    02: /home/cyc/GIT/devops_container_environment/libs/deploy.bashlib:331 deploy.clean  <<<
+    >>>    03: ./deploy:78 deploy.main  <<<
+    $rm -rf /home/cyc/GIT/devops_container_environment/workspace.devops_container_environment
+    $deploy.restart 2>&1 | tee restart.log
+    INFO: updating /home/cyc/GIT/devops_container_environment/workspace.devops_container_environment/docker-compose.yml
+    populating secrets
+
+    the following also reported because of interference with CFG_USER_SECRETS=~/.inf
+    ***ERROR: Password file: '.secrets/grafana_admin.pwd' not found. Used by startup of service: grafana
+    ***ERROR: Password file: '.secrets/mysql_root.pwd' not found. Used by startup of service: mysql
+    ***ERROR: Password file: '.secrets/mysql.pwd' not found. Used by startup of service: nagios
+    >> GENERATING SSL CERT
+
+
+add https://hub.docker.com/r/pihole/pihole to production
+        fix hosts on nginx
+change 'versions' to subtree for production
+
+jenkins
+    improve logging from 'Clean Docker Registry': show badge when reclaim shows > 0
+    improve 'Check for Linux updates' to more clearly show list of updated packages
+registry report
+    - include packed sizes
+usLib to save to mySQL
+error in uid_gid.validateUser when passed 2222:2222
+change docker-registry-fe to delimit pagination using '?' rather than '/'
+
+build_container:
+    build dependencies
+        - handled by Gradle: change build.sh to work inside each sub-repo. iter on OS in each repo (rather than repo for each OS) 
+
+nagios:
     nagios:  nohup: can't execute 'nagios.finishStartup': No such file
     add drive checking to nagios
     2 sources of truth:  mysql & NagiosCOnfig.tgz :: need to select one or other
@@ -36,105 +105,20 @@ nagios
                             source "$file"
     checkout https://github.com/harisekhon/nagios-plugins
 
-docker-utilities
-    bugtrace:
-	$ docker-utilities deleteTag 'devops/.*:dev-ballab1-f4072' -u svc_cyclonebuild -c $__SETTINGS_FILE
-	delete specific tag from afeoscyc-mw.cec.lab.emc.com/ : devops/.*:dev-ballab1-f4072
-	retrieving digests for devops/.*
-	***ERROR: failure to complete registry request
-	    command:       curl --insecure --request GET --silent https://afeoscyc-mw.cec.lab.emc.com/artifactory/api/docker/cyclone-dockerv2-local/v2/devops/.*/tags/list
-	    error code:    "NAME_UNKNOWN"
-	    error message: "Repository name not known to registry."
-	    error details: {
-	  "name": "devops/.*"
-	}
-	    http_code:     404 Not Found
-	    Failed to get https://afeoscyc-mw.cec.lab.emc.com/artifactory/api/docker/cyclone-dockerv2-local/v2/devops/.*/tags/list
 
-	***ERROR: repository: devops/.* - does not exist
-    retagimages should be specific to build_PDR directory, deploy directory or a docker-compose.yml
-    need more help info in context help
-    getimage should update 'versions' folder
-    pushImage needs to be able to rename to latest if needed
-
-
-deploy
-    git login required even on 'down'
-    regression: CONTAINER_TAG always honored, may have other side effects
-    retag existing images if (needed and ! inuse)
-    should be able to specify (and replace in docker-compose.yml) a 'named' container_tag
-    when CONTAINER_TAG is a 'git tag' (for something ?):
-    	set default CONTAINER_TAG to tag
-    	push images with tag=CONTAINER_TAG
-    	set tag on current repo (if not exists)
-    update of ${CONFIG_DIR}/docker-compose.yml should only update 'image:'
-    recognize ">>>>> issue while executing 06.nagios <<<<<" 
-    add docker-compose checking to deploy
-    bugtrace:
-	    cyc@hopcyc-ballab1-1-00 ~/GIT/devops_container_environment (dev/ballab1/mres3291)
-	    $ ./deploy --clean
-	    ***ERROR at /home/cyc/GIT/devops_container_environment/libs/deploy.bashlib:95. 'grep -cs "$network"' exited with status 1
-	    >>>    Current directory /home/cyc/GIT/devops_container_environment
-	    Stack trace:
-	    >>>    01: /home/cyc/GIT/devops_container_environment/libs/deploy.bashlib:95 trap.catch_error  <<<
-	    >>>    02: /home/cyc/GIT/devops_container_environment/libs/deploy.bashlib:331 deploy.clean  <<<
-	    >>>    03: ./deploy:78 deploy.main  <<<
-	    $rm -rf /home/cyc/GIT/devops_container_environment/workspace.devops_container_environment
-	    $deploy.restart 2>&1 | tee restart.log
-	    INFO: updating /home/cyc/GIT/devops_container_environment/workspace.devops_container_environment/docker-compose.yml
-	    populating secrets
-
-	    the following also reported because of interference with CFG_USER_SECRETS=~/.inf
-	    ***ERROR: Password file: '.secrets/grafana_admin.pwd' not found. Used by startup of service: grafana
-	    ***ERROR: Password file: '.secrets/mysql_root.pwd' not found. Used by startup of service: mysql
-	    ***ERROR: Password file: '.secrets/mysql.pwd' not found. Used by startup of service: nagios
-	    >> GENERATING SSL CERT
-
-
-
-jenkins
-    k8s jobs
-    clean workspace directory
-    	implement in pipline post{}
-    CleanDockerRegistry.jenkinsfile - need service
-	$ df
-	df: /media/WDMyCloud: Stale file handle
-	returns exit code 1
-    improve logging from 'Clean Docker Registry': show badge when reclaim shows > 0
-    improve 'Check for Linux updates' to more clearly show list of updated packages
-    (on nginx):
-         need to examine/tune Garbage collection
-                 https://www.slideshare.net/TidharKleinOrbach/why-does-my-jenkins-freeze-sometimes-and-what-can-i-do-about-it
-                 http://engineering.taboola.com/5-simple-tips-boosting-jenkins-performance/
-                 https://www.cloudbees.com/blog/joining-big-leagues-tuning-jenkins-gc-responsiveness-and-stability
-                 https://jenkins.io/blog/2016/11/21/gc-tuning/
-                 analyze GC logs with tools such as http://gceasy.io/
-         2018/01/01 16:29:15 [error] 6#6: *9 connect() failed (111: Connection refused) while connecting to upstream, client: 10.1.3.24, server: default, request: "POST /jenkins/ajaxBuildQueue HTTP/1.1", upstream: "http://172.18.0.5:8080/jenkins/ajaxBuildQueue", host: "10.1.3.6", referrer: "https://10.1.3.6/jenkins/"
-         2018/01/01 16:29:15 [error] 6#6: *10 connect() failed (111: Connection refused) while connecting to upstream, client: 10.1.3.24, server: default, request: "POST /jenkins/ajaxExecutors HTTP/1.1", upstream: "http://172.18.0.5:8080/jenkins/ajaxExecutors", host: "10.1.3.6", referrer: "https://10.1.3.6/jenkins/" 
-     It appears that your reverse proxy set up is broken.
-     complete unit tests
-
-
-build.sh
-    recognize parent on different branch
-	    prompt to pull dependant images and retag
-    add user/settings credential support
-
-
-add https://hub.docker.com/r/pihole/pihole to production
-        fix hosts on nginx
-
-registry report
-    - include packed sizes
-usLib to save to mySQL
-error in uid_gid.validateUser when passed 2222:2222
-change docker-registry-fe to delimit pagination using '?' rather than '/'
-
-build_container:
-    build dependencies
-        - handled by Gradle: change build.sh to work inside each sub-repo. iter on OS in each repo (rather than repo for each OS) 
-    change '/usr/local/bin' to subtree
-
+get stuff working:
+   reverse proxy for cesi
+   Jenkins
+     (on nginx):
+        need to examine/tune Garbage collection
+                https://www.slideshare.net/TidharKleinOrbach/why-does-my-jenkins-freeze-sometimes-and-what-can-i-do-about-it
+                http://engineering.taboola.com/5-simple-tips-boosting-jenkins-performance/
+                https://www.cloudbees.com/blog/joining-big-leagues-tuning-jenkins-gc-responsiveness-and-stability
+                https://jenkins.io/blog/2016/11/21/gc-tuning/
+                analyze GC logs with tools such as http://gceasy.io/
+        2018/01/01 16:29:15 [error] 6#6: *9 connect() failed (111: Connection refused) while connecting to upstream, client: 10.1.3.24, server: default, request: "POST /jenkins/ajaxBuildQueue HTTP/1.1", upstream: "http://172.18.0.5:8080/jenkins/ajaxBuildQueue", host: "10.1.3.6", referrer: "https://10.1.3.6/jenkins/"
+        2018/01/01 16:29:15 [error] 6#6: *10 connect() failed (111: Connection refused) while connecting to upstream, client: 10.1.3.24, server: default, request: "POST /jenkins/ajaxExecutors HTTP/1.1", upstream: "http://172.18.0.5:8080/jenkins/ajaxExecutors", host: "10.1.3.6", referrer: "https://10.1.3.6/jenkins/" 
+    complete unit tests
 
 CBF:
     check if download file already exists (to allow use of Git-LFS)
@@ -159,7 +143,6 @@ builds
              https://github.com/docker-library/redis/blob/e95c0cf4ffd9a52aa48d05b93fe3b42069c05032/5.0-rc/32bit/Dockerfile
     Separate build, package and deploy/run actions
         Fix up docker dependency script
-
 
 enhancements:
     container kafka logging with https://hub.docker.com/r/mickyg/kafka-logdriver/
@@ -222,9 +205,7 @@ Done
 =============================================================
 ```
 2019-10-04
-finish nginx front end
 docker-utilities
-    deletetag --allrepos fails when a tag does not exist in a nrepo
     minor issue:
 	$ docker-utilities report -o x.txt -f text
 	docker-utilities: invalid option -- 'f'
@@ -308,7 +289,7 @@ jenkins
             git checkout master
 or/
             git fetch bashlib
-            git subtree merge --squash --prefix=cbf/bashlib bashlib/master
+            git subtree merge --squash --prefix=cbf/bashlib bashlib master
             git push
 
 
