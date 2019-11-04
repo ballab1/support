@@ -37,30 +37,16 @@ nagios
     checkout https://github.com/harisekhon/nagios-plugins
 
 docker-utilities
-    bugtrace:
-	$ docker-utilities deleteTag 'devops/.*:dev-ballab1-f4072' -u svc_cyclonebuild -c $__SETTINGS_FILE
-	delete specific tag from afeoscyc-mw.cec.lab.emc.com/ : devops/.*:dev-ballab1-f4072
-	retrieving digests for devops/.*
-	***ERROR: failure to complete registry request
-	    command:       curl --insecure --request GET --silent https://afeoscyc-mw.cec.lab.emc.com/artifactory/api/docker/cyclone-dockerv2-local/v2/devops/.*/tags/list
-	    error code:    "NAME_UNKNOWN"
-	    error message: "Repository name not known to registry."
-	    error details: {
-	  "name": "devops/.*"
-	}
-	    http_code:     404 Not Found
-	    Failed to get https://afeoscyc-mw.cec.lab.emc.com/artifactory/api/docker/cyclone-dockerv2-local/v2/devops/.*/tags/list
-
-	***ERROR: repository: devops/.* - does not exist
     retagimages should be specific to build_PDR directory, deploy directory or a docker-compose.yml
     need more help info in context help
     getimage should update 'versions' folder
     pushImage needs to be able to rename to latest if needed
+    registry report
+      - include packed sizes
 
 
 deploy
     git login required even on 'down'
-    regression: CONTAINER_TAG always honored, may have other side effects
     retag existing images if (needed and ! inuse)
     should be able to specify (and replace in docker-compose.yml) a 'named' container_tag
     when CONTAINER_TAG is a 'git tag' (for something ?):
@@ -70,26 +56,6 @@ deploy
     update of ${CONFIG_DIR}/docker-compose.yml should only update 'image:'
     recognize ">>>>> issue while executing 06.nagios <<<<<" 
     add docker-compose checking to deploy
-    bugtrace:
-	    cyc@hopcyc-ballab1-1-00 ~/GIT/devops_container_environment (dev/ballab1/mres3291)
-	    $ ./deploy --clean
-	    ***ERROR at /home/cyc/GIT/devops_container_environment/libs/deploy.bashlib:95. 'grep -cs "$network"' exited with status 1
-	    >>>    Current directory /home/cyc/GIT/devops_container_environment
-	    Stack trace:
-	    >>>    01: /home/cyc/GIT/devops_container_environment/libs/deploy.bashlib:95 trap.catch_error  <<<
-	    >>>    02: /home/cyc/GIT/devops_container_environment/libs/deploy.bashlib:331 deploy.clean  <<<
-	    >>>    03: ./deploy:78 deploy.main  <<<
-	    $rm -rf /home/cyc/GIT/devops_container_environment/workspace.devops_container_environment
-	    $deploy.restart 2>&1 | tee restart.log
-	    INFO: updating /home/cyc/GIT/devops_container_environment/workspace.devops_container_environment/docker-compose.yml
-	    populating secrets
-
-	    the following also reported because of interference with CFG_USER_SECRETS=~/.inf
-	    ***ERROR: Password file: '.secrets/grafana_admin.pwd' not found. Used by startup of service: grafana
-	    ***ERROR: Password file: '.secrets/mysql_root.pwd' not found. Used by startup of service: mysql
-	    ***ERROR: Password file: '.secrets/mysql.pwd' not found. Used by startup of service: nagios
-	    >> GENERATING SSL CERT
-
 
 
 jenkins
@@ -124,8 +90,6 @@ build.sh
 add https://hub.docker.com/r/pihole/pihole to production
         fix hosts on nginx
 
-registry report
-    - include packed sizes
 usLib to save to mySQL
 error in uid_gid.validateUser when passed 2222:2222
 change docker-registry-fe to delimit pagination using '?' rather than '/'
@@ -221,6 +185,46 @@ future development
 Done
 =============================================================
 ```
+11/2/2019
+deploy
+    regression: CONTAINER_TAG always honored, may have other side effects
+    bugtrace:
+	    cyc@hopcyc-ballab1-1-00 ~/GIT/devops_container_environment (dev/ballab1/mres3291)
+	    $ ./deploy --clean
+	    ***ERROR at /home/cyc/GIT/devops_container_environment/libs/deploy.bashlib:95. 'grep -cs "$network"' exited with status 1
+	    >>>    Current directory /home/cyc/GIT/devops_container_environment
+	    Stack trace:
+	    >>>    01: /home/cyc/GIT/devops_container_environment/libs/deploy.bashlib:95 trap.catch_error  <<<
+	    >>>    02: /home/cyc/GIT/devops_container_environment/libs/deploy.bashlib:331 deploy.clean  <<<
+	    >>>    03: ./deploy:78 deploy.main  <<<
+	    $rm -rf /home/cyc/GIT/devops_container_environment/workspace.devops_container_environment
+	    $deploy.restart 2>&1 | tee restart.log
+	    INFO: updating /home/cyc/GIT/devops_container_environment/workspace.devops_container_environment/docker-compose.yml
+	    populating secrets
+
+	    the following also reported because of interference with CFG_USER_SECRETS=~/.inf
+	    ***ERROR: Password file: '.secrets/grafana_admin.pwd' not found. Used by startup of service: grafana
+	    ***ERROR: Password file: '.secrets/mysql_root.pwd' not found. Used by startup of service: mysql
+	    ***ERROR: Password file: '.secrets/mysql.pwd' not found. Used by startup of service: nagios
+	    >> GENERATING SSL CERT
+docker-utilities
+    bugtrace:
+	$ docker-utilities deleteTag 'devops/.*:dev-ballab1-f4072' -u svc_cyclonebuild -c $__SETTINGS_FILE
+	delete specific tag from afeoscyc-mw.cec.lab.emc.com/ : devops/.*:dev-ballab1-f4072
+	retrieving digests for devops/.*
+	***ERROR: failure to complete registry request
+	    command:       curl --insecure --request GET --silent https://afeoscyc-mw.cec.lab.emc.com/artifactory/api/docker/cyclone-dockerv2-local/v2/devops/.*/tags/list
+	    error code:    "NAME_UNKNOWN"
+	    error message: "Repository name not known to registry."
+	    error details: {
+	  "name": "devops/.*"
+	}
+	    http_code:     404 Not Found
+	    Failed to get https://afeoscyc-mw.cec.lab.emc.com/artifactory/api/docker/cyclone-dockerv2-local/v2/devops/.*/tags/list
+
+	***ERROR: repository: devops/.* - does not exist
+
+
 2019-10-04
 finish nginx front end
 docker-utilities
