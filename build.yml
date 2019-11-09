@@ -1,0 +1,23 @@
+container_os:
+    - alpine
+    - i386-ubuntu
+#    - ubuntu 
+
+environment:
+    KAFKA_BOOTSTRAP_SERVERS: '10.1.3.6:9092,10.1.3.11:9092,10.1.3.10:9092'
+
+parent_branches:
+    - master
+    - v3.9
+    - latest
+
+skip_builds:
+    - jira-fd-kafka
+    - jenkins-build-events
+    - mysql
+    - nginx_alt
+    - supervisord-monitor
+    - ticket-checker
+    - gradle
+    - python
+

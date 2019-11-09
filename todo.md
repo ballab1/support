@@ -4,6 +4,10 @@ TODO
 implement Docker.findImage  (should check local and remote. Need flag to indicate to pull remote)
 move to python:3.7
 
+
+security
+    remove CBF bashlib exports:  implement registry (using grep) of funcitons, and export when needed
+
 get working
     fix project updates
     kafkamgr
