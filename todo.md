@@ -50,6 +50,10 @@ docker-utilities
 
 
 deploy
+    change to deploy.yml
+    allow version overrides for any service
+    when CONTAINER_TAG coresponds to gt tag (may need to use --promote), put tag into docker-compose rather than fingerprint
+    capture container image ID's before down, and check for orphaned ID's after up
     git login required even on 'down'
     retag existing images if (needed and ! inuse)
     should be able to specify (and replace in docker-compose.yml) a 'named' container_tag
