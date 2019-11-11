@@ -13,7 +13,6 @@ get working
     kafkamgr
     microservices from kafka to DBMS
     supervisord monitor
-    docker-utilities: registory curation
     reverse proxy for cesi
 
 zen
@@ -42,17 +41,15 @@ nagios
 
 docker-utilities
     retagimages should be specific to build_PDR directory, deploy directory or a docker-compose.yml
-    need more help info in context help
     getimage should update 'versions' folder
     pushImage needs to be able to rename to latest if needed
     registry report
       - include packed sizes
 
-
 deploy
     change to deploy.yml
     allow version overrides for any service
-    when CONTAINER_TAG coresponds to gt tag (may need to use --promote), put tag into docker-compose rather than fingerprint
+    when CONTAINER_TAG coresponds to git tag (may need to use --promote), put tag into docker-compose rather than fingerprint
     capture container image ID's before down, and check for orphaned ID's after up
     git login required even on 'down'
     retag existing images if (needed and ! inuse)
@@ -89,11 +86,6 @@ jenkins
      complete unit tests
 
 
-build.sh
-    recognize parent on different branch
-	    prompt to pull dependant images and retag
-    add user/settings credential support
-
 
 add https://hub.docker.com/r/pihole/pihole to production
         fix hosts on nginx
@@ -117,6 +109,7 @@ CBF:
         - should check if specified version same as installed version (no point in wget)
 
 builds
+    optionally push 'latest'
     quality ladder:  dev -> staging -> master
         - deploy should set 'latest' (not build). (use registry API to get and work with available images)
         - dev:  where we make changes
@@ -193,8 +186,15 @@ future development
 Done
 =============================================================
 ```
+11/9/2019
+builds
+    recognize parent on different branch
+	    prompt to pull dependant images and retag
+    add user/settings credential support
+
 11/2/2019
 deploy
+    add user/settings credential support
     regression: CONTAINER_TAG always honored, may have other side effects
     bugtrace:
 	    cyc@hopcyc-ballab1-1-00 ~/GIT/devops_container_environment (dev/ballab1/mres3291)
@@ -216,6 +216,9 @@ deploy
 	    ***ERROR: Password file: '.secrets/mysql.pwd' not found. Used by startup of service: nagios
 	    >> GENERATING SSL CERT
 docker-utilities
+    registory curation
+    add user/settings credential support
+    need more help info in context help
     bugtrace:
 	$ docker-utilities deleteTag 'devops/.*:dev-ballab1-f4072' -u svc_cyclonebuild -c $__SETTINGS_FILE
 	delete specific tag from afeoscyc-mw.cec.lab.emc.com/ : devops/.*:dev-ballab1-f4072
