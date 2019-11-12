@@ -49,16 +49,14 @@ docker-utilities
 deploy
     change to deploy.yml
     allow version overrides for any service
+        should be able to specify (and replace in docker-compose.yml) a 'named' container_tag
     when CONTAINER_TAG coresponds to git tag (may need to use --promote), put tag into docker-compose rather than fingerprint
+        set default CONTAINER_TAG to tag
+        push images with tag=CONTAINER_TAG
+        set tag on current repo (if not exists)
     capture container image ID's before down, and check for orphaned ID's after up
     git login required even on 'down'
     retag existing images if (needed and ! inuse)
-    should be able to specify (and replace in docker-compose.yml) a 'named' container_tag
-    when CONTAINER_TAG is a 'git tag' (for something ?):
-    	set default CONTAINER_TAG to tag
-    	push images with tag=CONTAINER_TAG
-    	set tag on current repo (if not exists)
-    update of ${CONFIG_DIR}/docker-compose.yml should only update 'image:'
     recognize ">>>>> issue while executing 06.nagios <<<<<" 
     add docker-compose checking to deploy
 
@@ -215,6 +213,7 @@ deploy
 	    ***ERROR: Password file: '.secrets/mysql_root.pwd' not found. Used by startup of service: mysql
 	    ***ERROR: Password file: '.secrets/mysql.pwd' not found. Used by startup of service: nagios
 	    >> GENERATING SSL CERT
+    update of ${CONFIG_DIR}/docker-compose.yml should only update 'image:'
 docker-utilities
     registory curation
     add user/settings credential support
