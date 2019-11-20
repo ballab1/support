@@ -45,6 +45,8 @@ docker-utilities
     pushImage needs to be able to rename to latest if needed
     registry report
       - include packed sizes
+    implement wildcards on pushimage
+
 
 deploy
     change to deploy.yml
