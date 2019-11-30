@@ -15,9 +15,6 @@ get working
     supervisord monitor
     reverse proxy for cesi
 
-zen
-    get admin working
-
 nagios
     change nagiosgraph to pnp4nagios
     nagios:  nohup: can't execute 'nagios.finishStartup': No such file
@@ -49,7 +46,6 @@ docker-utilities
 
 
 deploy
-    change to deploy.yml
     allow version overrides for any service
         should be able to specify (and replace in docker-compose.yml) a 'named' container_tag
     when CONTAINER_TAG coresponds to git tag (may need to use --promote), put tag into docker-compose rather than fingerprint
@@ -65,8 +61,6 @@ deploy
 
 jenkins
     k8s jobs
-    clean workspace directory
-    	implement in pipline post{}
     CleanDockerRegistry.jenkinsfile - need service
 	$ df
 	df: /media/WDMyCloud: Stale file handle
@@ -186,6 +180,15 @@ future development
 Done
 =============================================================
 ```
+11/29/2019
+jenkins
+    clean workspace directory
+    	implement in pipline post{}
+deploy
+    change to deploy.yml
+zen
+    get admin working
+
 11/9/2019
 builds
     recognize parent on different branch
