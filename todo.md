@@ -5,9 +5,6 @@ implement Docker.findImage  (should check local and remote. Need flag to indicat
 move to python:3.7
 determine why we do not have kafka metrics
 
-security
-    remove CBF bashlib exports:  implement registry (using grep) of funcitons, and export when needed
-
 get working
     fix project updates
     kafkamgr
@@ -36,29 +33,6 @@ nagios
                             source "$file"
     checkout https://github.com/harisekhon/nagios-plugins
 
-docker-utilities
-    retagimages should be specific to build_PDR directory, deploy directory or a docker-compose.yml
-    getimage should update 'versions' folder
-    pushImage needs to be able to rename to latest if needed
-    registry report
-      - include packed sizes
-    implement wildcards on pushimage
-
-
-deploy
-    allow version overrides for any service
-        should be able to specify (and replace in docker-compose.yml) a 'named' container_tag
-    when CONTAINER_TAG coresponds to git tag (may need to use --promote), put tag into docker-compose rather than fingerprint
-        set default CONTAINER_TAG to tag
-        push images with tag=CONTAINER_TAG
-        set tag on current repo (if not exists)
-    capture container image ID's before down, and check for orphaned ID's after up
-    git login required even on 'down'
-    retag existing images if (needed and ! inuse)
-    recognize ">>>>> issue while executing 06.nagios <<<<<" 
-    add docker-compose checking to deploy
-
-
 jenkins
     k8s jobs
     CleanDockerRegistry.jenkinsfile - need service
@@ -80,12 +54,10 @@ jenkins
      complete unit tests
 
 
-
 add https://hub.docker.com/r/pihole/pihole to production
         fix hosts on nginx
 
 usLib to save to mySQL
-error in uid_gid.validateUser when passed 2222:2222
 change docker-registry-fe to delimit pagination using '?' rather than '/'
 
 build_container:
@@ -101,23 +73,7 @@ CBF:
     use CBF_VERSION better
         - should never unset
         - should check if specified version same as installed version (no point in wget)
-
-builds
-    optionally push 'latest'
-    quality ladder:  dev -> staging -> master
-        - deploy should set 'latest' (not build). (use registry API to get and work with available images)
-        - dev:  where we make changes
-        - staging: PRs from dev + CI builds
-        - master: production
-    fix promotions: quality ladder:  dev -> staging -> master
-            - keep dev at 1 build
-            - deploy should update 'latest' tag
-    docker-registry
-        - change to https
-        - configure to use redis
-             https://github.com/docker-library/redis/blob/e95c0cf4ffd9a52aa48d05b93fe3b42069c05032/5.0-rc/32bit/Dockerfile
-    Separate build, package and deploy/run actions
-        Fix up docker dependency script
+    error in uid_gid.validateUser when passed 2222:2222
 
 
 enhancements:
@@ -152,12 +108,12 @@ enhancements:
             Add getcomposer (for debugging PHP) to php7
         move PHP to port 9000 so we can move it out of nginx
     nginx
+        funnel access of other servers through nginx
         improve extensibility
             change usage from conf.d to sites_enabled
             add thread to check sites_enabled (shared vol) & restart nginx on any change
                 check age of files & delete if old
                 proxied servers create files in sites_enabled & touch on frequent basis
-        funnel access of other servers through nginx
     backups
         find & remove dup files across 10.1.3.1/10.1.3.5
         sync across network USB drives  (10.1.3.1 & 10.1.3.5)
@@ -181,6 +137,8 @@ Done
 =============================================================
 ```
 11/29/2019
+nginx
+    improve extensibility
 jenkins
     clean workspace directory
     	implement in pipline post{}
