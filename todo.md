@@ -1,8 +1,6 @@
 TODO
 ```
 
-implement Docker.findImage  (should check local and remote. Need flag to indicate to pull remote)
-move to python:3.7
 determine why we do not have kafka metrics
 
 get working
