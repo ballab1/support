@@ -1,15 +1,6 @@
 TODO
 ```
 
-determine why we do not have kafka metrics
-
-get working
-    fix project updates
-    kafkamgr
-    microservices from kafka to DBMS
-    supervisord monitor
-    reverse proxy for cesi
-
 nagios
     change nagiosgraph to pnp4nagios
     nagios:  nohup: can't execute 'nagios.finishStartup': No such file
