@@ -1,6 +1,6 @@
 container_os:
     - alpine
-    - i386-ubuntu
+#    - i386-ubuntu
 #    - ubuntu 
 
 environment:
