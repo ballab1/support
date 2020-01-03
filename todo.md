@@ -1,23 +1,6 @@
 TODO
 ```
 
-uwsgi:
-	confluent:	04.confluent.sh:6
-	hubot:		03.hubot.sh:1
-	jenkins:	05.jenkins.sh:2
-	nagios:		07.nconf:1
-	nginx-base:	03.nginx_base.sh:4
-	nodervisor:	03.nodervisor.sh:1
-	php5:		03.fcgi.sh:1
-	php5:		04.php.sh:2
-	php7:		03.fcgi.sh:1
-	php7:		04.php.sh:2
-	supervisord:	02.supervisord.sh:1
-	supervisord:	99.supervisord.sh:1
-
-	nagios/build/action_folders/00.bashlib/nagios.bashlib:7
-
-
 nagios
     change nagiosgraph to pnp4nagios
     nagios:  nohup: can't execute 'nagios.finishStartup': No such file
@@ -142,6 +125,10 @@ future development
 Done
 =============================================================
 ```
+1/1/2020
+cesi (supervisord monitor)
+
+
 11/29/2019
 nginx
     improve extensibility
