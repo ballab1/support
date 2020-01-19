@@ -19,9 +19,6 @@
 [submodule "jenkins"]
     path = jenkins
     url = ../jenkins.git
-[submodule "kafka-manager"]
-    path = kafka-manager
-    url = ../kafka-manager.git
 [submodule "movefiles"]
     path = movefiles
     url = ../moveFiles.git
@@ -34,9 +31,6 @@
 [submodule "nginx-proxy"]
     path = nginx-proxy
     url = ../nginx-proxy.git
-[submodule "nodervisor"]
-    path = nodervisor
-    url = ../nodervisor.git
 [submodule "openjdk"]
     path = openjdk
     url = ../openjdk.git
@@ -79,6 +73,3 @@
 [submodule "webdav"]
     path = webdav
     url = ../webdav.git
-[submodule "zenphoto"]
-    path = zenphoto
-    url = ../zenphoto.git
