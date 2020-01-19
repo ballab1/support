@@ -1,6 +1,9 @@
 TODO
 ```
 
+cbf
+    remove all function exports. move to where/when needed
+
 nagios
     change nagiosgraph to pnp4nagios
     nagios:  nohup: can't execute 'nagios.finishStartup': No such file
@@ -42,9 +45,6 @@ jenkins
      It appears that your reverse proxy set up is broken.
      complete unit tests
 
-
-add https://hub.docker.com/r/pihole/pihole to production
-        fix hosts on nginx
 
 usLib to save to mySQL
 change docker-registry-fe to delimit pagination using '?' rather than '/'
@@ -100,9 +100,8 @@ enhancements:
         funnel access of other servers through nginx
         improve extensibility
             change usage from conf.d to sites_enabled
-            add thread to check sites_enabled (shared vol) & restart nginx on any change
-                check age of files & delete if old
-                proxied servers create files in sites_enabled & touch on frequent basis
+            use docker events to detect changes
+                restart nginx on any change
     backups
         find & remove dup files across 10.1.3.1/10.1.3.5
         sync across network USB drives  (10.1.3.1 & 10.1.3.5)
@@ -115,6 +114,7 @@ enhancements:
         implement jenkins jobs as containers
         make fancy report for 'Jenkins Uptime Pipeline' and export data to kafka
         review list of plugins and dependents to ensure all loaded plugins are explicity defined
+        implement jasc
 
 
 future development  
@@ -127,6 +127,8 @@ Done
 ```
 1/1/2020
 cesi (supervisord monitor)
+add https://hub.docker.com/r/pihole/pihole to production
+        fix hosts on nginx
 
 
 11/29/2019
