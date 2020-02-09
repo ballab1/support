@@ -125,6 +125,13 @@ future development
 Done
 =============================================================
 ```
+2/8/2020
+confluent
+	changes to fix clustering issues
+webdav
+        currently provides read/write access : no restrictions
+
+
 1/1/2020
 cesi (supervisord monitor)
 add https://hub.docker.com/r/pihole/pihole to production
