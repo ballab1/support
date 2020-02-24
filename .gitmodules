@@ -73,3 +73,6 @@
 [submodule "webdav"]
     path = webdav
     url = ../webdav.git
+[submodule "kafka-manager"]
+	path = kafka-manager
+	url = ../kafka-manager

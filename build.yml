@@ -20,4 +20,4 @@ skip_builds:
     - ticket-checker
     - gradle
     - python
-
+    - kafka-manager
