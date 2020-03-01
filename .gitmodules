@@ -19,6 +19,12 @@
 [submodule "jenkins"]
     path = jenkins
     url = ../jenkins.git
+[submodule "kafka-eagle"]
+    path = kafka-eagle
+    url = ../kafka-eagle
+[submodule "kafka-manager"]
+    path = kafka-manager
+    url = ../kafka-manager
 [submodule "movefiles"]
     path = movefiles
     url = ../moveFiles.git
@@ -73,6 +79,3 @@
 [submodule "webdav"]
     path = webdav
     url = ../webdav.git
-[submodule "kafka-manager"]
-	path = kafka-manager
-	url = ../kafka-manager
