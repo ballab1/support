@@ -5,25 +5,11 @@ cbf
     remove all function exports. move to where/when needed
 
 nagios
-    change nagiosgraph to pnp4nagios
-    nagios:  nohup: can't execute 'nagios.finishStartup': No such file
     add drive checking to nagios
-    2 sources of truth:  mysql & NagiosCOnfig.tgz :: need to select one or other
-    does not correctly spawn nagios.finishStartup.
-        - /run/nagios.lock does not exists (should contain PID of primary nagios for supervisord)
-        - var/rw/nagios.cmd has incorrect permissions (resrticts what nconf can do)
-        docker-entrypoint.sh
-            my.defaultInit
-                crf.prepareEnvironment
-                    ( command "$tmp_script" ) && status=$? || status=$?
-                        cd "$WORKDIR"
-                        source "$file"
-                or sudo -E
-                        crf.prepareEnvironment
-                        ( command "$tmp_script" ) && status=$? || status=$?
-                               cd "$WORKDIR"
-                            source "$file"
     checkout https://github.com/harisekhon/nagios-plugins
+    curate 'archives/nagios-*.log' and 'config/NagiosConfig.tgz.*' and 'config/NagiosConfig.ERROR.tgz.*'
+                - ./nagios/archives:/var/nagios/archives
+                - ./nagios/config:/var/www/nconf/output  
 
 jenkins
     k8s jobs
@@ -86,7 +72,6 @@ enhancements:
         improve page layout (make similar to:  https://apache.org/dist/zookeeper/)
     nagios
         reconfigue nagios
-        configuration: load DBMS from config files
         registryReport (summary):
                 add amount of space used  (use ` ssh ubuntu-s2 df /dev/sdb1 | tail -1 | awk '{print $5 " used, " $3/1024/1024 " GB  available"}'`)
     PHP
@@ -125,6 +110,29 @@ future development
 Done
 =============================================================
 ```
+
+3/21/2020
+nagios
+    change nagiosgraph to pnp4nagios
+    2 sources of truth:  mysql & NagiosCOnfig.tgz :: need to select one or other
+        configuration: load DBMS from config files
+    nagios:  nohup: can't execute 'nagios.finishStartup': No such file
+    does not correctly spawn nagios.finishStartup.
+        - /run/nagios.lock does not exists (should contain PID of primary nagios for supervisord)
+        - var/rw/nagios.cmd has incorrect permissions (resrticts what nconf can do)
+        docker-entrypoint.sh
+            my.defaultInit
+                crf.prepareEnvironment
+                    ( command "$tmp_script" ) && status=$? || status=$?
+                        cd "$WORKDIR"
+                        source "$file"
+                or sudo -E
+                        crf.prepareEnvironment
+                        ( command "$tmp_script" ) && status=$? || status=$?
+                               cd "$WORKDIR"
+                            source "$file"
+
+
 2/8/2020
 confluent
 	changes to fix clustering issues
