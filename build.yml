@@ -20,3 +20,4 @@ skip_builds:
     - ticket-checker
     - gradle
     - python
+    - php5
