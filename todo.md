@@ -41,6 +41,59 @@ build_container:
     change '/usr/local/bin' to subtree
 
 
+    k8s :
+        dns
+      	    codedns : restarts, resolve ubuntu.home
+    	ingress
+    	authentication
+    	    rbac
+    	jenkins
+    openvpn
+    	“MAN-IN-THE-MIDDLE” ATTACK IF CLIENTS DO NOT VERIFY THE CERTIFICATE OF THE SERVER THEY ARE CONNECTING TO.  https://openvpn.net/community-resources/how-to/#mitm
+    	
++
+    kafka (and remove debug from logs)
+      pipeline to refresh (stop/start zookeepers in order, then brokers)
+      kafkacat
+      kafkatool
+      need better config tool
+      kafka to mysql uService
+    gradle build
+    convert container build to gradle
+    resync configs across all ubuntu (docker-compose, apt(packages), docker(daemon.json), fstab(synology)
+    nagios pnp4nagios & php7
+       https://github.com/Bonsaif/new-nconf
+    migrate mysql to miriadb
+    multi-pr
+    ELK monitoring
+      nginx_status
+      on other systems
+    jasc
+
+    add elk monitoring on other systems
+    graphql
+    jasc
+    docker-registry-frontend : change 'user:repo' paradigm to 'folder:subfolder:subfolder:..' paradigm
+    determine why we do not have kafka metrics
+    build using kaniko  (https://www.thenativeweb.io/blog/2018-08-14-11-32-kubernetes-building-docker-images-within-a-cluster/ 
+                         https://console.cloud.google.com/gcr/images/kaniko-project/GLOBAL/executor?pli=1&gcrImageListsize=30)
+#    microservices from kafka to DBMS
+#      (us-lib)
+    k8s
+    nagios startup & nagiosgraph polling
+    reverse proxy for cesi & photoprism & & registry-fe & wdmycloud et al.
+    scan fileshare (NFS issues :  negotiated dialect[SMB3_11] against server[10.1.3.5])
+      - 
+    cloud-init: ssh keys
+      - need further broad investigation
+    MAAS
+    DNS  (pihole or dnsmasq or Synology)
+    hubot
+#    CBF: mod 99.logs.sh for webdav/deploy startup & update bashlibs
+    photoprism.bashlib (to provide scriptable interface to setup photoprism)
+    implement extensible traps in BASH
+
+
 CBF:
     check if download file already exists (to allow use of Git-LFS)
     Track created users for runtime changes
@@ -111,10 +164,48 @@ Done
 =============================================================
 ```
 
+9/24/2020
+    redo certificates
+    deploy
+        line 904 failes with '$${data.host}:$${data.port}'
+        create deploy function for
+
+    fix checkForLinuxUpdates.sh
+    	dpkg --get-selections | grep -e 'linux.*-4'
+
+
+9/11/2020
+        grafana
+        nginx is in debug mode
+        all docker-compose refer to 10.1.3.1
+        kafka issues
+        jenkins startup
+	ubuntu-s3 : ubuntu-5 : ubuntu-6
+            sudo hostnamectl set-hostname s3.ubuntu.home
+	pip missing
+	    curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+	    python get-pip.py
+	pyyaml==5.3.1  missing
+	    python -c "import yaml; print(yaml.__version__)"
+              curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py;  python get-pip.py; rm get-pip.py;pip install pyyaml==5.3.1;python -c "import yaml; print(yaml.__version__)"
+        change bobb from bobb:bobb to bobb:users
+
+
+8/8/2020
+    graph of %disk space on each server
+    nagios
+    jira-event-client
+    gradle coverage
+    unit-tests for bash and Jenkins
+    python script to fix nas filenames to unicode
+    analyze calc checksums - remove dups
+    migration to alpine:3.12.0
+
+
 3/21/2020
-nagios
-    change nagiosgraph to pnp4nagios
-    2 sources of truth:  mysql & NagiosCOnfig.tgz :: need to select one or other
+    nagios
+        change nagiosgraph to pnp4nagios
+        2 sources of truth:  mysql & NagiosCOnfig.tgz :: need to select one or other
         configuration: load DBMS from config files
     nagios:  nohup: can't execute 'nagios.finishStartup': No such file
     does not correctly spawn nagios.finishStartup.
@@ -133,17 +224,39 @@ nagios
                             source "$file"
 
 
+2/3/2020
+    multi-pr
+    elk-stack
+      nginx_status
+      on other systems
+    jasc
+    k8s
+    	authentication
+    	codedns : restarts, resolve ubuntu.home
+    	ingress
+    	rbac
+    	jenkins
+    nagios startup & nagiosgraph polling
+    other from 12/19/19
+
+
 2/8/2020
-confluent
+    confluent
 	changes to fix clustering issues
-webdav
+    webdav
         currently provides read/write access : no restrictions
 
 
 1/1/2020
-cesi (supervisord monitor)
-add https://hub.docker.com/r/pihole/pihole to production
+    cesi (supervisord monitor)
+    add https://hub.docker.com/r/pihole/pihole to production
         fix hosts on nginx
+
+
+12/19/19
+    multi-pr
+    elk-stack
+      nginx_status
 
 
 11/29/2019
