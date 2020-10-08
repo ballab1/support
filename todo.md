@@ -10,6 +10,7 @@ nagios
     curate 'archives/nagios-*.log' and 'config/NagiosConfig.tgz.*' and 'config/NagiosConfig.ERROR.tgz.*'
                 - ./nagios/archives:/var/nagios/archives
                 - ./nagios/config:/var/www/nconf/output  
+    nconf/include/ajax/exec_generate_config.php contains 'tar -r' to refresh NagiosConfig.tgz with startic files : Alpine does not support 'tar -r'
 
 jenkins
     k8s jobs
@@ -164,6 +165,7 @@ Done
 =============================================================
 ```
 
+
 9/24/2020
     redo certificates
     deploy
@@ -172,6 +174,7 @@ Done
 
     fix checkForLinuxUpdates.sh
     	dpkg --get-selections | grep -e 'linux.*-4'
+    kafkacat
 
 
 9/11/2020
