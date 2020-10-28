@@ -5,7 +5,6 @@ cbf
     remove all function exports. move to where/when needed
 
 nagios
-    add drive checking to nagios
     checkout https://github.com/harisekhon/nagios-plugins
     curate 'archives/nagios-*.log' and 'config/NagiosConfig.tgz.*' and 'config/NagiosConfig.ERROR.tgz.*'
                 - ./nagios/archives:/var/nagios/archives
@@ -14,12 +13,7 @@ nagios
 
 jenkins
     k8s jobs
-    CleanDockerRegistry.jenkinsfile - need service
-	$ df
-	df: /media/WDMyCloud: Stale file handle
-	returns exit code 1
     improve logging from 'Clean Docker Registry': show badge when reclaim shows > 0
-    improve 'Check for Linux updates' to more clearly show list of updated packages
     (on nginx):
          need to examine/tune Garbage collection
                  https://www.slideshare.net/TidharKleinOrbach/why-does-my-jenkins-freeze-sometimes-and-what-can-i-do-about-it
@@ -164,6 +158,22 @@ future development
 Done
 =============================================================
 ```
+
+10/23/2020
+    improve 'Check for Linux updates' to more clearly show list of updated packages
+    jenkins:
+	- compare zip files on ubuntu and check for diff. If there is a diff, rename  with date, and delete oldest when there are more than 10 (use for ecipies and configs)
+	- backup NagiosConfig
+    ELK monitoring
+      nginx_status
+    add elk monitoring on other systems
+    nagios
+        add drive checking to nagios
+
+
+10/16/2020
+    nagios pnp4nagios & php7
+       https://github.com/Bonsaif/new-nconf
 
 
 9/24/2020
