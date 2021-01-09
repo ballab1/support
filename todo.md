@@ -65,13 +65,13 @@ build_container:
       on other systems
     jasc
 
-    add elk monitoring on other systems
     graphql
     jasc
     docker-registry-frontend : change 'user:repo' paradigm to 'folder:subfolder:subfolder:..' paradigm
     determine why we do not have kafka metrics
     build using kaniko  (https://www.thenativeweb.io/blog/2018-08-14-11-32-kubernetes-building-docker-images-within-a-cluster/ 
                          https://console.cloud.google.com/gcr/images/kaniko-project/GLOBAL/executor?pli=1&gcrImageListsize=30)
+            or 
 #    microservices from kafka to DBMS
 #      (us-lib)
     k8s
@@ -158,6 +158,18 @@ future development
 Done
 =============================================================
 ```
+12/17/2020
+    add elk monitoring on other systems
+    jenkins
+	parseUptime:
+		regex:  ^\s*(\S{8})\s+up\s+([^u]+),\s+(\d+){0,1}(?:\susers{0,1},\s+){0,1}load\s+average:\s(\S+),\s+(\S+),\s+(\S+)
+		only matches:	19:27:11 up  8:20,  0 users,  load average: 0.00, 0.01, 0.00
+				02:50:06 up 7 days, 18:37,  0 users,  load average: 0.52, 0.72, 0.76
+				02:50:08 up  0 days, 0:0:0,   load average: 0.55, 0.30, 0.26
+		does not match:	19:27:10 up  0 days, 0:0:0,  0.29, 0.34
+			  (from master after a reboot)
+		problem is with 'realUptime' script
+
 
 10/23/2020
     improve 'Check for Linux updates' to more clearly show list of updated packages
