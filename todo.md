@@ -1,6 +1,36 @@
 TODO
 ```
 
+docker-search.py
+        need to handle docker volumes
+
+	Executing container kafka-eagle
+	Container Name:  kafka-eagle
+		    ID:  c71547e3b4a21474355e81222de248578d9294ba3268c2fa66c69d3940fa602b
+		 Image:  sha256:3c68324bd3331a4625b41bf56fd87263e5f3d4ce86a2d916b9f3b5b10faee896
+	      Image ID:  sha256:3c68324bd3331a4625b41bf56fd87263e5f3d4ce86a2d916b9f3b5b10faee896
+		Status:  running: Up 3 hours
+	       Network:  devops-container-net
+	    IP Address:  172.23.0.9/16
+
+
+	Image details for
+		 Image:  sha256:3c68324bd3331a4625b41bf56fd87263e5f3d4ce86a2d916b9f3b5b10faee896
+	object of type 'NoneType' has no len()
+	Traceback (most recent call last):
+	  File "/home/cyc/bin/docker-search.py", line 851, in main
+	    images.show()
+	  File "/home/cyc/bin/docker-search.py", line 506, in show
+	    Display.imageInfo(image, image.id)
+	  File "/home/cyc/bin/docker-search.py", line 203, in imageInfo
+	    Display.basicImageInfo(image, refid)
+	  File "/home/cyc/bin/docker-search.py", line 151, in basicImageInfo
+	    if len(image.repo_tags) > 1:
+	TypeError: object of type 'NoneType' has no len()
+
+
+
+
 cbf
     remove all function exports. move to where/when needed
 
