@@ -43,7 +43,6 @@ nagios
 
 jenkins
     k8s jobs
-    improve logging from 'Clean Docker Registry': show badge when reclaim shows > 0
     (on nginx):
          need to examine/tune Garbage collection
                  https://www.slideshare.net/TidharKleinOrbach/why-does-my-jenkins-freeze-sometimes-and-what-can-i-do-about-it
@@ -105,7 +104,6 @@ build_container:
 #    microservices from kafka to DBMS
 #      (us-lib)
     k8s
-    nagios startup & nagiosgraph polling
     reverse proxy for cesi & photoprism & & registry-fe & wdmycloud et al.
     scan fileshare (NFS issues :  negotiated dialect[SMB3_11] against server[10.1.3.5])
       - 
@@ -120,7 +118,6 @@ build_container:
 
 
 CBF:
-    check if download file already exists (to allow use of Git-LFS)
     Track created users for runtime changes
     migrate to python
     use CBF_VERSION better
@@ -153,7 +150,6 @@ enhancements:
         registryReport (summary):
                 add amount of space used  (use ` ssh ubuntu-s2 df /dev/sdb1 | tail -1 | awk '{print $5 " used, " $3/1024/1024 " GB  available"}'`)
     PHP
-        Nagios/nconf with php7
         create/use base containers for 'nginx+php5+fpm'/'nginx+php7+fpm': use port for PHP
         provide build options
             Add getcomposer (for debugging PHP) to php5
@@ -188,6 +184,15 @@ future development
 Done
 =============================================================
 ```
+4/13/2021
+CBF:
+    check if download file already exists (to allow use of Git-LFS)
+jenkins
+    improve logging from 'Clean Docker Registry': show badge when reclaim shows > 0
+PHP
+    Nagios/nconf with php7
+    
+
 12/17/2020
     add elk monitoring on other systems
     jenkins
@@ -216,6 +221,7 @@ Done
 10/16/2020
     nagios pnp4nagios & php7
        https://github.com/Bonsaif/new-nconf
+        nagios startup & nagiosgraph polling
 
 
 9/24/2020
