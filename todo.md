@@ -1,6 +1,9 @@
 TODO
 ```
 
+
+
+
 docker-search.py
         need to handle docker volumes
 
@@ -42,6 +45,7 @@ nagios
     nconf/include/ajax/exec_generate_config.php contains 'tar -r' to refresh NagiosConfig.tgz with startic files : Alpine does not support 'tar -r'
 
 jenkins
+     add kafka loging of Linux updates
     k8s jobs
     (on nginx):
          need to examine/tune Garbage collection
