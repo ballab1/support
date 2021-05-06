@@ -1,7 +1,12 @@
 TODO
 ```
 
-
+deploy
+	save to & restore from a tarfile
+docker-utilities
+	in docker.clean, add
+		scan volumes
+		check /var/lib/docker/containers are same as running, and remove
 
 
 docker-search.py
