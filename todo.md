@@ -1,8 +1,6 @@
 TODO
 ```
 
-deploy
-	save to & restore from a tarfile
 docker-utilities
 	in docker.clean, add
 		scan volumes
@@ -193,6 +191,11 @@ future development
 Done
 =============================================================
 ```
+5/13/21
+deploy
+	save to & restore from a tarfile
+
+
 4/13/2021
 CBF:
     check if download file already exists (to allow use of Git-LFS)
