@@ -1,5 +1,46 @@
 TODO
 ```
+deploy
+	^[[0m^[[97m******************************************************************************
+	^[[0m^[[97mINFO: updating /home/cyc/devops_container_environment/workspace.devops_container_environment/.env
+	^[[0mFetching origin
+	fatal: ambiguous argument 'origin/v4.4.4': unknown revision or path not in the working tree.
+	Use '--' to separate paths from revisions, like this:
+	'git <command> [<revision>...] -- [<file>...]'
+	^[[90m$deploy.restart
+	^[[0mCONTAINER_TAG: integration
+	populating /home/cyc/devops_container_environment/workspace.devops_container_environment/.secrets from git secrets
+	^[[90mgit clone --quiet -- https://eos2git.cec.lab.emc.com/Devops/devops_container_environment.secrets /home/cyc/devops_container_environment/workspace.devops_container_environment/.secrets
+	^[[0m^[[91mExposing docker REST API^[[0m
+	^[[33msed -iE 's|^(ExecStart=/usr/bin/dockerd -H fd://)(.*)$|\1 -H tcp://0.0.0.0:4243\2|' /lib/systemd/system/docker.service^[[0m
+	Unable to find image 'afeoscyc-mw.cec.lab.emc.com/devops/alpine/base_container:integration' locally
+	integration: Pulling from devops/alpine/base_container
+	540db60ca938: Pulling fs layer
+	70b02a9b72a9: Pulling fs layer
+
+
+	+	/c4_working/GIT/deploy_grafana_standalone/bin/deploy.bashlib:	876	deploy.updateSecretRefs():	return 0
+	+	/c4_working/GIT/deploy_grafana_standalone/bin/deploy.bashlib:	498	deploy.initializeWorkspace():	'[' -e /c4_working/GIT/deploy_grafana_standalone/deploy.setup ']'
+	+	/c4_working/GIT/deploy_grafana_standalone/bin/deploy.bashlib:	499	deploy.initializeWorkspace():	/c4_working/GIT/deploy_grafana_standalone/deploy.setup
+	/c4_working/GIT/deploy_grafana_standalone/bin/deploy.bashlib: line 499: /c4_working/GIT/deploy_grafana_standalone/deploy.setup: Permission denied
+	+	/c4_working/GIT/deploy_grafana_standalone/bin/deploy.bashlib:	499	deploy.initializeWorkspace():	stat=126
+	+	/c4_working/GIT/deploy_grafana_standalone/bin/deploy.bashlib:	500	deploy.initializeWorkspace():	'[' 126 ']'
+
+
+	populating /c4_working/GIT/deploy_grafana_standalone/workspace.deploy_grafana_standalone/.secrets from git secrets
+	git clone --quiet -- https://eos2git.cec.lab.emc.com/Devops/devops_container_environment.secrets /c4_working/GIT/deploy_grafana_standalone/workspace.deploy_grafana_standalone/.secrets
+
+	***ERROR: Password file: 'null' not found. Used by startup of service: grafana
+
+	grafana_dbpass not defined: connection to MYSQL not created
+	touch: cannot touch '/c4_working/GIT/deploy_grafana_standalone/workspace.deploy_grafana_standalone/grafana/.grafana.init': Permission denied
+	/c4_working/GIT/deploy_grafana_standalone/deploy.setup: line 15: [: : integer expression expected
+	Exposing docker REST API
+	sed -iE 's|^(ExecStart=/usr/bin/dockerd -H fd://)(.*)$|\1 -H tcp://0.0.0.0:4243\2|' /lib/systemd/system/docker.service
+	sed: can't read /lib/systemd/system/docker.service: No such file or directory
+	copying certs to docker volume : workspacedeploy_grafana_standalone_alpinecerts
+
+
 
 docker-utilities
 	in docker.clean, add
