@@ -12,6 +12,7 @@ parent_branches:
     - latest
 
 skip_builds:
+    - kafka-eagle
     - jira-fd-kafka
     - jenkins-build-events
     - mysql
