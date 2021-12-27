@@ -79,3 +79,6 @@
 [submodule "webdav"]
     path = webdav
     url = ../webdav.git
+[submodule "bin"]
+	path = bin
+	url = ../work-stuff
