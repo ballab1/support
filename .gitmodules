@@ -70,9 +70,6 @@
 [submodule "supervisord"]
     path = supervisord
     url = ../supervisord.git
-[submodule "utilities"]
-    path = bin
-    url = ../utilities
 [submodule "versions"]
     path = versions
     url = ../versions
