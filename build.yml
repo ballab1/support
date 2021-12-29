@@ -8,7 +8,7 @@ environment:
 
 parent_branches:
     - master
-    - v3.9
+    - v3.9.8
     - latest
 
 skip_builds:
@@ -20,5 +20,33 @@ skip_builds:
     - supervisord-monitor
     - ticket-checker
     - gradle
-    - python
+#    - python
     - php5
+
+all:
+    - base_container
+    - openjdk
+    - confluent
+    - build_container
+    - python 
+    - perl
+    - perl-carton
+
+alpine:
+    - cesi
+    - hubot
+    - jenkins
+    - kafka-eagle
+    - kafka-manager
+    - movefiles
+    - nagios
+    - nginx-base
+    - nginx-proxy
+    - openjre
+    - php5
+    - php7
+    - phpmyadmin
+    - postgresql
+    - smee
+    - supervisord
+    - webdav
