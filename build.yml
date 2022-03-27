@@ -12,7 +12,8 @@ parent_branches:
     - latest
 
 skip_builds:
-    - kafka-eagle
+    - movefiles
+    - cesi
     - jira-fd-kafka
     - jenkins-build-events
     - mysql
@@ -33,12 +34,10 @@ all:
     - perl-carton
 
 alpine:
-    - cesi
     - hubot
     - jenkins
     - kafka-eagle
     - kafka-manager
-    - movefiles
     - nagios
     - nginx-base
     - nginx-proxy
