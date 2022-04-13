@@ -1,7 +1,7 @@
 TODO
 ```
 
-deploy
+deploy 
 	^[[0m^[[97m******************************************************************************
 	^[[0m^[[97mINFO: updating /home/cyc/devops_container_environment/workspace.devops_container_environment/.env
 	^[[0mFetching origin
@@ -41,7 +41,7 @@ deploy
 	sed: can't read /lib/systemd/system/docker.service: No such file or directory
 	copying certs to docker volume : workspacedeploy_grafana_standalone_alpinecerts
 
- 
+
 
 docker-utilities
 	in docker.clean, add
