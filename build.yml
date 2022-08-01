@@ -23,7 +23,7 @@ skip_builds:
     - gradle
 #    - python
     - php5
-    - kafka-eagle
+#    - kafka-eagle
 
 all:
     - base_container
