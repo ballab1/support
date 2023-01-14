@@ -33,6 +33,7 @@ all:
     - python 
     - perl
     - perl-carton
+    - jsonnet
 
 alpine:
     - hubot

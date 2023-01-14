@@ -79,3 +79,6 @@
 [submodule "bin"]
 	path = bin
 	url = ../work-stuff
+[submodule "jsonnet"]
+	path = jsonnet
+	url = ../jsonnet
