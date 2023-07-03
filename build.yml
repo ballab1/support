@@ -24,12 +24,13 @@ skip_builds:
 #    - python
     - php5
 #    - kafka-eagle
+    - build_container
 
 all:
     - base_container
     - openjdk
     - confluent
-    - build_container
+#    - build_container
     - python 
     - perl
     - perl-carton
