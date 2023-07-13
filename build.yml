@@ -4,7 +4,7 @@ container_os:
 #    - ubuntu 
 
 environment:
-    KAFKA_BOOTSTRAP_SERVERS: s3.ubuntu.home:9092,s4.ubuntu.home:9092,s8.ubuntu.home:9092
+    KAFKA_BOOTSTRAP_SERVERS: s3.ubuntu.home:9092,s7.ubuntu.home:9092,s8.ubuntu.home:9092
 
 parent_branches:
     - master
@@ -24,13 +24,13 @@ skip_builds:
 #    - python
     - php5
 #    - kafka-eagle
-    - build_container
+#   - build_container
 
 all:
     - base_container
     - openjdk
     - confluent
-#    - build_container
+    - build_container
     - python 
     - perl
     - perl-carton
