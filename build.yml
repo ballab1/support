@@ -21,10 +21,9 @@ skip_builds:
     - supervisord-monitor
     - ticket-checker
     - gradle
-#    - python
     - php5
+#    - python
 #    - kafka-eagle
-   - build_container
 
 all:
     - base_container
