@@ -1,0 +1,24 @@
+#!/usr/bin/bash
+
+
+# get the new OS_VERSION
+OS_VERSION='$OS_VERSION'
+while [[ "$OS_VERSION" =~ \S ]]; do
+  OS_VERSION="$(grep -E "^${OS_VERSION:1}=" versions/alpine | cut -d '=' -f 2)"
+done
+echo "$OS_VERSION"
+
+# update OS_VERSION in all files
+while read -r file; do
+  sedCmd="$(printf '|OS_VERSION:-%s|OS_VERSION:-%s|g' "$old_version" "$OS_VERSION")"
+  sed -i "$sedCmd" "$file"
+done < <(grep -r -E 'OS_VERSION:-3.1.\..'|cut -d ":" -f 1|awk '{split($0,arr,"/"); if (arr[2] == "Dockerfile" || arr[2] == "docker-compose.yml") print $0}')
+
+# commit the changes
+while read -r dir;do
+  echo
+  pushd "$dir"
+  [ "$(git status --porcelain)" ] && (git add -A; git commit -m "update alpine to ${OS_VERSION}";git push)
+  popd >/dev/null
+done < <(git submodule status --recursive | awk '{print $2}')
+
