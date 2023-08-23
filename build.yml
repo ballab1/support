@@ -22,6 +22,7 @@ skip_builds:
     - ticket-checker
     - gradle
     - php5
+    - php7
 #    - python
 #    - kafka-eagle
 
@@ -46,6 +47,7 @@ alpine:
     - openjre
     - php5
     - php7
+    - php8
     - phpmyadmin
     - postgresql
     - smee
