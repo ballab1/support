@@ -1,0 +1,40 @@
+#!/usr/bin/bash
+
+DOCKER_COMPOSE_VER=2.21.0
+FILES=(
+     'systemSetup'
+     'upgradeDockerCompose'
+)
+
+#--------------------------------------------------------------------------------
+function main() {
+ 
+    cd ~/.bin
+    updateFiles 'DOCKER_COMPOSE_VER' "$DOCKER_COMPOSE_VER" "${FILES[@]}"
+    git add -A; git commit -m "update docker-compose to ${DOCKER_COMPOSE_VER}";git push
+
+#   force sync of all '.bin' directories
+#   jenkins 'https://10.3.1.10/jenkins/job/bin%20-%20Update%20directories/'
+#    ./updateDockerCompose 'all'
+}
+
+#--------------------------------------------------------------------------------
+function updateFiles() {
+ 
+     local key="${1:?}"
+     local new_version="${2:-?}"
+     shift 2
+
+     local old_version="$(grep -E "^${key}=" "$[0]" | cut -d '=' -f 2)"
+
+     # update "$old_version  in all files
+     local file sedCmd
+     sedCmd="$(printf 's|^%s=%s.*$|%s=%s|g' "$key" "$old_version" "$key" "$new_version")"
+     while read -r file; do
+       sed -i "$sedCmd" "$file"
+     done < <(printf '%s\n' "$@")
+}
+ 
+#--------------------------------------------------------------------------------
+
+main "$@"

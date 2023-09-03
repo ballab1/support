@@ -52,7 +52,7 @@ function updateFiles() {
     local old_version="${1:-?}"
     local new_version="${2:-?}"
 
-    # update OS_VERSION in all files
+    # update "$old_version" in all files
     local file sedCmd
     while read -r file; do
       sedCmd="$(printf 's|OS_VERSION:-%s|OS_VERSION:-%s|g' "$old_version" "$new_version")"
