@@ -1,0 +1,21 @@
+#!/usr/bin/bash
+
+PACKAGE=confluent
+VERSION='7.5.1'
+
+#--------------------------------------------------------------------------------
+function main() {
+
+    cd ~/GIT/support/
+    newDownloadVersion.py -p "$PACKAGE" -v "$VERSION"
+    cd "$PACKAGE"
+    git add -A; git commit -m "update to ${PACKAGE} v${VERSION}";git push
+    cd ../versions
+    git add -A; git commit -m "update to ${PACKAGE} v${VERSION}";git push
+    cd ..
+    git add -A; git commit -m "update to ${PACKAGE} v${VERSION}";git push
+}
+
+#--------------------------------------------------------------------------------
+
+main "$@"
