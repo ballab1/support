@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-OS_VERSION='3.18.3'
+OS_VERSION='3.18.4'
 
 
 #--------------------------------------------------------------------------------
@@ -20,15 +20,25 @@ function main() {
     done
 
     if [ "$old_version" != "$OS_VERSION" ]; then
+
+        # pull new version
+        docker pull "alpine:${OS_VERSION}"
+	docker tag "alpine:${OS_VERSION}" "s2.ubuntu.home:5000/thirdparty/agent:${OS_VERSION}"
+	docker push "s2.ubuntu.home:5000/thirdparty/agent:${OS_VERSION}"
+	docker rmi "alpine:${OS_VERSION}"
+	docker rmi "s2.ubuntu.home:5000/thirdparty/agent:${OS_VERSION}"
+
+
         # update versions file
         sedCmd="$(printf 's|OS_VERSION:-%s|OS_VERSION:-%s|g' "$old_version" "$OS_VERSION")"
         sed -i "$sedCmd" "$versionFile"
 
         # update & commit the changes
         updateFiles "$old_version" "$OS_VERSION"
+
+        commitChanges "$OS_VERSION"
+        git add -A; git commit -m "update alpine to ${OS_VERSION}";git push
     fi
-    commitChanges "$OS_VERSION"
-    git add -A; git commit -m "update alpine to ${OS_VERSION}";git push
 }
 
 #--------------------------------------------------------------------------------
