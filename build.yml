@@ -1,7 +1,7 @@
 container_os:
     - alpine
 #    - i386-ubuntu
-#    - ubuntu 
+#    - ubuntu
 
 environment:
     KAFKA_BOOTSTRAP_SERVERS: s3.ubuntu.home:9092,s7.ubuntu.home:9092,s8.ubuntu.home:9092
@@ -14,6 +14,7 @@ parent_branches:
 skip_builds:
     - movefiles
     - cesi
+    - hubot
     - jira-fd-kafka
     - jenkins-build-events
     - mysql
@@ -31,7 +32,7 @@ all:
     - openjdk
     - confluent
     - build_container
-    - python 
+    - python
     - perl
     - perl-carton
     - jsonnet
