@@ -7,8 +7,8 @@ environment:
     KAFKA_BOOTSTRAP_SERVERS: s3.ubuntu.home:9092,s7.ubuntu.home:9092,s8.ubuntu.home:9092
 
 parent_branches:
-    - master
-    - v3.9.8
+    - main
+    - v3.9.9
     - latest
 
 skip_builds:
@@ -24,6 +24,7 @@ skip_builds:
     - gradle
     - php5
     - php7
+    - kafka-manager
 #    - python
 #    - kafka-eagle
 

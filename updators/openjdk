@@ -1,0 +1,82 @@
+#!/usr/bin/bash
+
+JDK_VERSION='17.0.9_p8-r0'
+
+#--------------------------------------------------------------------------------
+function main() {
+
+    local -r absGitRoot="$(git rev-parse --show-toplevel)"
+    cd "$absGitRoot" ||:
+    local -r versionFile='versions/alpine'
+
+    # get the old JDK_VERSION
+#    local -r old_version="${1:?}"
+    local -r old_version="$(grep -E 'JAVA_EXTENDED=' "$versionFile" | cut -d '=' -f 2)"
+    if [ "$old_version" != "$JDK_VERSION" ]; then
+
+        # update & commit the changes
+        processModules "$old_version"
+
+        # commit changes to main project
+        cd "$absGitRoot" ||:
+        if [ "$(git status --porcelain)" ]; then
+          # commit the changes
+          echo
+          echo "$absGitRoot"
+          (git add -A; git commit -m "update openjdk to ${JDK_VERSION}";git push)
+        fi
+    fi
+}
+
+#--------------------------------------------------------------------------------
+function processModules() {
+
+    local -r old_version="${1:?}"
+
+    local dir file sedCmd1 sedCmd2 sedCmd3 sedCmd4 sedCmd5 new_package old_package
+
+    local -a old_ver new_ver
+    mapfile -t old_ver < <(split_str "$old_version")
+    mapfile -t new_ver < <(split_str "$JDK_VERSION")
+
+    old_package="1.${old_ver[0]}.${old_ver[1]}-openjdk"
+    new_package="1.${new_ver[0]}.${new_ver[1]}-openjdk"
+
+    sedCmd1="$s!(JAVA_VERSION)(:-|=)${old_version}!\1\2${JDK_VERSION}!g"
+    sedCmd2="$s!(JAVA_EXTENDED)(:-|=)${old_version}!\1\2${JDK_VERSION}!g"
+    sedCmd3="s!(JAVA_PACKAGE)(:-|=)${old_package}!\1\2${new_package}!g"
+    sedCmd4="s|"openjdk${old_ver[0]}"|"openjdk${new_ver[0]}"|g"
+    sedCmd5="s|java-${old_ver[0]}-openjdk|java-${new_ver[0]}-openjdk"
+
+    local dir grepCmd
+    while read -r dir;do
+
+      grepCmd="${old_version}|${old_package}|openjdk${old_ver[0]}|${old_ver[0]}-openjdk"
+
+      skip folder with no matching content
+      [ "$(grep -cEr "$grepCmd" "${absGitRoot}/$dir")" = 0 ] && continue
+
+      while read -r file; do
+        sed -i -E -e "$sedCmd1" -e "$sedCmd2" -e "$sedCmd3" -e "$sedCmd4" "$file"
+      done < <(grep -Er "$grepCmd" "${absGitRoot}/$dir"|cut -d ':' -f 1|sort -u)
+
+      cd "${absGitRoot}/$dir" ||:
+      if [ "$(git status --porcelain)" ]; then
+        # commit the changes
+        echo
+        echo "$dir"
+        (git add -A; git commit -m "update openjdk to ${JDK_VERSION}";git push)
+      fi
+    done < <(git submodule status --recursive | awk '{print $2}')
+}
+
+#--------------------------------------------------------------------------------
+function split_str() {
+
+    local str="${1:?}"
+    echo "$str" | awk '{split($0,arr,"/");for (i in arr) print arr[i]}'
+}
+
+#--------------------------------------------------------------------------------
+
+main "$@"
