@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-DOCKER_COMPOSE_VER=2.21.0
+DOCKER_COMPOSE_VER=2.23.3
 FILES=(
      'systemSetup'
      'upgradeDockerCompose'
@@ -8,7 +8,7 @@ FILES=(
 
 #--------------------------------------------------------------------------------
 function main() {
- 
+
     cd ~/.bin
     updateFiles 'DOCKER_COMPOSE_VER' "$DOCKER_COMPOSE_VER" "${FILES[@]}"
     git add -A; git commit -m "update docker-compose to ${DOCKER_COMPOSE_VER}";git push
@@ -20,12 +20,12 @@ function main() {
 
 #--------------------------------------------------------------------------------
 function updateFiles() {
- 
+
      local key="${1:?}"
      local new_version="${2:-?}"
      shift 2
 
-     local old_version="$(grep -E "^${key}=" "$[0]" | cut -d '=' -f 2)"
+     local old_version="$(grep -E "^${key}=" "${BASH_SOURCE[0]}" | cut -d '=' -f 2)"
 
      # update "$old_version  in all files
      local file sedCmd
@@ -34,7 +34,7 @@ function updateFiles() {
        sed -i "$sedCmd" "$file"
      done < <(printf '%s\n' "$@")
 }
- 
+
 #--------------------------------------------------------------------------------
 
 main "$@"
