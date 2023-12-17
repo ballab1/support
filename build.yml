@@ -25,9 +25,9 @@ skip_builds:
     - php5
     - php7
     - kafka-manager
-    - perl
-    - perl-carton
-    - postgresql
+#   - perl
+#   - perl-carton
+#   - postgresql
 #    - python
 #    - kafka-eagle
 
