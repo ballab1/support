@@ -8,28 +8,28 @@ environment:
 
 parent_branches:
     - main
-    - v3.9.9
+    - v3.9.10
     - latest
 
 skip_builds:
-    - movefiles
     - cesi
+    - gradle
     - hubot
-    - jira-fd-kafka
     - jenkins-build-events
+    - jira-fd-kafka
+#    - kafka-eagle
+    - kafka-manager
+    - movefiles
     - mysql
     - nginx_alt
-    - supervisord-monitor
-    - ticket-checker
-    - gradle
+#    - perl
+#    - perl-carton
     - php5
     - php7
-    - kafka-manager
-#   - perl
-#   - perl-carton
-#   - postgresql
+#    - postgresql
 #    - python
-#    - kafka-eagle
+    - supervisord-monitor
+    - ticket-checker
 
 all:
     - base_container
