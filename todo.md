@@ -1,7 +1,24 @@
 TODO
 ```
 
-deploy 
+git-keep
+	need option to override 'main' behavior so it becomes same as non-main default behavior
+
+promote
+	check branch and if 'dev':
+	   get list of 'alpine':dev images
+	      retag image to main and 'fingerprint'
+	      push main & 'fingetprint' images
+	      update docker-compose to use 'fingerprint'
+	      create & merge PR from dev to main
+
+
+
+deploy
+	needs to force 'versions' repo to origin/main to prevent merge conflicts
+	-----
+
+
 	^[[0m^[[97m******************************************************************************
 	^[[0m^[[97mINFO: updating /home/cyc/devops_container_environment/workspace.devops_container_environment/.env
 	^[[0mFetching origin
@@ -86,7 +103,7 @@ nagios
     checkout https://github.com/harisekhon/nagios-plugins
     curate 'archives/nagios-*.log' and 'config/NagiosConfig.tgz.*' and 'config/NagiosConfig.ERROR.tgz.*'
                 - ./nagios/archives:/var/nagios/archives
-                - ./nagios/config:/var/www/nconf/output  
+                - ./nagios/config:/var/www/nconf/output
     nconf/include/ajax/exec_generate_config.php contains 'tar -r' to refresh NagiosConfig.tgz with startic files : Alpine does not support 'tar -r'
 
 jenkins
@@ -100,7 +117,7 @@ jenkins
                  https://jenkins.io/blog/2016/11/21/gc-tuning/
                  analyze GC logs with tools such as http://gceasy.io/
          2018/01/01 16:29:15 [error] 6#6: *9 connect() failed (111: Connection refused) while connecting to upstream, client: 10.1.3.24, server: default, request: "POST /jenkins/ajaxBuildQueue HTTP/1.1", upstream: "http://172.18.0.5:8080/jenkins/ajaxBuildQueue", host: "10.1.3.6", referrer: "https://10.1.3.6/jenkins/"
-         2018/01/01 16:29:15 [error] 6#6: *10 connect() failed (111: Connection refused) while connecting to upstream, client: 10.1.3.24, server: default, request: "POST /jenkins/ajaxExecutors HTTP/1.1", upstream: "http://172.18.0.5:8080/jenkins/ajaxExecutors", host: "10.1.3.6", referrer: "https://10.1.3.6/jenkins/" 
+         2018/01/01 16:29:15 [error] 6#6: *10 connect() failed (111: Connection refused) while connecting to upstream, client: 10.1.3.24, server: default, request: "POST /jenkins/ajaxExecutors HTTP/1.1", upstream: "http://172.18.0.5:8080/jenkins/ajaxExecutors", host: "10.1.3.6", referrer: "https://10.1.3.6/jenkins/"
      It appears that your reverse proxy set up is broken.
      complete unit tests
 
@@ -110,7 +127,7 @@ change docker-registry-fe to delimit pagination using '?' rather than '/'
 
 build_container:
     build dependencies
-        - handled by Gradle: change build.sh to work inside each sub-repo. iter on OS in each repo (rather than repo for each OS) 
+        - handled by Gradle: change build.sh to work inside each sub-repo. iter on OS in each repo (rather than repo for each OS)
     change '/usr/local/bin' to subtree
 
 
@@ -123,7 +140,7 @@ build_container:
     	jenkins
     openvpn
     	“MAN-IN-THE-MIDDLE” ATTACK IF CLIENTS DO NOT VERIFY THE CERTIFICATE OF THE SERVER THEY ARE CONNECTING TO.  https://openvpn.net/community-resources/how-to/#mitm
-    	
+
 +
     kafka (and remove debug from logs)
       pipeline to refresh (stop/start zookeepers in order, then brokers)
@@ -147,15 +164,15 @@ build_container:
     jasc
     docker-registry-frontend : change 'user:repo' paradigm to 'folder:subfolder:subfolder:..' paradigm
     determine why we do not have kafka metrics
-    build using kaniko  (https://www.thenativeweb.io/blog/2018-08-14-11-32-kubernetes-building-docker-images-within-a-cluster/ 
+    build using kaniko  (https://www.thenativeweb.io/blog/2018-08-14-11-32-kubernetes-building-docker-images-within-a-cluster/
                          https://console.cloud.google.com/gcr/images/kaniko-project/GLOBAL/executor?pli=1&gcrImageListsize=30)
-            or 
+            or
 #    microservices from kafka to DBMS
 #      (us-lib)
     k8s
     reverse proxy for cesi & photoprism & & registry-fe & wdmycloud et al.
     scan fileshare (NFS issues :  negotiated dialect[SMB3_11] against server[10.1.3.5])
-      - 
+      -
     cloud-init: ssh keys
       - need further broad investigation
     MAAS
@@ -179,7 +196,7 @@ enhancements:
     container kafka logging with https://hub.docker.com/r/mickyg/kafka-logdriver/
     containers
         base jenkins and webdav on supervisord image
-        tie DBMS backups into startup by copying SQL files to "ubuntu-s:\home\bobb\prod\mysql\vols\loader\dumps" 
+        tie DBMS backups into startup by copying SQL files to "ubuntu-s:\home\bobb\prod\mysql\vols\loader\dumps"
         improve logging   (make use of /dev/fd/1 or /dev/fd/2)
         need generic uS for "kafka topic -> DBMS table"
         file checksums -> kafka topic
@@ -189,7 +206,7 @@ enhancements:
         hash generation should be perl container job/script to push to kafka topic
         photos
         backups
-        jenkins:  
+        jenkins:
         build.sh: auto configure from JENKINS_GITHUB settings
     webdav
         currently provides read/write access : no restrictions
@@ -215,7 +232,7 @@ enhancements:
         sync across network USB drives  (10.1.3.1 & 10.1.3.5)
         barebones hubot:  see https://slackapi.github.io/hubot-slack/
             need more coffeescript & add script versions
-        recipes: 
+        recipes:
             add side menu for categories filtering
             backup needs more intelligence + moved to jenkinsfile
     jenkins
@@ -225,7 +242,7 @@ enhancements:
         implement jasc
 
 
-future development  
+future development
     create container which has a firewall
     create a GIT-LFS->raw_fs server for testing
 ```
@@ -245,7 +262,7 @@ jenkins
     improve logging from 'Clean Docker Registry': show badge when reclaim shows > 0
 PHP
     Nagios/nconf with php7
-    
+
 
 12/17/2020
     add elk monitoring on other systems
@@ -477,13 +494,13 @@ nagios
 	restart process after NCONF deploys new config
 
 2019-09-07
-docker-utilities 
+docker-utilities
     multiple updates
     recognize filer on tags for 'docker-utilities images '*:*'
 jenkins
     kafka logging from pipelines
 deploy
-    --container_tag needed. 
+    --container_tag needed.
 fix small pics on zen
 
 
@@ -503,7 +520,7 @@ jenkins
 
 
 2019-07-13
-    change cbf/bashlib to 
+    change cbf/bashlib to
       - subtree for cbf
       - submodule for support
       - subtree for production
@@ -654,7 +671,7 @@ split 'production' into two: "broker,zookeeper,hubot,mysql", "other"
 git-crypt: encode/decode files (aka GIT-LFS encoding) which are protected so they can go into GIT
 
 issues pushing/pulling to registry
-     sometimes ':latest' not defined, sometimes 'fingerprint' not defined                
+     sometimes ':latest' not defined, sometimes 'fingerprint' not defined
      projects should have definition of /version:tags
          so we can have
                 jenkins/2.121.2:latest
@@ -677,7 +694,7 @@ Add getcomposer (for PHP) to php7
     zen:
         The plain HTTP request was sent to HTTPS port
             http://10.1.3.6:443/zp-core/setup/index.php?autorun=gallery
-                        zp-core/htaccess references:  RewriteBase /zenphoto 
+                        zp-core/htaccess references:  RewriteBase /zenphoto
                         zp-core/setup/index.php:  if ($connection && !isset($_zp_options))  [ but file should be index.php.xxx ]
         Always starts up in 'setup / update' mode
     Jenkins errors (on nginx):
