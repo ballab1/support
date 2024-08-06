@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-JDK_VERSION='17.0.9_p8-r0'
+JDK_VERSION='17.0.12_p7-r0'
 
 # still need to add JAVA_HOME in kafka deployments
 
