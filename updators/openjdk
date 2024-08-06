@@ -44,8 +44,8 @@ function processModules() {
     old_package="1.${old_ver[0]}.${old_ver[1]}-openjdk"
     new_package="1.${new_ver[0]}.${new_ver[1]}-openjdk"
 
-    sedCmd1="$s!(JAVA_VERSION)(:-|=)${old_version}!\1\2${JDK_VERSION}!g"
-    sedCmd2="$s!(JAVA_EXTENDED)(:-|=)${old_version}!\1\2${JDK_VERSION}!g"
+    sedCmd1="s!(JAVA_VERSION)(:-|=)${old_version}!\1\2${JDK_VERSION}!g"
+    sedCmd2="s!(JAVA_EXTENDED)(:-|=)${old_version}!\1\2${JDK_VERSION}!g"
     sedCmd3="s!(JAVA_PACKAGE)(:-|=)${old_package}!\1\2${new_package}!g"
     sedCmd4="s|"openjdk${old_ver[0]}"|"openjdk${new_ver[0]}"|g"
     sedCmd5="s|java-${old_ver[0]}-openjdk|java-${new_ver[0]}-openjdk"
@@ -55,18 +55,17 @@ function processModules() {
 
       grepCmd="${old_version}|${old_package}|openjdk${old_ver[0]}|${old_ver[0]}-openjdk"
 
-      skip folder with no matching content
+      # skip folder with no matching content
       [ "$(grep -cEr "$grepCmd" "${absGitRoot}/$dir")" = 0 ] && continue
 
+      echo "..processing $dir"
       while read -r file; do
         sed -i -E -e "$sedCmd1" -e "$sedCmd2" -e "$sedCmd3" -e "$sedCmd4" "$file"
       done < <(grep -Er "$grepCmd" "${absGitRoot}/$dir"|cut -d ':' -f 1|sort -u)
 
       cd "${absGitRoot}/$dir" ||:
       if [ "$(git status --porcelain)" ]; then
-        # commit the changes
-        echo
-        echo "$dir"
+        echo 'commiting the changes\n'
         (git add -A; git commit -m "update openjdk to ${JDK_VERSION}";git push)
       fi
     done < <(git submodule status --recursive | awk '{print $2}')
