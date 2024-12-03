@@ -23,11 +23,11 @@ skip_builds:
     - mysql
     - nginx_alt
 #    - perl
-#    - perl-carton
+    - perl-carton
     - php5
     - php7
-#    - postgresql
-#    - python
+    - postgresql
+    - python
     - supervisord-monitor
     - ticket-checker
 
