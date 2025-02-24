@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-OS_VERSION='3.21.2'
+OS_VERSION='3.21.3'
 
 #--------------------------------------------------------------------------------
 function main() {
@@ -29,7 +29,7 @@ function main() {
 
 
         # update versions file
-        sedCmd="$(printf 's|OS_VERSION:-%s|OS_VERSION:-%s|g' "$old_version" "$OS_VERSION")"
+        sedCmd="$(printf 's|ALPINE_VERSION=%s|ALPINE_VERSION=%s|g' "$old_version" "$OS_VERSION")"
         sed -i "$sedCmd" "$versionFile"
 
         # update & commit the changes
