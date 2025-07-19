@@ -13,6 +13,7 @@ parent_branches:
 
 skip_builds:
     - cesi
+    - confluent
     - gradle
     - hubot
     - jenkins-build-events
@@ -30,16 +31,15 @@ skip_builds:
     - python
     - supervisord-monitor
     - ticket-checker
+    - perl
+    - perl-carton
+    - jsonnet
 
 all:
     - base_container
     - openjdk
-    - confluent
     - build_container
     - python
-    - perl
-    - perl-carton
-    - jsonnet
 
 alpine:
     - hubot
