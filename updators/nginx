@@ -1,6 +1,7 @@
 #!/usr/bin/bash
 
-NGINX_VERSION='1.26.3'
+MY_VERSION='1.28.0'
+VERSION_STRING='NGINX_VERSION'
 
 # still need to add NGINX_HOME in kafka deployments
 
@@ -11,10 +12,10 @@ function main() {
     cd "$absGitRoot" ||:
     local -r versionFile='versions/alpine'
 
-    # get the old JDK_VERSION
+    # get the old MY_VERSION
 #    local -r old_version="${1:?}"
-    local -r old_version="$(grep -E 'NGINX_EXTENDED=' "$versionFile" | cut -d '=' -f 2)"
-    if [ "$old_version" != "$JDK_VERSION" ]; then
+    local -r old_version="$(grep -E "${VERSION_STRING}=" "$versionFile" | cut -d '=' -f 2)"
+    if [ "$old_version" != "$MY_VERSION" ]; then
 
         # update & commit the changes
         processModules "$old_version"
@@ -25,7 +26,7 @@ function main() {
           # commit the changes
           echo
           echo "$absGitRoot"
-          (git add -A; git commit -m "update openjdk to ${JDK_VERSION}";git push)
+          (git add -A; git commit -m "update ${VERSION_STRING} to ${MY_VERSION}";git push)
         fi
     fi
 }
@@ -39,33 +40,33 @@ function processModules() {
 
     local -a old_ver new_ver
     mapfile -t old_ver < <(split_str "$old_version")
-    mapfile -t new_ver < <(split_str "$JDK_VERSION")
+    mapfile -t new_ver < <(split_str "$MY_VERSION")
 
-    old_package="1.${old_ver[0]}.${old_ver[1]}-openjdk"
-    new_package="1.${new_ver[0]}.${new_ver[1]}-openjdk"
+    old_package="1.${old_ver[0]}"
+    new_package="1.${new_ver[0]}"
 
-    sedCmd1="s!(NGINX_VERSION)(:-|=)${old_version}!\1\2${JDK_VERSION}!g"
+    sedCmd1='s!('"$MY_VERSION"')(:-|=)'"$old_version"'!\1\2'"$MY_VERSION"'!g'
 
     local dir grepCmd
     while read -r dir;do
 
-       for file in $(grep -R 'NGINX_VERSION:-' * | cut -d ':' -f 1 | sort -u);do
-           sed -E -e 's|\{NGINX_VERSION:-1.26.3}|g' "$file"
-       done
-      grepCmd="${old_version}|${old_package}|openjdk${old_ver[0]}|${old_ver[0]}-openjdk"
+      for file in $(grep -R "${VERSION_STRING}:-" * | cut -d ':' -f 1 | sort -u);do
+          sed -E -e 's|\{'"$VERSION_STRING"':-1.26.3}||g' "$file"
+      done
+      grepCmd="${old_version}|${old_package}"
 
       # skip folder with no matching content
       [ "$(grep -cEr "$grepCmd" "${absGitRoot}/$dir")" = 0 ] && continue
 
       echo "..processing $dir"
       while read -r file; do
-        sed -i -E -e "$sedCmd1" -e "$sedCmd2" -e "$sedCmd3" -e "$sedCmd4" "$file"
+          sed -i -E -e "$sedCmd1" "$file"
       done < <(grep -Er "$grepCmd" "${absGitRoot}/$dir"|cut -d ':' -f 1|sort -u)
 
       cd "${absGitRoot}/$dir" ||:
       if [ "$(git status --porcelain)" ]; then
-        echo 'commiting the changes\n'
-        (git add -A; git commit -m "update openjdk to ${JDK_VERSION}";git push)
+          echo 'commiting the changes\n'
+          (git add -A; git commit -m "update ${VERSION_STRING} to ${MY_VERSION}";git push)
       fi
     done < <(git submodule status --recursive | awk '{print $2}')
 }
