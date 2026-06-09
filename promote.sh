@@ -33,4 +33,4 @@ while read m; do
 done < <(git submodule status --recursive | awk '{print $2}') 
 promote
 
-# docker inspect  s2.ubuntu.home:5000/alpine/base_container:main|jq '.[].Config.Labels|with_entries(.key |= "p0." + .)'
+# docker inspect  registry.ubuntu.home/alpine/base_container:main|jq '.[].Config.Labels|with_entries(.key |= "p0." + .)'

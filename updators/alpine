@@ -22,10 +22,10 @@ function main() {
 
         # pull new version
         docker pull "alpine:${OS_VERSION}"
-	docker tag "alpine:${OS_VERSION}" "s2.ubuntu.home:5000/docker.io/agent:${OS_VERSION}"
-	docker push "s2.ubuntu.home:5000/docker.io/agent:${OS_VERSION}"
+	docker tag "alpine:${OS_VERSION}" "registry.ubuntu.home/docker.io/agent:${OS_VERSION}"
+	docker push "registry.ubuntu.home/docker.io/agent:${OS_VERSION}"
 	docker rmi "alpine:${OS_VERSION}"
-	docker rmi "s2.ubuntu.home:5000/docker.io/agent:${OS_VERSION}"
+	docker rmi "registry.ubuntu.home/docker.io/agent:${OS_VERSION}"
 
 
         # update versions file
