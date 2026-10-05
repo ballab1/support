@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-MY_VERSION='1.28.0'
+MY_VERSION='1.30.0'
 VERSION_STRING='NGINX_VERSION'
 
 # still need to add NGINX_HOME in kafka deployments
