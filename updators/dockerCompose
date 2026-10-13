@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-DOCKER_COMPOSE_VER=2.23.3
+DOCKER_COMPOSE_VER=v5.6.0
 FILES=(
      'systemSetup'
      'upgradeDockerCompose'
